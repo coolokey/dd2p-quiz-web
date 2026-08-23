@@ -130,7 +130,7 @@ function handleTimer() {
     if (animating) pendingRegulationEnd = true;
     else closeRegulation({ advanceQuestion: true });
   }
-  if (!combatState.ended) renderGame();
+  if (!combatState.ended && !animating) renderGame();
 }
 function ensureQuestion() {
   if (quizState.questionIndex >= currentQuiz.activeQuestions.length) currentQuiz.activeQuestions.push(...shuffle(currentQuiz.questions));

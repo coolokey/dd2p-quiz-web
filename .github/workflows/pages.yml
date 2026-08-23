@@ -27,6 +27,8 @@ jobs:
           node-version: 22
       - run: npm test
       - run: test -f web/data/catalog.json && test -d web/images
+      - run: test -f web/assets/battle/manifest.json
+      - run: test $(find web/assets/battle/characters -mindepth 1 -maxdepth 1 -type d | wc -l) -ge 12
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

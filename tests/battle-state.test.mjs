@@ -13,7 +13,7 @@ test('答對時加一分並使對手受到傷害', () => {
 
   assert.equal(next.scores.left, 1);
   assert.equal(next.health.right, 90);
-  assert.deepEqual(next.animation, { type: 'attack', player: 'left', opponent: 'right' });
+  assert.deepEqual(next.animation, { type: 'attack', player: 'left', opponent: 'right', damage: 10 });
   assert.equal(state.scores.left, 0);
   assert.equal(state.health.right, 100);
 });
@@ -78,4 +78,14 @@ test('答錯時不計分也不扣除任何生命值', () => {
   assert.deepEqual(next.scores, state.scores);
   assert.deepEqual(next.animation, { type: 'miss', player: 'left', opponent: 'right' });
   assert.notStrictEqual(next, state);
+});
+
+test('攻擊事件包含攻擊者、受擊者與傷害值', () => {
+  const next = applyCorrectAnswer(createBattleState(), 'right');
+  assert.deepEqual(next.animation, {
+    type: 'attack',
+    player: 'right',
+    opponent: 'left',
+    damage: 10,
+  });
 });

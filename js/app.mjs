@@ -5,6 +5,7 @@ import { createCharacterSelection, selectCharacter } from './character-select.mj
 import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
 import { prepareQuestionRound } from './question-randomizer.mjs';
+import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -12,6 +13,7 @@ let quizState = null, combatState = null, audioManager = null, timerId = null;
 let timeLeft = 0, regulationLimit = 0, battleSettings = null;
 let characterSelection = createCharacterSelection(), keyHits = new Set(), animating = false;
 let pendingRegulationEnd = false, activeQuestionIndex = null;
+let attackState = createAttackState();
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 const storedVolume = (key, fallback) => {
   const stored = localStorage.getItem(key);
@@ -115,6 +117,7 @@ async function startGame(settings) {
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
   timeLeft = settings.mode === 'time' ? settings.limit : null;
   animating = false; pendingRegulationEnd = false; activeQuestionIndex = null;
+  attackState = createAttackState();
   if (timerId) clearInterval(timerId);
   await audioManager?.setScene(settings.arenaId);
   await audioManager?.unlock();
@@ -207,10 +210,19 @@ async function processAnswer(input) {
   if (correct) {
     combatState = applyCorrectAnswer(combatState, input.player); renderGame({ allowEnded: true, questionOverride: question, progressOverride: answerProgress });
     audioManager?.playSfx('buzz'); audioManager?.playSfx('correct'); audioManager?.playSfx('attack');
-    audioManager?.playSfx('weapon');
     const actor = characterById(battleSettings.characters[input.player]);
-    const animation = playBattleAnimation(app, combatState.animation, { weapon: actor?.weapon, attackFrames: actor?.states?.attack, duration: 650 });
-    await new Promise(resolve => setTimeout(resolve, 420));
+    const attack = drawAttack(attackState, input.player);
+    attackState = attack.state;
+    const timing = attackTiming(attack.attackType);
+    const animation = playBattleAnimation(app, combatState.animation, {
+      attackType: attack.attackType,
+      weapon: actor?.weapon,
+      attackFrames: actor?.states?.attack,
+      duration: 650,
+    });
+    if (timing.swingDelay === 0) audioManager?.playSfx('weapon');
+    else setTimeout(() => audioManager?.playSfx('weapon'), timing.swingDelay);
+    await new Promise(resolve => setTimeout(resolve, timing.impactDelay));
     audioManager?.playSfx('hit'); audioManager?.playSfx('hurt');
     await animation;
   } else {

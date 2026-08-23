@@ -72,6 +72,23 @@ export function buildProjectileMarkup(weapon, player) {
   return `<span class="energy-bolt from-${player}" aria-hidden="true"></span>`;
 }
 
+export function attackClassNames(attackType = 'energy') {
+  return { actor: `attack-${attackType}`, target: `hit-${attackType}` };
+}
+
+export function buildAttackEffectMarkup({ attackType = 'energy', player, opponent, damage, weapon = null }) {
+  if (attackType === 'energy') {
+    return {
+      weapon: buildProjectileMarkup(weapon, player),
+      impact: `<span class="impact-burst impact-energy damage-${opponent}" aria-hidden="true"></span><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
+    };
+  }
+  return {
+    weapon: '',
+    impact: `<span class="melee-impact impact-${attackType} damage-${opponent}" aria-hidden="true"></span><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
+  };
+}
+
 export async function playSpriteFrames(image, frames, duration) {
   if (!image || !Array.isArray(frames) || frames.length === 0) return;
   const original = image.getAttribute?.('src') ?? image.src;
@@ -92,7 +109,12 @@ export async function playSpriteFrames(image, frames, duration) {
   });
 }
 
-export async function playBattleAnimation(root, animation, { duration = 650, weapon = null, attackFrames = [] } = {}) {
+export async function playBattleAnimation(root, animation, {
+  duration = 650,
+  weapon = null,
+  attackFrames = [],
+  attackType = 'energy',
+} = {}) {
   if (!animation) return;
   const actor = root.querySelector(`[data-fighter="${animation.player}"]`);
   const target = root.querySelector(`[data-fighter="${animation.opponent}"]`);
@@ -101,17 +123,27 @@ export async function playBattleAnimation(root, animation, { duration = 650, wea
   const attackClass = animation.type === 'attack' ? 'is-attacking' : 'is-missing';
   actor?.classList.add(attackClass);
   const frameAnimation = playSpriteFrames(actor?.querySelector('.fighter-sprite'), attackFrames, duration);
+  const typeClasses = attackClassNames(attackType);
 
   if (animation.type === 'attack') {
-    target?.classList.add('is-hit');
-    if (weaponLayer) weaponLayer.innerHTML = buildProjectileMarkup(weapon, animation.player);
-    if (impact) impact.innerHTML = `<b class="damage-pop damage-${animation.opponent}">−${escapeHtml(animation.damage)}</b>`;
+    actor?.classList.add(typeClasses.actor);
+    target?.classList.add('is-hit', typeClasses.target);
+    const effects = buildAttackEffectMarkup({
+      attackType,
+      player: animation.player,
+      opponent: animation.opponent,
+      damage: animation.damage,
+      weapon,
+    });
+    if (weaponLayer) weaponLayer.innerHTML = effects.weapon;
+    if (impact) impact.innerHTML = effects.impact;
   }
 
   await new Promise(resolve => setTimeout(resolve, duration));
   await frameAnimation;
   actor?.classList.remove(attackClass);
-  target?.classList.remove('is-hit');
+  actor?.classList.remove(typeClasses.actor);
+  target?.classList.remove('is-hit', typeClasses.target);
   if (weaponLayer) weaponLayer.innerHTML = '';
   if (impact) impact.innerHTML = '';
 }

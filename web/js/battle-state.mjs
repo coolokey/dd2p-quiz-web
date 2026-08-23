@@ -35,7 +35,7 @@ export function applyCorrectAnswer(state, player) {
     phase: ended ? 'ended' : state.phase,
     animation: { type: 'attack', player, opponent },
     ended,
-    endReason: suddenDeathWin ? 'sudden-death' : ko ? 'ko' : null,
+    endReason: ko ? 'ko' : suddenDeathWin ? 'sudden-death' : null,
     winner: ended ? player : null,
   };
 }

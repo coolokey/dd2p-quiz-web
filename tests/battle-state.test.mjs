@@ -57,6 +57,19 @@ test('驟死賽先答對者立即獲勝', () => {
   );
 });
 
+test('驟死賽答對同時使對手生命歸零時優先判定 KO', () => {
+  const suddenDeath = {
+    ...finishRegulation(createBattleState()),
+    health: { left: 10, right: 100 },
+  };
+  const next = applyCorrectAnswer(suddenDeath, 'right');
+
+  assert.deepEqual(
+    { ended: next.ended, reason: next.endReason, winner: next.winner },
+    { ended: true, reason: 'ko', winner: 'right' },
+  );
+});
+
 test('答錯時不計分也不扣除任何生命值', () => {
   const state = createBattleState();
   const next = applyWrongAnswer(state, 'left');

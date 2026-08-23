@@ -4,6 +4,7 @@ import { applyCorrectAnswer, applyWrongAnswer, createBattleState, finishRegulati
 import { createCharacterSelection, selectCharacter } from './character-select.mjs';
 import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
+import { prepareQuestionRound } from './question-randomizer.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -20,7 +21,6 @@ const storedVolume = (key, fallback) => {
 const audioVolumes = { master: storedVolume('dd2p-volume-master', 0.8), music: storedVolume('dd2p-volume-music', 0.65), effects: storedVolume('dd2p-volume-effects', 0.9) };
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' })[char]);
-const shuffle = values => [...values].sort(() => Math.random() - .5);
 const header = () => '<div class="masthead"><div><p class="eyebrow">DD2P BATTLE EDITION</p><h1 class="title">雙人知識對決</h1></div><div class="round">2P</div></div>';
 const shell = body => `<div class="shell">${header()}<section class="panel">${body}</section></div>`;
 const playerName = player => player === 'left' ? '左方紅隊' : '右方藍隊';
@@ -109,7 +109,7 @@ function renderKeyTest(settings) {
 
 async function startGame(settings) {
   battleSettings = settings;
-  currentQuiz = { ...currentQuiz, activeQuestions: shuffle(currentQuiz.questions) };
+  currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions) };
   quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
@@ -133,7 +133,9 @@ function handleTimer() {
   if (!combatState.ended && !animating) renderGame();
 }
 function ensureQuestion() {
-  if (quizState.questionIndex >= currentQuiz.activeQuestions.length) currentQuiz.activeQuestions.push(...shuffle(currentQuiz.questions));
+  if (quizState.questionIndex >= currentQuiz.activeQuestions.length) {
+    currentQuiz.activeQuestions.push(...prepareQuestionRound(currentQuiz.questions));
+  }
 }
 function closeRegulation({ advanceQuestion = false } = {}) {
   combatState = finishRegulation(combatState);

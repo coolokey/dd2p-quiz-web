@@ -19,3 +19,8 @@ export function randomizeQuestion(question, random = Math.random) {
     answerIndex: shuffled.findIndex(option => option.correct),
   };
 }
+
+export function prepareQuestionRound(questions, random = Math.random) {
+  return shuffleWithRandom(questions, random)
+    .map(question => randomizeQuestion(question, random));
+}

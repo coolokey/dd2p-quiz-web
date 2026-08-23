@@ -72,6 +72,27 @@ test('每種攻擊提供不同攻擊者與受擊者類別', () => {
 });
 
 test('受擊動作與傷害特效等到命中時間才出現', async () => {
+  let now = 0;
+  const timers = [];
+  const schedule = (callback, delay) => {
+    const timer = { at: now + delay, callback, canceled: false };
+    timers.push(timer);
+    return timer;
+  };
+  const cancelSchedule = timer => { timer.canceled = true; };
+  const tick = duration => {
+    const targetTime = now + duration;
+    while (true) {
+      const timer = timers
+        .filter(candidate => !candidate.canceled && candidate.at <= targetTime)
+        .sort((left, right) => left.at - right.at)[0];
+      if (!timer) break;
+      timer.canceled = true;
+      now = timer.at;
+      timer.callback();
+    }
+    now = targetTime;
+  };
   const makeClassList = initial => {
     const values = new Set(initial);
     return {
@@ -96,16 +117,19 @@ test('受擊動作與傷害特效等到命中時間才出現', async () => {
   };
 
   const animation = playBattleAnimation(root, { type: 'attack', player: 'left', opponent: 'right', damage: 10 }, {
-    attackType: 'punch', duration: 45, impactDelay: 20, reactionDuration: 30,
+    attackType: 'punch', duration: 80, impactDelay: 20, reactionDuration: 300, schedule, cancelSchedule,
   });
   assert.equal(target.classList.contains('is-hit'), false);
   assert.equal(impactLayer.innerHTML, '');
-  await new Promise(resolve => setTimeout(resolve, 25));
+  tick(19);
+  assert.equal(target.classList.contains('is-hit'), false);
+  tick(1);
   assert.equal(target.classList.contains('hit-punch'), true);
   assert.match(impactLayer.innerHTML, /impact-punch/);
-  await new Promise(resolve => setTimeout(resolve, 22));
+  tick(299);
   assert.equal(target.classList.contains('hit-punch'), true);
   assert.match(impactLayer.innerHTML, /impact-punch/);
+  tick(1);
   await animation;
   assert.equal(target.classList.contains('is-hit'), false);
   assert.equal(impactLayer.innerHTML, '');

@@ -116,6 +116,8 @@ export async function playBattleAnimation(root, animation, {
   attackType = 'energy',
   impactDelay = 0,
   reactionDuration = 650,
+  schedule = setTimeout,
+  cancelSchedule = clearTimeout,
 } = {}) {
   if (!animation) return;
   const actor = root.querySelector(`[data-fighter="${animation.player}"]`);
@@ -145,14 +147,14 @@ export async function playBattleAnimation(root, animation, {
     };
     effectiveImpactDelay = Math.max(0, Math.min(duration, Number(impactDelay) || 0));
     if (effectiveImpactDelay === 0) showImpact();
-    else impactTimer = setTimeout(showImpact, effectiveImpactDelay);
+    else impactTimer = schedule(showImpact, effectiveImpactDelay);
   }
 
   const totalDuration = animation.type === 'attack'
     ? Math.max(duration, effectiveImpactDelay + Math.max(0, Number(reactionDuration) || 0))
     : duration;
-  await new Promise(resolve => setTimeout(resolve, totalDuration));
-  if (impactTimer) clearTimeout(impactTimer);
+  await new Promise(resolve => schedule(resolve, totalDuration));
+  if (impactTimer) cancelSchedule(impactTimer);
   await frameAnimation;
   actor?.classList.remove(attackClass);
   actor?.classList.remove(typeClasses.actor);

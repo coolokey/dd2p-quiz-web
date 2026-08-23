@@ -114,6 +114,7 @@ export async function playBattleAnimation(root, animation, {
   weapon = null,
   attackFrames = [],
   attackType = 'energy',
+  impactDelay = 0,
 } = {}) {
   if (!animation) return;
   const actor = root.querySelector(`[data-fighter="${animation.player}"]`);
@@ -124,10 +125,10 @@ export async function playBattleAnimation(root, animation, {
   actor?.classList.add(attackClass);
   const frameAnimation = playSpriteFrames(actor?.querySelector('.fighter-sprite'), attackFrames, duration);
   const typeClasses = attackClassNames(attackType);
+  let impactTimer = null;
 
   if (animation.type === 'attack') {
     actor?.classList.add(typeClasses.actor);
-    target?.classList.add('is-hit', typeClasses.target);
     const effects = buildAttackEffectMarkup({
       attackType,
       player: animation.player,
@@ -136,10 +137,17 @@ export async function playBattleAnimation(root, animation, {
       weapon,
     });
     if (weaponLayer) weaponLayer.innerHTML = effects.weapon;
-    if (impact) impact.innerHTML = effects.impact;
+    const showImpact = () => {
+      target?.classList.add('is-hit', typeClasses.target);
+      if (impact) impact.innerHTML = effects.impact;
+    };
+    const delay = Math.max(0, Math.min(duration, Number(impactDelay) || 0));
+    if (delay === 0) showImpact();
+    else impactTimer = setTimeout(showImpact, delay);
   }
 
   await new Promise(resolve => setTimeout(resolve, duration));
+  if (impactTimer) clearTimeout(impactTimer);
   await frameAnimation;
   actor?.classList.remove(attackClass);
   actor?.classList.remove(typeClasses.actor);

@@ -219,6 +219,7 @@ async function processAnswer(input) {
       weapon: actor?.weapon,
       attackFrames: actor?.states?.attack,
       duration: 650,
+      impactDelay: timing.impactDelay,
     });
     if (timing.swingDelay === 0) audioManager?.playSfx('weapon');
     else setTimeout(() => audioManager?.playSfx('weapon'), timing.swingDelay);

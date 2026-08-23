@@ -35,7 +35,12 @@ export function buildBattleMarkup(viewModel) {
     <header class="battle-topbar">
       <span class="arena-name">${escapeHtml(viewModel.scene.label)}</span>
       <strong class="battle-progress">${escapeHtml(viewModel.progress)}</strong>
-      <button class="audio-toggle" type="button" data-audio-toggle aria-label="切換聲音">聲音</button>
+      <div class="audio-controls">
+        <label title="主音量">主<input type="range" min="0" max="1" step="0.05" value="${escapeHtml(viewModel.audio?.master ?? 0.8)}" data-master-volume></label>
+        <label title="背景音樂音量">樂<input type="range" min="0" max="1" step="0.05" value="${escapeHtml(viewModel.audio?.music ?? 0.65)}" data-music-volume></label>
+        <label title="音效音量">效<input type="range" min="0" max="1" step="0.05" value="${escapeHtml(viewModel.audio?.effects ?? 0.9)}" data-effects-volume></label>
+        <button class="audio-toggle" type="button" data-audio-toggle aria-label="切換聲音">聲音</button>
+      </div>
     </header>
     <div class="arena" data-arena>
       <div class="arena-vignette"></div>

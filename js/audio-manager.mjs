@@ -54,24 +54,36 @@ export function createAudioManager({
   audioManifest = {},
   audioFactory = browserAudioFactory,
   volume = DEFAULT_VOLUME,
+  musicVolume = 1,
+  effectsVolume = 1,
   muted = false,
 } = {}) {
   const sceneMusic = buildSceneMusic(manifest, audioManifest);
   const soundEffects = buildSfx(manifest, audioManifest);
-  const activeAudios = new Set();
+  const activeAudios = new Map();
   let unlocked = false;
   let selectedScene = null;
   let backgroundMusic = null;
   let currentVolume = clampVolume(volume);
+  let currentMusicVolume = clampVolume(musicVolume);
+  let currentEffectsVolume = clampVolume(effectsVolume);
   let isMuted = Boolean(muted);
 
-  function configure(audio, { loop = false } = {}) {
+  function effectiveVolume(kind) {
+    return currentVolume * (kind === 'music' ? currentMusicVolume : currentEffectsVolume);
+  }
+
+  function configure(audio, { loop = false, kind = 'effect' } = {}) {
     if (!audio) return null;
     audio.loop = loop;
-    audio.volume = currentVolume;
+    audio.volume = effectiveVolume(kind);
     audio.muted = isMuted;
-    activeAudios.add(audio);
+    activeAudios.set(audio, kind);
     return audio;
+  }
+
+  function refreshVolumes() {
+    for (const [audio, kind] of activeAudios) audio.volume = effectiveVolume(kind);
   }
 
   function stopBackgroundMusic() {
@@ -90,7 +102,7 @@ export function createAudioManager({
     stopBackgroundMusic();
     const src = sceneMusic.get(selectedScene);
     if (!unlocked || !src) return;
-    backgroundMusic = configure(audioFactory(src), { loop: true });
+    backgroundMusic = configure(audioFactory(src), { loop: true, kind: 'music' });
     await safePlay(backgroundMusic);
   }
 
@@ -117,14 +129,26 @@ export function createAudioManager({
 
     setMuted(nextMuted) {
       isMuted = Boolean(nextMuted);
-      for (const audio of activeAudios) audio.muted = isMuted;
+      for (const audio of activeAudios.keys()) audio.muted = isMuted;
       return isMuted;
     },
 
     setVolume(nextVolume) {
       currentVolume = clampVolume(nextVolume);
-      for (const audio of activeAudios) audio.volume = currentVolume;
+      refreshVolumes();
       return currentVolume;
+    },
+
+    setMusicVolume(nextVolume) {
+      currentMusicVolume = clampVolume(nextVolume);
+      refreshVolumes();
+      return currentMusicVolume;
+    },
+
+    setEffectsVolume(nextVolume) {
+      currentEffectsVolume = clampVolume(nextVolume);
+      refreshVolumes();
+      return currentEffectsVolume;
     },
 
     stop() {

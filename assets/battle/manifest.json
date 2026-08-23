@@ -183,44 +183,22 @@
       ],
       "states": {
         "idle": [
-          "./assets/battle/characters/4/idle/01.png",
-          "./assets/battle/characters/4/idle/02.png",
-          "./assets/battle/characters/4/idle/03.png",
-          "./assets/battle/characters/4/idle/04.png"
+          "./assets/battle/characters/4/idle/01.png"
         ],
         "attack": [
-          "./assets/battle/characters/4/attack/01.png",
-          "./assets/battle/characters/4/attack/02.png",
-          "./assets/battle/characters/4/attack/03.png",
-          "./assets/battle/characters/4/attack/04.png",
-          "./assets/battle/characters/4/attack/05.png",
-          "./assets/battle/characters/4/attack/06.png"
+          "./assets/battle/characters/4/attack/01.png"
         ],
         "hurt": [
-          "./assets/battle/characters/4/idle/01.png",
-          "./assets/battle/characters/4/idle/02.png",
-          "./assets/battle/characters/4/idle/03.png",
-          "./assets/battle/characters/4/idle/04.png"
+          "./assets/battle/characters/4/idle/01.png"
         ],
         "miss": [
-          "./assets/battle/characters/4/attack/01.png",
-          "./assets/battle/characters/4/attack/02.png",
-          "./assets/battle/characters/4/attack/03.png",
-          "./assets/battle/characters/4/attack/04.png",
-          "./assets/battle/characters/4/attack/05.png",
-          "./assets/battle/characters/4/attack/06.png"
+          "./assets/battle/characters/4/attack/01.png"
         ],
         "win": [
-          "./assets/battle/characters/4/idle/01.png",
-          "./assets/battle/characters/4/idle/02.png",
-          "./assets/battle/characters/4/idle/03.png",
-          "./assets/battle/characters/4/idle/04.png"
+          "./assets/battle/characters/4/idle/01.png"
         ],
         "lose": [
-          "./assets/battle/characters/4/idle/01.png",
-          "./assets/battle/characters/4/idle/02.png",
-          "./assets/battle/characters/4/idle/03.png",
-          "./assets/battle/characters/4/idle/04.png"
+          "./assets/battle/characters/4/idle/01.png"
         ]
       },
       "weapon": null

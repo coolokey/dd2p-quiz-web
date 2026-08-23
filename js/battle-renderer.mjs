@@ -67,7 +67,32 @@ export function renderBattle(root, viewModel) {
   return root;
 }
 
-export async function playBattleAnimation(root, animation, { duration = 650, weapon = null } = {}) {
+export function buildProjectileMarkup(weapon, player) {
+  if (weapon) return `<img class="flying-weapon from-${player}" src="${escapeHtml(weapon)}" alt="">`;
+  return `<span class="energy-bolt from-${player}" aria-hidden="true"></span>`;
+}
+
+export async function playSpriteFrames(image, frames, duration) {
+  if (!image || !Array.isArray(frames) || frames.length === 0) return;
+  const original = image.getAttribute?.('src') ?? image.src;
+  const setSource = source => image.setAttribute ? image.setAttribute('src', source) : image.src = source;
+  const stepMs = Math.max(1, duration / (frames.length + 1));
+  let frameIndex = 0;
+  setSource(frames[frameIndex++]);
+
+  await new Promise(resolve => {
+    const interval = setInterval(() => {
+      if (frameIndex < frames.length) setSource(frames[frameIndex++]);
+    }, stepMs);
+    setTimeout(() => {
+      clearInterval(interval);
+      setSource(original);
+      resolve();
+    }, duration);
+  });
+}
+
+export async function playBattleAnimation(root, animation, { duration = 650, weapon = null, attackFrames = [] } = {}) {
   if (!animation) return;
   const actor = root.querySelector(`[data-fighter="${animation.player}"]`);
   const target = root.querySelector(`[data-fighter="${animation.opponent}"]`);
@@ -75,14 +100,16 @@ export async function playBattleAnimation(root, animation, { duration = 650, wea
   const impact = root.querySelector('[data-impact]');
   const attackClass = animation.type === 'attack' ? 'is-attacking' : 'is-missing';
   actor?.classList.add(attackClass);
+  const frameAnimation = playSpriteFrames(actor?.querySelector('.fighter-sprite'), attackFrames, duration);
 
   if (animation.type === 'attack') {
     target?.classList.add('is-hit');
-    if (weapon && weaponLayer) weaponLayer.innerHTML = `<img class="flying-weapon from-${animation.player}" src="${escapeHtml(weapon)}" alt="">`;
+    if (weaponLayer) weaponLayer.innerHTML = buildProjectileMarkup(weapon, animation.player);
     if (impact) impact.innerHTML = `<b class="damage-pop damage-${animation.opponent}">−${escapeHtml(animation.damage)}</b>`;
   }
 
   await new Promise(resolve => setTimeout(resolve, duration));
+  await frameAnimation;
   actor?.classList.remove(attackClass);
   target?.classList.remove('is-hit');
   if (weaponLayer) weaponLayer.innerHTML = '';

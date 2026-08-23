@@ -96,11 +96,14 @@ test('受擊動作與傷害特效等到命中時間才出現', async () => {
   };
 
   const animation = playBattleAnimation(root, { type: 'attack', player: 'left', opponent: 'right', damage: 10 }, {
-    attackType: 'punch', duration: 45, impactDelay: 20,
+    attackType: 'punch', duration: 45, impactDelay: 20, reactionDuration: 30,
   });
   assert.equal(target.classList.contains('is-hit'), false);
   assert.equal(impactLayer.innerHTML, '');
   await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(target.classList.contains('hit-punch'), true);
+  assert.match(impactLayer.innerHTML, /impact-punch/);
+  await new Promise(resolve => setTimeout(resolve, 22));
   assert.equal(target.classList.contains('hit-punch'), true);
   assert.match(impactLayer.innerHTML, /impact-punch/);
   await animation;

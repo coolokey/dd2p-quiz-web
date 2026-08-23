@@ -54,7 +54,7 @@ function renderRules() {
   });
   app.querySelector('#back').onclick = renderCatalog;
   app.querySelector('#next').onclick = () => {
-    playUiSound();
+    playUiSound('confirm');
     const mode = app.querySelector('[name=mode]:checked').value;
     const maximum = mode === 'time' ? 600 : currentQuiz.questions.length;
     const value = Math.min(maximum, Math.max(1, Number(limit.value) || (mode === 'time' ? 60 : 10)));
@@ -72,7 +72,7 @@ function renderArenaSelect(settings, selectedId = battleManifest.scenes[0]?.id) 
     playUiSound();
   });
   app.querySelector('#back').onclick = renderRules;
-  app.querySelector('#next').onclick = () => { playUiSound(); renderCharacterSelect({ ...settings, arenaId }); };
+  app.querySelector('#next').onclick = () => { playUiSound('confirm'); renderCharacterSelect({ ...settings, arenaId }); };
 }
 
 function characterCards(player) {

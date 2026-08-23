@@ -5,6 +5,7 @@ import {
   buildAttackEffectMarkup,
   buildBattleMarkup,
   buildProjectileMarkup,
+  playBattleAnimation,
   playSpriteFrames,
   resolveAssetUrl,
 } from '../web/js/battle-renderer.mjs';
@@ -68,6 +69,43 @@ test('每種攻擊提供不同攻擊者與受擊者類別', () => {
   assert.deepEqual(attackClassNames('energy'), { actor: 'attack-energy', target: 'hit-energy' });
   assert.deepEqual(attackClassNames('punch'), { actor: 'attack-punch', target: 'hit-punch' });
   assert.deepEqual(attackClassNames('kick'), { actor: 'attack-kick', target: 'hit-kick' });
+});
+
+test('受擊動作與傷害特效等到命中時間才出現', async () => {
+  const makeClassList = initial => {
+    const values = new Set(initial);
+    return {
+      add: (...names) => names.forEach(name => values.add(name)),
+      remove: (...names) => names.forEach(name => values.delete(name)),
+      contains: name => values.has(name),
+    };
+  };
+  const actor = { classList: makeClassList(['fighter-left']), querySelector: () => null };
+  const target = { classList: makeClassList(['fighter-right']) };
+  const weaponLayer = { innerHTML: '' };
+  const impactLayer = { innerHTML: '' };
+  const root = {
+    querySelector(selector) {
+      return {
+        '[data-fighter="left"]': actor,
+        '[data-fighter="right"]': target,
+        '[data-weapon]': weaponLayer,
+        '[data-impact]': impactLayer,
+      }[selector] ?? null;
+    },
+  };
+
+  const animation = playBattleAnimation(root, { type: 'attack', player: 'left', opponent: 'right', damage: 10 }, {
+    attackType: 'punch', duration: 45, impactDelay: 20,
+  });
+  assert.equal(target.classList.contains('is-hit'), false);
+  assert.equal(impactLayer.innerHTML, '');
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(target.classList.contains('hit-punch'), true);
+  assert.match(impactLayer.innerHTML, /impact-punch/);
+  await animation;
+  assert.equal(target.classList.contains('is-hit'), false);
+  assert.equal(impactLayer.innerHTML, '');
 });
 
 test('攻擊時依序播放原始角色影格並回復待機圖', async () => {

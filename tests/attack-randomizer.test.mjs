@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createAttackState, drawAttack } from '../web/js/attack-randomizer.mjs';
+import { attackTiming, createAttackState, drawAttack } from '../web/js/attack-randomizer.mjs';
 
 test('每輪三次攻擊包含氣功出拳出腳各一次', () => {
   let state = createAttackState(() => 0);
@@ -26,4 +26,10 @@ test('第四次攻擊會建立新一輪隨機袋', () => {
   const fourth = drawAttack(state, 'left', () => 0);
   assert.ok(['energy', 'punch', 'kick'].includes(fourth.attackType));
   assert.equal(fourth.state.left.length, 2);
+});
+
+test('三種攻擊使用不同的揮擊與命中節奏', () => {
+  assert.deepEqual(attackTiming('energy'), { swingDelay: 0, impactDelay: 420 });
+  assert.deepEqual(attackTiming('punch'), { swingDelay: 140, impactDelay: 280 });
+  assert.deepEqual(attackTiming('kick'), { swingDelay: 190, impactDelay: 340 });
 });

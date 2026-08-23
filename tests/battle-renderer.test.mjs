@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildBattleMarkup, buildProjectileMarkup, playSpriteFrames, resolveAssetUrl } from '../web/js/battle-renderer.mjs';
+import {
+  attackClassNames,
+  buildAttackEffectMarkup,
+  buildBattleMarkup,
+  buildProjectileMarkup,
+  playSpriteFrames,
+  resolveAssetUrl,
+} from '../web/js/battle-renderer.mjs';
 import { readFile } from 'node:fs/promises';
 
 const viewModel = {
@@ -46,6 +53,23 @@ test('沒有原始武器的角色仍會產生可見能量彈', () => {
   assert.match(buildProjectileMarkup('./weapon.png', 'right'), /flying-weapon from-right/);
 });
 
+test('三種攻擊建立不同特效且只有氣功產生投射物', () => {
+  const energy = buildAttackEffectMarkup({ attackType: 'energy', player: 'left', opponent: 'right', damage: 10 });
+  const punch = buildAttackEffectMarkup({ attackType: 'punch', player: 'left', opponent: 'right', damage: 10 });
+  const kick = buildAttackEffectMarkup({ attackType: 'kick', player: 'left', opponent: 'right', damage: 10 });
+  assert.match(energy.weapon, /energy-bolt/);
+  assert.doesNotMatch(punch.weapon, /energy-bolt/);
+  assert.doesNotMatch(kick.weapon, /energy-bolt/);
+  assert.match(punch.impact, /impact-punch/);
+  assert.match(kick.impact, /impact-kick/);
+});
+
+test('每種攻擊提供不同攻擊者與受擊者類別', () => {
+  assert.deepEqual(attackClassNames('energy'), { actor: 'attack-energy', target: 'hit-energy' });
+  assert.deepEqual(attackClassNames('punch'), { actor: 'attack-punch', target: 'hit-punch' });
+  assert.deepEqual(attackClassNames('kick'), { actor: 'attack-kick', target: 'hit-kick' });
+});
+
 test('攻擊時依序播放原始角色影格並回復待機圖', async () => {
   const assignments = [];
   const image = {
@@ -65,4 +89,13 @@ test('減少動態模式仍保留可辨識的攻擊與命中效果', async () =>
   const reducedMotion = css.slice(css.indexOf('@media(prefers-reduced-motion:reduce)'));
   assert.doesNotMatch(reducedMotion, /animation-duration:\s*\.01ms/);
   assert.match(css, /\.energy-bolt/);
+});
+
+test('CSS 包含三種攻擊與三種受擊動畫', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  for (const name of ['attack-energy', 'attack-punch', 'attack-kick', 'hit-energy', 'hit-punch', 'hit-kick']) {
+    assert.match(css, new RegExp(`\\.${name}`));
+  }
+  assert.match(css, /\.impact-punch/);
+  assert.match(css, /\.impact-kick/);
 });

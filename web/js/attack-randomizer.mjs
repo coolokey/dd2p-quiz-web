@@ -18,3 +18,11 @@ export function drawAttack(state, player, random = Math.random) {
   const [attackType, ...remaining] = bag;
   return { attackType, state: { ...state, [player]: remaining } };
 }
+
+export function attackTiming(attackType) {
+  return {
+    energy: { swingDelay: 0, impactDelay: 420 },
+    punch: { swingDelay: 140, impactDelay: 280 },
+    kick: { swingDelay: 190, impactDelay: 340 },
+  }[attackType] ?? { swingDelay: 0, impactDelay: 420 };
+}

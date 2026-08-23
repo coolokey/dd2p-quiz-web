@@ -33,7 +33,7 @@ export function applyCorrectAnswer(state, player) {
     health: { ...state.health, [opponent]: opponentHealth },
     scores: { ...state.scores, [player]: state.scores[player] + 1 },
     phase: ended ? 'ended' : state.phase,
-    animation: { type: 'attack', player, opponent },
+    animation: { type: 'attack', player, opponent, damage: BATTLE_CONFIG.damage },
     ended,
     endReason: ko ? 'ko' : suddenDeathWin ? 'sudden-death' : null,
     winner: ended ? player : null,

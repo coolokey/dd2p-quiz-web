@@ -1,0 +1,190 @@
+{
+  "quizzes": [
+    {
+      "id": "1061204",
+      "name": "(國中)數學 三角形的重心(公開課)",
+      "questions": 300,
+      "file": "./data/quizzes/1061204.json"
+    },
+    {
+      "id": "99",
+      "name": "(國小)99乘法表",
+      "questions": 81,
+      "file": "./data/quizzes/99.json"
+    },
+    {
+      "id": "ax-b-c-advance",
+      "name": "(國中)數學 解一元一次方程式：a(x＋b)＋c＝d.",
+      "questions": 120,
+      "file": "./data/quizzes/ax-b-c-advance.json"
+    },
+    {
+      "id": "ax-b-c-or-ax-b-c",
+      "name": "(國中)數學 解一元一次方程式：ax±b=c",
+      "questions": 200,
+      "file": "./data/quizzes/ax-b-c-or-ax-b-c.json"
+    },
+    {
+      "id": "chinese-book3-language",
+      "name": "(國中)國文 第三冊語文常識",
+      "questions": 144,
+      "file": "./data/quizzes/chinese-book3-language.json"
+    },
+    {
+      "id": "chinese-book3_l1-l8",
+      "name": "(國中)國文 第三冊L1～L8",
+      "questions": 324,
+      "file": "./data/quizzes/chinese-book3_l1-l8.json"
+    },
+    {
+      "id": "chinese-book3_l9-15",
+      "name": "(國中)國文 第三冊L9～L15",
+      "questions": 264,
+      "file": "./data/quizzes/chinese-book3_l9-15.json"
+    },
+    {
+      "id": "chinese3-nanyi",
+      "name": "(數學)國文 第三冊 文言文",
+      "questions": 252,
+      "file": "./data/quizzes/chinese3-nanyi.json"
+    },
+    {
+      "id": "civic-book3",
+      "name": "(國中)公民 第三冊",
+      "questions": 59,
+      "file": "./data/quizzes/civic-book3.json"
+    },
+    {
+      "id": "clock",
+      "name": "(國小)看時鐘",
+      "questions": 240,
+      "file": "./data/quizzes/clock.json"
+    },
+    {
+      "id": "engliah-book3-l1-l9",
+      "name": "(國中)英文 康軒Book3 L1~L9",
+      "questions": 499,
+      "file": "./data/quizzes/engliah-book3-l1-l9.json"
+    },
+    {
+      "id": "engliah-book3-l4-l6",
+      "name": "(國中)英文 康軒Book3 L4~L6",
+      "questions": 185,
+      "file": "./data/quizzes/engliah-book3-l4-l6.json"
+    },
+    {
+      "id": "history-book3",
+      "name": "(國中)歷史 第三冊\r\n",
+      "questions": 138,
+      "file": "./data/quizzes/history-book3.json"
+    },
+    {
+      "id": "india-math-easy",
+      "name": "(國中) 極速數學easy",
+      "questions": 103,
+      "file": "./data/quizzes/india-math-easy.json"
+    },
+    {
+      "id": "india_math",
+      "name": "(國中) 極速數學",
+      "questions": 151,
+      "file": "./data/quizzes/india_math.json"
+    },
+    {
+      "id": "math-2_digtal_add",
+      "name": "(國小)數學 2位數加法",
+      "questions": 200,
+      "file": "./data/quizzes/math-2_digtal_add.json"
+    },
+    {
+      "id": "math-3_single_digtal_add",
+      "name": "(國小)數學 3個個位數加法",
+      "questions": 200,
+      "file": "./data/quizzes/math-3_single_digtal_add.json"
+    },
+    {
+      "id": "math-a-permutation",
+      "name": "(國中)數學 等差數列",
+      "questions": 100,
+      "file": "./data/quizzes/math-a-permutation.json"
+    },
+    {
+      "id": "math-add_10-20",
+      "name": "(國小)１０～２０的加法",
+      "questions": 36,
+      "file": "./data/quizzes/math-add_10-20.json"
+    },
+    {
+      "id": "math-angle-in-circle",
+      "name": "(國中)數學 圓內的各種角度(ㄚ杰版)",
+      "questions": 480,
+      "file": "./data/quizzes/math-angle-in-circle.json"
+    },
+    {
+      "id": "math-cross-factorization",
+      "name": "(國中)數學 十字分解一元二次方程式",
+      "questions": 180,
+      "file": "./data/quizzes/math-cross-factorization.json"
+    },
+    {
+      "id": "math-integer-s-addtion-and-substraction",
+      "name": "(國中)數學 整數的加減",
+      "questions": 200,
+      "file": "./data/quizzes/math-integer-s-addtion-and-substraction.json"
+    },
+    {
+      "id": "math-integer-s-time-and-divide",
+      "name": "(國中) 數學-整數的乘除",
+      "questions": 630,
+      "file": "./data/quizzes/math-integer-s-time-and-divide.json"
+    },
+    {
+      "id": "math-multipy-formula",
+      "name": "(國中)數學 乘法公式的應用",
+      "questions": 300,
+      "file": "./data/quizzes/math-multipy-formula.json"
+    },
+    {
+      "id": "math-poly-square",
+      "name": "(國中)數學 第三冊 平方根和勾股定理",
+      "questions": 41,
+      "file": "./data/quizzes/math-poly-square.json"
+    },
+    {
+      "id": "math-science-notation",
+      "name": "(國中)數學 科學記號(江明真老師版)",
+      "questions": 700,
+      "file": "./data/quizzes/math-science-notation.json"
+    },
+    {
+      "id": "math-segment-in-circle-hanlin",
+      "name": "(國中)數學 圓的各種線段",
+      "questions": 270,
+      "file": "./data/quizzes/math-segment-in-circle-hanlin.json"
+    },
+    {
+      "id": "math-triangle-s-center-g",
+      "name": "(國中)數學 三角形的重心問題",
+      "questions": 360,
+      "file": "./data/quizzes/math-triangle-s-center-g.json"
+    },
+    {
+      "id": "math-triangle-s-center-i",
+      "name": "(國中)數學 三角形的內心問題",
+      "questions": 360,
+      "file": "./data/quizzes/math-triangle-s-center-i.json"
+    },
+    {
+      "id": "math-triangle-s-center-o",
+      "name": "(國中)數學 三角形的外心問題",
+      "questions": 420,
+      "file": "./data/quizzes/math-triangle-s-center-o.json"
+    },
+    {
+      "id": "txt_add_10",
+      "name": "(國小)１０以內的加法",
+      "questions": 45,
+      "file": "./data/quizzes/txt_add_10.json"
+    }
+  ]
+}

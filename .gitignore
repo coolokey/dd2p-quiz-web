@@ -1,0 +1,15 @@
+*
+!.gitignore
+!README.md
+!package.json
+!.github/
+!.github/**
+!docs/
+!docs/superpowers/
+!docs/superpowers/**
+!scripts/
+!scripts/**
+!tests/
+!tests/**
+!web/
+!web/**

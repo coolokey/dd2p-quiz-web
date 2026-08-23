@@ -1,0 +1,10 @@
+{
+  "name": "dd2p-quiz-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "convert": "node scripts/convert-a-quizbase.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "start": "npx --yes serve web"
+  }
+}

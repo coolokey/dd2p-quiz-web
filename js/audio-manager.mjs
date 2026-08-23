@@ -129,6 +129,7 @@ export function createAudioManager({
 
     stop() {
       stopBackgroundMusic();
+      selectedScene = null;
     },
   };
 }

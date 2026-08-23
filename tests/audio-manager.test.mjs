@@ -145,3 +145,16 @@ test('可以使用獨立音訊 manifest 覆蓋場景音樂與音效', async () =
     './audio/new-correct.mp3',
   ]);
 });
+
+test('停止後再次選擇同一場景會重新播放背景音樂', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  await manager.setScene('palace');
+  await manager.unlock();
+  manager.stop();
+  await manager.setScene('palace');
+
+  assert.equal(audios.length, 2);
+  assert.equal(audios[1].src, './assets/battle/music/palace.mp3');
+  assert.equal(audios[1].playCount, 1);
+});

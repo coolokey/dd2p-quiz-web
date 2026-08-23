@@ -171,10 +171,10 @@ function bindAudioToggle() {
     };
   }
 }
-function renderGame({ allowEnded = false } = {}) {
+function renderGame({ allowEnded = false, questionOverride = null, progressOverride = null } = {}) {
   if (combatState.ended && !allowEnded) return renderResult();
   ensureQuestion();
-  const question = currentQuiz.activeQuestions[quizState.questionIndex];
+  const question = questionOverride ?? currentQuiz.activeQuestions[quizState.questionIndex];
   const scene = battleManifest.scenes.find(item => item.id === battleSettings.arenaId) ?? battleManifest.scenes[0];
   const left = characterById(battleSettings.characters.left), right = characterById(battleSettings.characters.right);
   renderBattle(app, {
@@ -185,7 +185,7 @@ function renderGame({ allowEnded = false } = {}) {
       left: { name: left.name || `角色 ${left.id}`, health: combatState.health.left, score: combatState.scores.left, image: characterImage(left) },
       right: { name: right.name || `角色 ${right.id}`, health: combatState.health.right, score: combatState.scores.right, image: characterImage(right) },
     },
-    progress: combatState.phase === 'sudden-death' ? 'SUDDEN' : timeLeft === null ? `${Math.min(quizState.questionIndex + 1, regulationLimit)}／${regulationLimit}` : `${timeLeft}s`,
+    progress: progressOverride ?? (combatState.phase === 'sudden-death' ? 'SUDDEN' : timeLeft === null ? `${Math.min(quizState.questionIndex + 1, regulationLimit)}／${regulationLimit}` : `${timeLeft}s`),
     prompt: question.prompt, questionImage: question.image, choices: question.choices,
     status: currentStatus(), phase: combatState.phase,
   });
@@ -201,14 +201,18 @@ async function processAnswer(input) {
   if (nextQuizState === quizState) return;
   const correct = input.answerIndex === question.answerIndex;
   quizState = nextQuizState; animating = true;
+  const answerProgress = combatState.phase === 'sudden-death' ? 'SUDDEN' : timeLeft === null ? `${Math.min(activeQuestionIndex + 1, regulationLimit)}／${regulationLimit}` : `${timeLeft}s`;
   if (correct) {
-    combatState = applyCorrectAnswer(combatState, input.player); renderGame({ allowEnded: true });
+    combatState = applyCorrectAnswer(combatState, input.player); renderGame({ allowEnded: true, questionOverride: question, progressOverride: answerProgress });
     audioManager?.playSfx('buzz'); audioManager?.playSfx('correct'); audioManager?.playSfx('attack');
-    audioManager?.playSfx('weapon'); audioManager?.playSfx('hit'); audioManager?.playSfx('hurt');
+    audioManager?.playSfx('weapon');
     const actor = characterById(battleSettings.characters[input.player]);
-    await playBattleAnimation(app, combatState.animation, { weapon: actor?.weapon, duration: 650 });
+    const animation = playBattleAnimation(app, combatState.animation, { weapon: actor?.weapon, duration: 650 });
+    await new Promise(resolve => setTimeout(resolve, 420));
+    audioManager?.playSfx('hit'); audioManager?.playSfx('hurt');
+    await animation;
   } else {
-    combatState = applyWrongAnswer(combatState, input.player); renderGame();
+    combatState = applyWrongAnswer(combatState, input.player); renderGame({ questionOverride: question, progressOverride: answerProgress });
     audioManager?.playSfx('buzz'); audioManager?.playSfx('wrong');
     await playBattleAnimation(app, combatState.animation, { duration: 500 });
   }

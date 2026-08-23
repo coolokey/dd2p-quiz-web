@@ -23,6 +23,9 @@ test('戰鬥畫面包含場景、雙方角色、血條、題目與音量控制',
   assert.match(html, /data-health="right"[^>]*style="--health:70%"/);
   assert.match(html, /下列何者正確？/);
   assert.match(html, /data-audio-toggle/);
+  assert.match(html, /data-master-volume/);
+  assert.match(html, /data-music-volume/);
+  assert.match(html, /data-effects-volume/);
 });
 
 test('驟死階段顯示驟死提示', () => {

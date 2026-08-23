@@ -158,3 +158,18 @@ test('停止後再次選擇同一場景會重新播放背景音樂', async () =>
   assert.equal(audios[1].src, './assets/battle/music/palace.mp3');
   assert.equal(audios[1].playCount, 1);
 });
+
+test('背景音樂與事件音效可分別調整音量', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory, volume: 0.8, musicVolume: 0.5, effectsVolume: 0.25 });
+  await manager.setScene('palace');
+  await manager.unlock();
+  await manager.playSfx('correct');
+
+  assert.equal(audios[0].volume, 0.4);
+  assert.equal(audios[1].volume, 0.2);
+  manager.setMusicVolume(0.25);
+  manager.setEffectsVolume(0.75);
+  assert.equal(audios[0].volume, 0.2);
+  assert.ok(Math.abs(audios[1].volume - 0.6) < Number.EPSILON * 4);
+});

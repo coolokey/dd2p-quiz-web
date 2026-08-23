@@ -10,7 +10,14 @@ let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, curr
 let quizState = null, combatState = null, audioManager = null, timerId = null;
 let timeLeft = 0, regulationLimit = 0, battleSettings = null;
 let characterSelection = createCharacterSelection(), keyHits = new Set(), animating = false;
+let pendingRegulationEnd = false, activeQuestionIndex = null;
 let muted = localStorage.getItem('dd2p-muted') === 'true';
+const storedVolume = (key, fallback) => {
+  const stored = localStorage.getItem(key);
+  const value = Number(stored);
+  return stored === null || !Number.isFinite(value) ? fallback : Math.max(0, Math.min(1, value));
+};
+const audioVolumes = { master: storedVolume('dd2p-volume-master', 0.8), music: storedVolume('dd2p-volume-music', 0.65), effects: storedVolume('dd2p-volume-effects', 0.9) };
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' })[char]);
 const shuffle = values => [...values].sort(() => Math.random() - .5);
@@ -107,7 +114,7 @@ async function startGame(settings) {
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
   timeLeft = settings.mode === 'time' ? settings.limit : null;
-  animating = false;
+  animating = false; pendingRegulationEnd = false; activeQuestionIndex = null;
   if (timerId) clearInterval(timerId);
   await audioManager?.setScene(settings.arenaId);
   await audioManager?.unlock();
@@ -117,17 +124,25 @@ async function startGame(settings) {
 }
 function handleTimer() {
   if (combatState?.ended || combatState?.phase === 'sudden-death') return;
-  timeLeft -= 1;
-  if (timeLeft <= 0) { clearInterval(timerId); timerId = null; closeRegulation(); }
+  timeLeft = Math.max(0, timeLeft - 1);
+  if (timeLeft <= 0) {
+    clearInterval(timerId); timerId = null;
+    if (animating) pendingRegulationEnd = true;
+    else closeRegulation({ advanceQuestion: true });
+  }
   if (!combatState.ended) renderGame();
 }
 function ensureQuestion() {
   if (quizState.questionIndex >= currentQuiz.activeQuestions.length) currentQuiz.activeQuestions.push(...shuffle(currentQuiz.questions));
 }
-function closeRegulation() {
+function closeRegulation({ advanceQuestion = false } = {}) {
   combatState = finishRegulation(combatState);
   if (combatState.ended) renderResult();
-  else { audioManager?.playSfx('start'); ensureQuestion(); }
+  else {
+    if (advanceQuestion) quizState = { ...quizState, questionIndex: quizState.questionIndex + 1, phase: 'open', eligiblePlayers: ['left','right'], lockedPlayer: null, ended: false };
+    else quizState = { ...quizState, phase: 'open', eligiblePlayers: ['left','right'], lockedPlayer: null, ended: false };
+    audioManager?.playSfx('start'); ensureQuestion();
+  }
 }
 function currentStatus() {
   if (combatState.phase === 'sudden-death') return '驟死決勝：第一位答對者立即獲勝！';
@@ -142,9 +157,22 @@ function bindAudioToggle() {
     muted = !muted; localStorage.setItem('dd2p-muted', String(muted));
     audioManager?.setMuted(muted); button.textContent = muted ? '靜音中' : '聲音開啟';
   };
+  const volumeBindings = [
+    ['master', '[data-master-volume]', 'setVolume', 'dd2p-volume-master'],
+    ['music', '[data-music-volume]', 'setMusicVolume', 'dd2p-volume-music'],
+    ['effects', '[data-effects-volume]', 'setEffectsVolume', 'dd2p-volume-effects'],
+  ];
+  for (const [kind, selector, method, storageKey] of volumeBindings) {
+    const slider = app.querySelector(selector);
+    slider.oninput = () => {
+      audioVolumes[kind] = Number(slider.value);
+      localStorage.setItem(storageKey, slider.value);
+      audioManager?.[method](audioVolumes[kind]);
+    };
+  }
 }
-function renderGame() {
-  if (combatState.ended) return renderResult();
+function renderGame({ allowEnded = false } = {}) {
+  if (combatState.ended && !allowEnded) return renderResult();
   ensureQuestion();
   const question = currentQuiz.activeQuestions[quizState.questionIndex];
   const scene = battleManifest.scenes.find(item => item.id === battleSettings.arenaId) ?? battleManifest.scenes[0];
@@ -152,6 +180,7 @@ function renderGame() {
   renderBattle(app, {
     scene,
     baseUrl: location.href,
+    audio: audioVolumes,
     players: {
       left: { name: left.name || `角色 ${left.id}`, health: combatState.health.left, score: combatState.scores.left, image: characterImage(left) },
       right: { name: right.name || `角色 ${right.id}`, health: combatState.health.right, score: combatState.scores.right, image: characterImage(right) },
@@ -166,36 +195,48 @@ function renderGame() {
 async function processAnswer(input) {
   if (animating || !quizState || combatState.ended) return;
   ensureQuestion();
+  activeQuestionIndex = quizState.questionIndex;
   const question = currentQuiz.activeQuestions[quizState.questionIndex];
   const nextQuizState = submitBuzzerAnswer(quizState, input.player, input.answerIndex, question.answerIndex);
   if (nextQuizState === quizState) return;
   const correct = input.answerIndex === question.answerIndex;
   quizState = nextQuizState; animating = true;
-  await audioManager?.playSfx('buzz');
   if (correct) {
-    combatState = applyCorrectAnswer(combatState, input.player); renderGame();
-    audioManager?.playSfx('correct'); audioManager?.playSfx('attack'); audioManager?.playSfx('hit');
+    combatState = applyCorrectAnswer(combatState, input.player); renderGame({ allowEnded: true });
+    audioManager?.playSfx('buzz'); audioManager?.playSfx('correct'); audioManager?.playSfx('attack');
+    audioManager?.playSfx('weapon'); audioManager?.playSfx('hit'); audioManager?.playSfx('hurt');
     const actor = characterById(battleSettings.characters[input.player]);
     await playBattleAnimation(app, combatState.animation, { weapon: actor?.weapon, duration: 650 });
   } else {
-    combatState = applyWrongAnswer(combatState, input.player); renderGame(); audioManager?.playSfx('wrong');
+    combatState = applyWrongAnswer(combatState, input.player); renderGame();
+    audioManager?.playSfx('buzz'); audioManager?.playSfx('wrong');
     await playBattleAnimation(app, combatState.animation, { duration: 500 });
   }
   animating = false;
   if (combatState.ended) return renderResult();
+  if (pendingRegulationEnd) {
+    pendingRegulationEnd = false;
+    const needsFreshQuestion = quizState.questionIndex === activeQuestionIndex;
+    activeQuestionIndex = null;
+    closeRegulation({ advanceQuestion: needsFreshQuestion });
+    if (!combatState.ended) renderGame();
+    return;
+  }
+  activeQuestionIndex = null;
   if (battleSettings.mode === 'questions' && combatState.phase === 'regulation' && quizState.questionIndex >= regulationLimit) closeRegulation();
   if (!combatState.ended) renderGame();
 }
 
 function renderResult() {
+  if (app.querySelector('.result')) return;
   if (timerId) clearInterval(timerId); timerId = null;
   const winner = combatState.winner ? playerName(combatState.winner) : '平手';
   const reason = combatState.endReason === 'ko' ? 'KO！' : combatState.endReason === 'sudden-death' ? '驟死決勝！' : '分數勝利！';
   if (combatState.endReason === 'ko') audioManager?.playSfx('ko');
-  audioManager?.playSfx('win');
+  audioManager?.playSfx('win'); audioManager?.playSfx('lose');
   app.innerHTML = shell(`<article class="result"><p class="lead">本局結算　${esc(reason)}</p><div class="winner">${esc(winner)}獲勝！</div><p class="prompt">紅隊 ${combatState.scores.left} 分　：　藍隊 ${combatState.scores.right} 分</p><div class="actions"><button class="secondary" id="catalog">更換題庫</button><button class="primary" id="again">再玩一次</button></div></article>`);
   app.querySelector('#catalog').onclick = () => { characterSelection = createCharacterSelection(); renderCatalog(); };
-  app.querySelector('#again').onclick = () => { characterSelection = createCharacterSelection(); renderRules(); };
+  app.querySelector('#again').onclick = () => { audioManager?.stop(); characterSelection = createCharacterSelection(); renderRules(); };
 }
 
 document.addEventListener('pointerdown', () => audioManager?.unlock(), { once: true });
@@ -203,6 +244,7 @@ document.addEventListener('keydown', event => {
   audioManager?.unlock();
   if (!isGameKey(event.code)) return;
   event.preventDefault();
+  if (event.repeat) return;
   if (app.querySelector('#key-hint')) {
     keyHits.add(event.code); app.querySelector(`[data-key="${event.code}"]`)?.classList.add('hit');
     const needed = Object.values(PLAYER_KEYS).flatMap(keys => [...keys.navigation, ...keys.answers]);
@@ -218,5 +260,5 @@ Promise.all([
   fetch('./assets/battle/manifest.json').then(response => response.ok ? response.json() : Promise.reject(new Error('battle manifest'))),
 ]).then(([data, manifest]) => {
   catalog = data.quizzes; battleManifest = manifest;
-  audioManager = createAudioManager({ manifest, muted }); renderCatalog();
+  audioManager = createAudioManager({ manifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects }); renderCatalog();
 }).catch(() => { app.innerHTML = shell('<p class="error">題庫或對戰素材尚未產生。請先執行 npm run convert 與 npm run prepare:battle。</p>'); });

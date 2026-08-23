@@ -9,6 +9,7 @@ import {
   createBaseBattleManifest,
   validateCharacter,
 } from '../scripts/lib/battle-asset-manifest.mjs';
+import { chooseCharacterSpriteGroup } from '../scripts/lib/character-sprite-selector.mjs';
 import { prepareBattleAssets } from '../scripts/prepare-battle-assets.mjs';
 
 test('maps all three arenas to original scenes and music', () => {
@@ -151,4 +152,27 @@ test('generated manifest publishes twelve unique characters and existing files',
   for (const reference of new Set(references)) {
     await access(path.join(webRoot, reference.replace(/^\.\/assets\//, 'assets/')));
   }
+});
+
+test('完整角色精靈優先於尺寸過小的特效群組', () => {
+  const selected = chooseCharacterSpriteGroup([
+    { name: 'head-effect', frames: Array.from({ length: 17 }, () => ({ width: 73, height: 72, size: 8000 })) },
+    { name: 'full-character', frames: [
+      { width: 136, height: 212, size: 25000 },
+      { width: 70, height: 70, size: 30000 },
+    ] },
+    { name: 'large-effect', frames: [{ width: 210, height: 205, size: 9000 }] },
+  ]);
+
+  assert.equal(selected.name, 'full-character');
+  assert.equal(selected.frames.length, 1);
+  assert.equal(selected.frames[0].width, 136);
+});
+
+test('沒有足夠高度的精靈時不冒充完整角色', () => {
+  const selected = chooseCharacterSpriteGroup([
+    { name: 'spark', frames: [{ width: 90, height: 80, size: 12000 }] },
+  ]);
+
+  assert.equal(selected, null);
 });

@@ -207,14 +207,15 @@ async function processAnswer(input) {
     audioManager?.playSfx('buzz'); audioManager?.playSfx('correct'); audioManager?.playSfx('attack');
     audioManager?.playSfx('weapon');
     const actor = characterById(battleSettings.characters[input.player]);
-    const animation = playBattleAnimation(app, combatState.animation, { weapon: actor?.weapon, duration: 650 });
+    const animation = playBattleAnimation(app, combatState.animation, { weapon: actor?.weapon, attackFrames: actor?.states?.attack, duration: 650 });
     await new Promise(resolve => setTimeout(resolve, 420));
     audioManager?.playSfx('hit'); audioManager?.playSfx('hurt');
     await animation;
   } else {
     combatState = applyWrongAnswer(combatState, input.player); renderGame({ questionOverride: question, progressOverride: answerProgress });
     audioManager?.playSfx('buzz'); audioManager?.playSfx('wrong');
-    await playBattleAnimation(app, combatState.animation, { duration: 500 });
+    const actor = characterById(battleSettings.characters[input.player]);
+    await playBattleAnimation(app, combatState.animation, { attackFrames: actor?.states?.miss, duration: 500 });
   }
   animating = false;
   if (combatState.ended) return renderResult();

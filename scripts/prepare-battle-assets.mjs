@@ -2,6 +2,7 @@ import {
   access,
   copyFile,
   mkdir,
+  readFile,
   readdir,
   rm,
   stat,
@@ -15,6 +16,10 @@ import {
   createBaseBattleManifest,
   createCharacterEntry,
 } from './lib/battle-asset-manifest.mjs';
+import {
+  chooseCharacterSpriteGroup,
+  selectAnimationFrames,
+} from './lib/character-sprite-selector.mjs';
 
 const ASSET_COPIES = [
   ['scene_1.png', 'scenes/palace.png'],
@@ -130,19 +135,30 @@ async function listFilesRecursive(directory, extensionPattern) {
 }
 
 async function selectRoleFrames(rawDirectory) {
-  const frameDirectory = path.join(rawDirectory, 'frames');
-  const frames = await listFilesRecursive(frameDirectory, /\.png$/i);
-  const described = await Promise.all(frames.map(async (file) => ({
-    file,
-    number: Number.parseInt(path.basename(file, path.extname(file)), 10) || 0,
-    size: (await stat(file)).size,
-  })));
-  const usable = described.filter(({ size }) => size >= 512).sort((a, b) => a.number - b.number);
+  const spritesDirectory = path.join(rawDirectory, 'sprites');
+  if (!(await exists(spritesDirectory))) return { idle: [], attack: [] };
+  const groups = [];
+  for (const entry of await readdir(spritesDirectory, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const directory = path.join(spritesDirectory, entry.name);
+    const files = await listFilesRecursive(directory, /\.png$/i);
+    const frames = await Promise.all(files.map(async (file) => {
+      const contents = await readFile(file);
+      return {
+        file,
+        number: Number.parseInt(path.basename(file, path.extname(file)), 10) || 0,
+        size: contents.length,
+        width: contents.readUInt32BE(16),
+        height: contents.readUInt32BE(20),
+      };
+    }));
+    groups.push({ name: entry.name, frames });
+  }
+  const selected = chooseCharacterSpriteGroup(groups);
+  if (!selected) return { idle: [], attack: [] };
+  const usable = selected.frames.filter(({ size }) => size >= 512).sort((a, b) => a.number - b.number);
   const idle = usable.slice(0, 4);
-  const attack = [...usable]
-    .sort((a, b) => b.size - a.size || a.number - b.number)
-    .slice(0, 6)
-    .sort((a, b) => a.number - b.number);
+  const attack = selectAnimationFrames(usable, 6);
   return { idle, attack };
 }
 

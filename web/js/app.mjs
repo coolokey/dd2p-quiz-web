@@ -7,6 +7,7 @@ import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
 import { prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
 import { bindCharacterActions, buildCharacterActions, createStartGate } from './prebattle-flow.mjs';
+import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -15,6 +16,7 @@ let timeLeft = 0, regulationLimit = 0, battleSettings = null;
 let characterSelection = createCharacterSelection(), keyHits = new Set(), animating = false;
 let pendingRegulationEnd = false, activeQuestionIndex = null;
 let attackState = createAttackState();
+let activeSubject = '全部';
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 const startGameOnce = createStartGate(settings => startGame(settings));
 const storedVolume = (key, fallback) => {
@@ -38,7 +40,14 @@ function playUiSound(name = 'menu') { audioManager?.unlock(); audioManager?.play
 
 function renderCatalog() {
   audioManager?.stop();
-  app.innerHTML = shell(`<p class="lead">選一個題庫，把教室變成真正的搶答擂台。</p><div class="quiz-grid">${catalog.map(quiz => `<button class="quiz-card" data-quiz="${esc(quiz.id)}"><strong>${esc(quiz.name)}</strong><span>${quiz.questions} 題可用</span></button>`).join('')}</div><p class="hint">共 ${catalog.length} 份題庫。空白或不完整題庫已自動排除。</p>`);
+  const filters = buildSubjectFilters(catalog);
+  const visibleCatalog = filterCatalog(catalog, activeSubject);
+  app.innerHTML = shell(`<p class="lead">選一個題庫，把教室變成真正的搶答擂台。</p><nav class="subject-filters" aria-label="依科目篩選題庫">${buildSubjectButtons(filters, activeSubject)}</nav><div class="quiz-grid">${visibleCatalog.map(quiz => `<button class="quiz-card" data-quiz="${esc(quiz.id)}"><strong>${esc(quiz.name)}</strong><span>${quiz.questions} 題可用</span></button>`).join('')}</div><p class="hint">目前顯示 ${visibleCatalog.length} 份，共 ${catalog.length} 份題庫。空白或不完整題庫已自動排除。</p>`);
+  app.querySelectorAll('[data-subject]').forEach(button => button.onclick = () => {
+    activeSubject = button.dataset.subject;
+    playUiSound();
+    renderCatalog();
+  });
   app.querySelectorAll('[data-quiz]').forEach(button => button.onclick = () => { playUiSound(); selectQuiz(button.dataset.quiz); });
 }
 async function selectQuiz(id) {

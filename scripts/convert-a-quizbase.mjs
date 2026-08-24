@@ -3,13 +3,14 @@ import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseParameterRecord, parseQuestionRecord } from './lib/question-parser.mjs';
 import { validateQuestion } from './lib/question-validator.mjs';
+import { subjectForQuiz } from './lib/quiz-subject.mjs';
 
 function topicId(name) {
   return name.normalize('NFKD').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'quiz';
 }
 
 export function makeCatalogEntry(quiz) {
-  return { id: quiz.id, name: quiz.name, questions: quiz.questions.length, file: `./data/quizzes/${quiz.id}.json` };
+  return { id: quiz.id, name: quiz.name, subject: subjectForQuiz(quiz), questions: quiz.questions.length, file: `./data/quizzes/${quiz.id}.json` };
 }
 
 export function imageFilesForQuiz(quiz) {

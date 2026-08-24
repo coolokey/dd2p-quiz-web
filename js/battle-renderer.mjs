@@ -96,20 +96,12 @@ export async function playSpriteFrames(image, frames, duration) {
   if (!image || !Array.isArray(frames) || frames.length === 0) return;
   const original = image.getAttribute?.('src') ?? image.src;
   const setSource = source => image.setAttribute ? image.setAttribute('src', source) : image.src = source;
-  const stepMs = Math.max(1, duration / (frames.length + 1));
-  let frameIndex = 0;
-  setSource(frames[frameIndex++]);
-
-  await new Promise(resolve => {
-    const interval = setInterval(() => {
-      if (frameIndex < frames.length) setSource(frames[frameIndex++]);
-    }, stepMs);
-    setTimeout(() => {
-      clearInterval(interval);
-      setSource(original);
-      resolve();
-    }, duration);
-  });
+  const stepMs = Math.max(1, duration / frames.length);
+  for (const frame of frames) {
+    setSource(frame);
+    await new Promise(resolve => setTimeout(resolve, stepMs));
+  }
+  setSource(original);
 }
 
 export async function playBattleAnimation(root, animation, {

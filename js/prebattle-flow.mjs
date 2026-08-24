@@ -12,3 +12,18 @@ export function bindCharacterActions(root, { onBack, onTest, onSkip }) {
   root.querySelector('#test-keys').onclick = onTest;
   root.querySelector('#skip-key-test').onclick = onSkip;
 }
+
+export function createStartGate(start) {
+  let starting = false;
+  return async (...args) => {
+    if (starting) return false;
+    starting = true;
+    try {
+      await start(...args);
+      return true;
+    } catch (error) {
+      starting = false;
+      throw error;
+    }
+  };
+}

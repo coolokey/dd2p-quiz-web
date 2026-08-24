@@ -6,7 +6,7 @@ import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
 import { prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
-import { bindCharacterActions, buildCharacterActions } from './prebattle-flow.mjs';
+import { bindCharacterActions, buildCharacterActions, createStartGate } from './prebattle-flow.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -99,10 +99,11 @@ function renderCharacterSelect(settings) {
     } catch (error) { app.querySelector('.lead').textContent = error.message; }
   });
   const selectedSettings = () => ({ ...settings, characters: { ...characterSelection } });
+  const startSelectedGame = createStartGate(() => startGame(selectedSettings()));
   bindCharacterActions(app, {
     onBack: () => renderArenaSelect(settings, settings.arenaId),
     onTest: () => { playUiSound('start'); renderKeyTest(selectedSettings()); },
-    onSkip: () => startGame(selectedSettings()),
+    onSkip: startSelectedGame,
   });
 }
 
@@ -111,7 +112,7 @@ function renderKeyTest(settings) {
   keyHits = new Set();
   app.innerHTML = shell(`<p class="lead">請兩位玩家各按一次自己的全部按鍵。亮起黃色即表示已偵測。</p><div class="keytest">${['left','right'].map(player => `<div class="player ${player}"><b>${playerName(player)}</b><div class="keys">${keysFor(player).map(code => `<span class="key" data-key="${code}">${esc(code.replace('Key','').replace('Digit',''))}</span>`).join('')}</div></div>`).join('')}</div><p id="key-hint" class="hint">請開始測試按鍵。</p><div class="actions"><button class="secondary" id="back">返回選角</button><button class="primary" id="start" disabled>開始對戰</button></div>`);
   app.querySelector('#back').onclick = () => renderCharacterSelect(settings);
-  app.querySelector('#start').onclick = () => startGame(settings);
+  app.querySelector('#start').onclick = createStartGate(() => startGame(settings));
 }
 
 async function startGame(settings) {

@@ -6,6 +6,7 @@ import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
 import { prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
+import { bindCharacterActions, buildCharacterActions } from './prebattle-flow.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -90,15 +91,19 @@ function selectedPreview(player) {
   return character ? `<div class="selected-fighter"><img src="${esc(characterImage(character))}" alt="${esc(character.name || `角色 ${character.id}`)}"></div>` : '<div class="selected-fighter"><b>尚未選擇</b></div>';
 }
 function renderCharacterSelect(settings) {
-  app.innerHTML = shell(`<h2 class="selection-title">雙方選擇角色</h2><p class="lead">同一名角色不能重複選擇。請先選紅方，再選藍方。</p><div class="versus-select"><section class="select-side left"><h3>左方玩家　紅隊</h3>${selectedPreview('left')}<div class="character-grid">${characterCards('left')}</div></section><div class="select-vs">VS</div><section class="select-side right"><h3>右方玩家　藍隊</h3>${selectedPreview('right')}<div class="character-grid">${characterCards('right')}</div></section></div>${battleManifest.characters.length ? '' : '<p class="error">角色素材尚未完成，請重新執行素材準備程序。</p>'}<div class="actions"><button class="secondary" id="back">返回戰場</button><button class="primary" id="next" ${characterSelection.left && characterSelection.right ? '' : 'disabled'}>前往按鍵測試</button></div>`);
+  app.innerHTML = shell(`<h2 class="selection-title">雙方選擇角色</h2><p class="lead">同一名角色不能重複選擇。請先選紅方，再選藍方。</p><div class="versus-select"><section class="select-side left"><h3>左方玩家　紅隊</h3>${selectedPreview('left')}<div class="character-grid">${characterCards('left')}</div></section><div class="select-vs">VS</div><section class="select-side right"><h3>右方玩家　藍隊</h3>${selectedPreview('right')}<div class="character-grid">${characterCards('right')}</div></section></div>${battleManifest.characters.length ? '' : '<p class="error">角色素材尚未完成，請重新執行素材準備程序。</p>'}${buildCharacterActions(Boolean(characterSelection.left && characterSelection.right))}`);
   app.querySelectorAll('[data-character]').forEach(button => button.onclick = () => {
     try {
       characterSelection = selectCharacter(characterSelection, button.dataset.player, characterById(button.dataset.character));
       playUiSound(); renderCharacterSelect(settings);
     } catch (error) { app.querySelector('.lead').textContent = error.message; }
   });
-  app.querySelector('#back').onclick = () => renderArenaSelect(settings, settings.arenaId);
-  app.querySelector('#next').onclick = () => { playUiSound('start'); renderKeyTest({ ...settings, characters: { ...characterSelection } }); };
+  const selectedSettings = () => ({ ...settings, characters: { ...characterSelection } });
+  bindCharacterActions(app, {
+    onBack: () => renderArenaSelect(settings, settings.arenaId),
+    onTest: () => { playUiSound('start'); renderKeyTest(selectedSettings()); },
+    onSkip: () => startGame(selectedSettings()),
+  });
 }
 
 function keysFor(player) { return [...PLAYER_KEYS[player].navigation, ...PLAYER_KEYS[player].answers]; }

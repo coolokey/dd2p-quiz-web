@@ -83,9 +83,12 @@ export function buildAttackEffectMarkup({ attackType = 'energy', player, opponen
       impact: `<span class="impact-burst impact-energy damage-${opponent}" aria-hidden="true"></span><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
     };
   }
+  const melee = attackType === 'kick'
+    ? { glyph: '腳', callout: '飛踢' }
+    : { glyph: '拳', callout: '重拳' };
   return {
     weapon: '',
-    impact: `<span class="melee-impact impact-${attackType} damage-${opponent}" aria-hidden="true"></span><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
+    impact: `<span class="melee-impact impact-${attackType} damage-${opponent} from-${player}" aria-hidden="true"><span class="melee-symbol melee-symbol-${attackType}">${melee.glyph}</span></span><b class="attack-callout attack-callout-${attackType} damage-${opponent} from-${player}" aria-hidden="true">${melee.callout}</b><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
   };
 }
 

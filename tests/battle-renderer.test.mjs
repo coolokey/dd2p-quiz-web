@@ -63,6 +63,21 @@ test('三種攻擊建立不同特效且只有氣功產生投射物', () => {
   assert.doesNotMatch(kick.weapon, /energy-bolt/);
   assert.match(punch.impact, /impact-punch/);
   assert.match(kick.impact, /impact-kick/);
+  assert.match(punch.impact, /melee-symbol-punch/);
+  assert.match(punch.impact, />拳</);
+  assert.match(punch.impact, /attack-callout-punch[^>]*>重拳/);
+  assert.match(punch.impact, /from-left/);
+  assert.match(kick.impact, /melee-symbol-kick/);
+  assert.match(kick.impact, />腳</);
+  assert.match(kick.impact, /attack-callout-kick[^>]*>飛踢/);
+  assert.match(kick.impact, /from-left/);
+  assert.doesNotMatch(energy.impact, /melee-symbol|重拳|飛踢/);
+});
+
+test('近身漫畫特效保留攻擊方向', () => {
+  const rightPunch = buildAttackEffectMarkup({ attackType: 'punch', player: 'right', opponent: 'left', damage: 10 });
+  assert.match(rightPunch.impact, /from-right/);
+  assert.match(rightPunch.impact, /damage-left/);
 });
 
 test('每種攻擊提供不同攻擊者與受擊者類別', () => {

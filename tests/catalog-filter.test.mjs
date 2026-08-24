@@ -38,15 +38,30 @@ test('科目按鈕包含數量、選取狀態、可及性與安全文字', () =>
 });
 
 test('首頁接入科目篩選模組與響應式樣式', async () => {
-  const [app, css] = await Promise.all([
+  const [app, css, index] = await Promise.all([
     readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8'),
     readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8'),
+    readFile(new URL('../web/index.html', import.meta.url), 'utf8'),
   ]);
   for (const name of ['buildSubjectButtons', 'buildSubjectFilters', 'filterCatalog']) {
     assert.match(app, new RegExp(name));
   }
   assert.match(app, /activeSubject/);
   assert.match(app, /\[data-subject\]/);
+  assert.match(app, /activeButton\?\.focus\(\)/);
+  assert.match(index, /<main id="app" aria-live="polite">/);
   assert.match(css, /\.subject-filters\s*\{[^}]*flex-wrap\s*:\s*wrap/s);
   assert.match(css, /\.subject-filter\.is-active/);
+});
+
+test('目前題庫資料維持確認過的各科數量', async () => {
+  const data = JSON.parse(await readFile(new URL('../web/data/catalog.json', import.meta.url), 'utf8'));
+  assert.deepEqual(buildSubjectFilters(data.quizzes), [
+    { subject: '全部', count: 31 },
+    { subject: '數學', count: 23 },
+    { subject: '國文', count: 4 },
+    { subject: '英文', count: 2 },
+    { subject: '公民', count: 1 },
+    { subject: '歷史', count: 1 },
+  ]);
 });

@@ -47,6 +47,8 @@ function renderCatalog() {
     activeSubject = button.dataset.subject;
     playUiSound();
     renderCatalog();
+    const activeButton = [...app.querySelectorAll('[data-subject]')].find(item => item.dataset.subject === activeSubject);
+    activeButton?.focus();
   });
   app.querySelectorAll('[data-quiz]').forEach(button => button.onclick = () => { playUiSound(); selectQuiz(button.dataset.quiz); });
 }

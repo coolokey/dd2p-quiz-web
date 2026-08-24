@@ -16,6 +16,7 @@ let characterSelection = createCharacterSelection(), keyHits = new Set(), animat
 let pendingRegulationEnd = false, activeQuestionIndex = null;
 let attackState = createAttackState();
 let muted = localStorage.getItem('dd2p-muted') === 'true';
+const startGameOnce = createStartGate(settings => startGame(settings));
 const storedVolume = (key, fallback) => {
   const stored = localStorage.getItem(key);
   const value = Number(stored);
@@ -99,11 +100,10 @@ function renderCharacterSelect(settings) {
     } catch (error) { app.querySelector('.lead').textContent = error.message; }
   });
   const selectedSettings = () => ({ ...settings, characters: { ...characterSelection } });
-  const startSelectedGame = createStartGate(() => startGame(selectedSettings()));
   bindCharacterActions(app, {
     onBack: () => renderArenaSelect(settings, settings.arenaId),
     onTest: () => { playUiSound('start'); renderKeyTest(selectedSettings()); },
-    onSkip: startSelectedGame,
+    onSkip: () => startGameOnce(selectedSettings()),
   });
 }
 
@@ -112,7 +112,7 @@ function renderKeyTest(settings) {
   keyHits = new Set();
   app.innerHTML = shell(`<p class="lead">請兩位玩家各按一次自己的全部按鍵。亮起黃色即表示已偵測。</p><div class="keytest">${['left','right'].map(player => `<div class="player ${player}"><b>${playerName(player)}</b><div class="keys">${keysFor(player).map(code => `<span class="key" data-key="${code}">${esc(code.replace('Key','').replace('Digit',''))}</span>`).join('')}</div></div>`).join('')}</div><p id="key-hint" class="hint">請開始測試按鍵。</p><div class="actions"><button class="secondary" id="back">返回選角</button><button class="primary" id="start" disabled>開始對戰</button></div>`);
   app.querySelector('#back').onclick = () => renderCharacterSelect(settings);
-  app.querySelector('#start').onclick = createStartGate(() => startGame(settings));
+  app.querySelector('#start').onclick = () => startGameOnce(settings);
 }
 
 async function startGame(settings) {

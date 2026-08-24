@@ -61,6 +61,11 @@ test('三種攻擊建立不同特效且只有氣功產生投射物', () => {
   assert.match(energy.weapon, /energy-bolt/);
   assert.doesNotMatch(punch.weapon, /energy-bolt/);
   assert.doesNotMatch(kick.weapon, /energy-bolt/);
+  assert.doesNotMatch(energy.weapon, /melee-strike/);
+  assert.match(punch.weapon, /melee-strike strike-punch from-left/);
+  assert.match(punch.weapon, /strike-limb strike-fist[^>]*>拳</);
+  assert.match(kick.weapon, /melee-strike strike-kick from-left/);
+  assert.match(kick.weapon, /strike-limb strike-boot[^>]*>腳</);
   assert.match(punch.impact, /impact-punch/);
   assert.match(kick.impact, /impact-kick/);
   assert.match(punch.impact, /melee-symbol-punch/);
@@ -76,6 +81,7 @@ test('三種攻擊建立不同特效且只有氣功產生投射物', () => {
 
 test('近身漫畫特效保留攻擊方向', () => {
   const rightPunch = buildAttackEffectMarkup({ attackType: 'punch', player: 'right', opponent: 'left', damage: 10 });
+  assert.match(rightPunch.weapon, /strike-punch from-right/);
   assert.match(rightPunch.impact, /from-right/);
   assert.match(rightPunch.impact, /damage-left/);
 });
@@ -196,6 +202,20 @@ test('CSS 提供大型拳腳圖形、文字與方向樣式', async () => {
   assert.match(css, /@keyframes kickLeft/);
   assert.match(css, /@keyframes hitPunchLeft/);
   assert.match(css, /@keyframes hitKickLeft/);
+});
+
+test('CSS 讓拳頭水平伸出並讓腳沿弧線踢出', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  for (const selector of ['.melee-strike', '.strike-fist', '.strike-boot', '.strike-punch.from-left', '.strike-punch.from-right', '.strike-kick.from-left', '.strike-kick.from-right']) {
+    assert.match(css, new RegExp(selector.replaceAll('.', '\\.')));
+  }
+  for (const animation of ['extendPunchLeft', 'extendPunchRight', 'swingKickLeft', 'swingKickRight', 'fistPop', 'bootSwing']) {
+    assert.match(css, new RegExp(`@keyframes ${animation}`));
+  }
+  const mobile = css.slice(css.indexOf('@media(max-width:760px)'));
+  const reduced = css.slice(css.indexOf('@media(prefers-reduced-motion:reduce)'));
+  assert.match(mobile, /melee-strike/);
+  assert.match(reduced, /melee-strike/);
 });
 
 test('reduced-motion 仍保留拳腳辨識標記', async () => {

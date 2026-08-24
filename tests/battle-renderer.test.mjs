@@ -179,3 +179,28 @@ test('CSS 包含三種攻擊與三種受擊動畫', async () => {
   assert.match(css, /\.impact-punch/);
   assert.match(css, /\.impact-kick/);
 });
+
+test('CSS 提供大型拳腳圖形、文字與方向樣式', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  for (const selector of [
+    '.melee-symbol-punch',
+    '.melee-symbol-kick',
+    '.attack-callout-punch',
+    '.attack-callout-kick',
+    '.melee-impact.from-left',
+    '.melee-impact.from-right',
+  ]) {
+    assert.match(css, new RegExp(selector.replaceAll('.', '\\.')));
+  }
+  assert.match(css, /@keyframes punchLeft/);
+  assert.match(css, /@keyframes kickLeft/);
+  assert.match(css, /@keyframes hitPunchLeft/);
+  assert.match(css, /@keyframes hitKickLeft/);
+});
+
+test('reduced-motion 仍保留拳腳辨識標記', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  const reduced = css.slice(css.indexOf('@media(prefers-reduced-motion:reduce)'));
+  assert.match(reduced, /melee-impact/);
+  assert.match(reduced, /attack-callout/);
+});

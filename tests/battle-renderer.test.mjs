@@ -63,9 +63,9 @@ test('三種攻擊建立不同特效且只有氣功產生投射物', () => {
   assert.doesNotMatch(kick.weapon, /energy-bolt/);
   assert.doesNotMatch(energy.weapon, /melee-strike/);
   assert.match(punch.weapon, /melee-strike strike-punch from-left/);
-  assert.match(punch.weapon, /strike-limb strike-fist[^>]*>拳</);
+  assert.match(punch.weapon, /strike-limb strike-fist[^>]*><span class="strike-glyph">拳</);
   assert.match(kick.weapon, /melee-strike strike-kick from-left/);
-  assert.match(kick.weapon, /strike-limb strike-boot[^>]*>腳</);
+  assert.match(kick.weapon, /strike-limb strike-boot[^>]*><span class="strike-glyph">腳</);
   assert.match(punch.impact, /impact-punch/);
   assert.match(kick.impact, /impact-kick/);
   assert.match(punch.impact, /melee-symbol-punch/);
@@ -82,6 +82,7 @@ test('三種攻擊建立不同特效且只有氣功產生投射物', () => {
 test('近身漫畫特效保留攻擊方向', () => {
   const rightPunch = buildAttackEffectMarkup({ attackType: 'punch', player: 'right', opponent: 'left', damage: 10 });
   assert.match(rightPunch.weapon, /strike-punch from-right/);
+  assert.match(rightPunch.weapon, /strike-glyph[^>]*>拳</);
   assert.match(rightPunch.impact, /from-right/);
   assert.match(rightPunch.impact, /damage-left/);
 });
@@ -140,6 +141,7 @@ test('受擊動作與傷害特效等到命中時間才出現', async () => {
   const animation = playBattleAnimation(root, { type: 'attack', player: 'left', opponent: 'right', damage: 10 }, {
     attackType: 'punch', duration: 80, impactDelay: 20, reactionDuration: 300, schedule, cancelSchedule,
   });
+  assert.match(weaponLayer.innerHTML, /melee-strike strike-punch/);
   assert.equal(target.classList.contains('is-hit'), false);
   assert.equal(impactLayer.innerHTML, '');
   tick(19);
@@ -153,6 +155,7 @@ test('受擊動作與傷害特效等到命中時間才出現', async () => {
   tick(1);
   await animation;
   assert.equal(target.classList.contains('is-hit'), false);
+  assert.equal(weaponLayer.innerHTML, '');
   assert.equal(impactLayer.innerHTML, '');
 });
 
@@ -216,6 +219,14 @@ test('CSS 讓拳頭水平伸出並讓腳沿弧線踢出', async () => {
   const reduced = css.slice(css.indexOf('@media(prefers-reduced-motion:reduce)'));
   assert.match(mobile, /melee-strike/);
   assert.match(reduced, /melee-strike/);
+});
+
+test('右方拳腳外殼鏡像但中文字保持正向', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.match(css, /\.melee-strike\.from-right\s*\{[^}]*--limb-direction:\s*-1/);
+  assert.match(css, /\.melee-strike\.from-right \.strike-glyph\s*\{[^}]*scale:\s*-1 1/);
+  assert.match(css, /@keyframes fistPop\s*\{[^}]*scale:\s*var\(--limb-direction\)/);
+  assert.match(css, /@keyframes bootSwing\s*\{[^}]*scale:\s*var\(--limb-direction\)/);
 });
 
 test('reduced-motion 仍保留拳腳辨識標記', async () => {

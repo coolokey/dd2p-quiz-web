@@ -87,7 +87,7 @@ export function buildAttackEffectMarkup({ attackType = 'energy', player, opponen
     ? { glyph: '腳', callout: '飛踢', limbClass: 'strike-boot' }
     : { glyph: '拳', callout: '重拳', limbClass: 'strike-fist' };
   return {
-    weapon: `<span class="melee-strike strike-${attackType} from-${player}" aria-hidden="true"><span class="strike-trail"></span><span class="strike-limb ${melee.limbClass}">${melee.glyph}</span></span>`,
+    weapon: `<span class="melee-strike strike-${attackType} from-${player}" aria-hidden="true"><span class="strike-trail"></span><span class="strike-limb ${melee.limbClass}"><span class="strike-glyph">${melee.glyph}</span></span></span>`,
     impact: `<span class="melee-impact impact-${attackType} damage-${opponent} from-${player}" aria-hidden="true"><span class="melee-symbol melee-symbol-${attackType}">${melee.glyph}</span></span><b class="attack-callout attack-callout-${attackType} damage-${opponent} from-${player}" aria-hidden="true">${melee.callout}</b><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
   };
 }

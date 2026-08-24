@@ -21,9 +21,8 @@ export function createStartGate(start) {
     try {
       await start(...args);
       return true;
-    } catch (error) {
+    } finally {
       starting = false;
-      throw error;
     }
   };
 }

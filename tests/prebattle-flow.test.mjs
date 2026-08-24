@@ -44,6 +44,8 @@ test('快速重複開始只執行一次非同步初始化', async () => {
   assert.equal(await second, false);
   finishStart();
   assert.equal(await first, true);
+  assert.equal(await startOnce(), true);
+  assert.equal(starts, 2);
 });
 
 test('開局初始化失敗後允許再次嘗試', async () => {

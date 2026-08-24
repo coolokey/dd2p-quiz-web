@@ -204,3 +204,11 @@ test('reduced-motion 仍保留拳腳辨識標記', async () => {
   assert.match(reduced, /melee-impact/);
   assert.match(reduced, /attack-callout/);
 });
+
+test('右方近身特效鏡像外框並將中文字轉回正向', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.match(css, /\.melee-impact\.from-right\s*\{[^}]*--impact-direction:\s*-1/);
+  assert.match(css, /@keyframes impactPulse\s*\{[^}]*scaleX\(var\(--impact-direction\)\)/);
+  assert.match(css, /\.melee-impact\.from-right \.melee-symbol\s*\{[^}]*scale:\s*-1 1/);
+  assert.doesNotMatch(css, /\.attack-callout\.from-right\s*\{[^}]*scale:\s*-1/);
+});

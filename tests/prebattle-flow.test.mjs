@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { bindCharacterActions, buildCharacterActions } from '../web/js/prebattle-flow.mjs';
+import { bindCharacterActions, buildCharacterActions, createStartGate } from '../web/js/prebattle-flow.mjs';
 
 test('選角完成後提供測試鍵盤與略過測試兩條入口', () => {
   const html = buildCharacterActions(true);
@@ -27,4 +27,33 @@ test('兩個入口分別觸發測試與略過回呼', () => {
   buttons['#test-keys'].onclick();
   buttons['#skip-key-test'].onclick();
   assert.deepEqual(calls, ['test', 'skip']);
+});
+
+test('快速重複開始只執行一次非同步初始化', async () => {
+  let starts = 0;
+  let finishStart;
+  const pending = new Promise(resolve => { finishStart = resolve; });
+  const startOnce = createStartGate(async () => {
+    starts += 1;
+    await pending;
+  });
+
+  const first = startOnce();
+  const second = startOnce();
+  assert.equal(starts, 1);
+  assert.equal(await second, false);
+  finishStart();
+  assert.equal(await first, true);
+});
+
+test('開局初始化失敗後允許再次嘗試', async () => {
+  let starts = 0;
+  const startOnce = createStartGate(async () => {
+    starts += 1;
+    if (starts === 1) throw new Error('audio failed');
+  });
+
+  await assert.rejects(startOnce(), /audio failed/);
+  assert.equal(await startOnce(), true);
+  assert.equal(starts, 2);
 });

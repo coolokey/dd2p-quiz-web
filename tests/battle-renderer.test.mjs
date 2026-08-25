@@ -279,6 +279,22 @@ test('行動橫向觸控介面提供安全區、觸控尺寸、直向遮罩與�
   assert.match(css, /@media\s*\(orientation:\s*landscape\)\s*and\s*\(max-height:\s*500px\)/);
 });
 
+test('觸控橫向版為雙人側鍵與單人底鍵保留核心戰區空間', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.match(css, /body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-left:\s*max\(64px,\s*calc\(env\(safe-area-inset-left\) \+ 64px\)\)/);
+  assert.match(css, /body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-right:\s*max\(64px,\s*calc\(env\(safe-area-inset-right\) \+ 64px\)\)/);
+  assert.match(css, /body:has\(\.mode-solo\) \.battle-shell\s*\{[^}]*padding-bottom:\s*calc\(env\(safe-area-inset-bottom\) \+ 64px\)/);
+});
+
+test('矮橫式觸控版維持雙欄答案並額外壓縮戰區高度', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.match(css, /@media \(hover: none\) and \(pointer: coarse\) and \(orientation: landscape\) and \(max-height: 500px\)/);
+  assert.match(css, /\.battle-choices\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0,1fr\)\)/);
+  assert.match(css, /\.arena\s*\{[^}]*height:\s*clamp\(104px,32vh,180px\)/);
+  assert.match(css, /\.battle-question-image\s*\{[^}]*max-height:\s*58px/);
+  assert.match(css, /\.battle-status\s*\{[^}]*font-size:\s*12px/);
+});
+
 test('CSS 包含三種攻擊與三種受擊動畫', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
   for (const name of ['attack-energy', 'attack-punch', 'attack-kick', 'hit-energy', 'hit-punch', 'hit-kick']) {

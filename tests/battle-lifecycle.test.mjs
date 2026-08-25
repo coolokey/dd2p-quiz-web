@@ -16,16 +16,19 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
-function createHarness({ gameMode = 'solo' } = {}) {
-  let quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
+function createHarness({ gameMode = 'solo', quizMode = 'time', limit = Number.MAX_SAFE_INTEGER } = {}) {
+  let quizState = createGameState({ mode: quizMode, limit });
   let combatState = createBattleState();
   let animationWait = null;
   let revealWait = null;
   const schedules = [];
+  const scheduleAttempts = [];
   const events = [];
   const reveals = [];
   const waits = [];
   let cancelCount = 0;
+  let afterAction = null;
+  let settledAction = null;
   let lifecycle;
 
   const questionKey = (phase = combatState.phase, index = quizState.questionIndex) => `${phase}:${index}`;
@@ -59,6 +62,17 @@ function createHarness({ gameMode = 'solo' } = {}) {
     };
   }
 
+  function scheduleCurrentQuestion() {
+    const activeQuestionKey = questionKey();
+    const accepted = lifecycle.scheduleCpu({
+      questionKey: activeQuestionKey,
+      question: currentQuestion(),
+      difficulty: 'normal',
+    });
+    scheduleAttempts.push({ questionKey: activeQuestionKey, accepted });
+    return accepted;
+  }
+
   lifecycle = createBattleLifecycle({
     cpuController: {
       schedule(request) { schedules.push(request); },
@@ -72,13 +86,21 @@ function createHarness({ gameMode = 'solo' } = {}) {
       waits.push(milliseconds);
       if (revealWait) await revealWait.promise;
     },
-    afterAnswer: outcome => events.push({ type: 'after', prompt: outcome.question.prompt }),
+    afterAnswer: outcome => {
+      events.push({ type: 'after', prompt: outcome.question.prompt });
+      return afterAction?.(outcome);
+    },
+    onSettled: outcome => {
+      events.push({ type: 'settled', prompt: outcome.question.prompt });
+      settledAction?.(outcome);
+    },
     submitCpuAnswer: input => lifecycle.submit(input),
   });
 
   return {
     lifecycle,
     schedules,
+    scheduleAttempts,
     events,
     reveals,
     waits,
@@ -87,21 +109,19 @@ function createHarness({ gameMode = 'solo' } = {}) {
     get combatState() { return combatState; },
     currentQuestion,
     schedule() {
-      return lifecycle.scheduleCpu({
-        questionKey: questionKey(),
-        question: currentQuestion(),
-        difficulty: 'normal',
-      });
+      return scheduleCurrentQuestion();
     },
     setGameMode(value) { gameMode = value; },
     setAnimationWait(value) { animationWait = value; },
     setRevealWait(value) { revealWait = value; },
+    setAfterAction(value) { afterAction = value; },
+    setSettledAction(value) { settledAction = value; },
     advanceQuestion() {
       quizState = { ...quizState, questionIndex: quizState.questionIndex + 1 };
     },
     endBattle() { combatState = { ...combatState, ended: true, phase: 'ended' }; },
     resetBattleState() {
-      quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
+      quizState = createGameState({ mode: quizMode, limit });
       combatState = createBattleState();
     },
     enterSuddenDeath() {
@@ -110,6 +130,57 @@ function createHarness({ gameMode = 'solo' } = {}) {
     },
   };
 }
+
+test('固定題數答對換題後只排程一個新 CPU，且 CPU 能回答新題', async () => {
+  const harness = createHarness({ quizMode: 'questions', limit: 3 });
+  harness.setSettledAction(() => harness.schedule());
+  harness.schedule();
+
+  await harness.lifecycle.submit({ player: 'left', answerIndex: 0 });
+  assert.deepEqual(harness.scheduleAttempts, [
+    { questionKey: 'regulation:0', accepted: true },
+    { questionKey: 'regulation:1', accepted: true },
+  ]);
+  assert.equal(harness.schedules.length, 2);
+
+  await harness.schedules[1].onAnswer(1);
+  assert.equal(harness.combatState.scores.right, 1);
+});
+
+test('雙方皆錯揭示完換題後只排程一個新 CPU', async () => {
+  const harness = createHarness({ quizMode: 'questions', limit: 3 });
+  harness.setSettledAction(() => harness.schedule());
+  harness.schedule();
+
+  await harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  await harness.schedules[0].onAnswer(1);
+  assert.deepEqual(harness.scheduleAttempts.slice(-1), [{ questionKey: 'regulation:1', accepted: true }]);
+  assert.equal(harness.schedules.length, 2);
+
+  await harness.schedules[1].onAnswer(1);
+  assert.equal(harness.combatState.scores.right, 1);
+});
+
+test('正規賽平手進驟死後以新 questionKey 只排程一個 CPU', async () => {
+  const harness = createHarness({ quizMode: 'questions', limit: 3 });
+  harness.setAfterAction(outcome => {
+    if (outcome.questionAdvanced && harness.combatState.phase === 'regulation') harness.enterSuddenDeath();
+  });
+  harness.setSettledAction(() => harness.schedule());
+  harness.schedule();
+
+  await harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  await harness.schedules[0].onAnswer(1);
+  assert.deepEqual(
+    harness.scheduleAttempts.filter(attempt => attempt.questionKey === 'sudden-death:1'),
+    [{ questionKey: 'sudden-death:1', accepted: true }],
+  );
+  assert.equal(harness.schedules.length, 2);
+
+  await harness.schedules[1].onAnswer(1);
+  assert.equal(harness.combatState.endReason, 'sudden-death');
+  assert.equal(harness.combatState.scores.right, 1);
+});
 
 test('單人開放題且右方可作答時每題只排程一次，本機雙人不排程', () => {
   const solo = createHarness();

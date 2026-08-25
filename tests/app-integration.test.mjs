@@ -21,6 +21,7 @@ test('單人模式在每題排程 CPU 並於換題及結束時取消', async () 
   assert.match(source, /lifecycle: battleLifecycle/);
   assert.match(source, /battleLifecycle\.submit\(/);
   assert.match(source, /battleLifecycle\.reset\(/);
+  assert.match(source, /onSettled: settleBattleAnswer/);
   assert.match(source, /battleSession\.timerExpired\(/);
   assert.match(source, /battleSession\.questionAdvanced\(/);
   assert.match(source, /battleSession\.finishAnswer\(/);

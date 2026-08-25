@@ -20,23 +20,64 @@ export function createCpuController({
   setTimer = setTimeout,
   clearTimer = clearTimeout,
   random = Math.random,
+  now = Date.now,
 } = {}) {
   let timerId = null;
   let generation = 0;
+  let task = null;
+  let paused = false;
+
+  function armTimer() {
+    if (!task || timerId !== null) return;
+    task.startedAt = now();
+    const currentGeneration = generation;
+    timerId = setTimer(() => {
+      if (currentGeneration !== generation || !task) return;
+      const completedTask = task;
+      timerId = null;
+      task = null;
+      paused = false;
+      completedTask.onAnswer(completedTask.answerIndex);
+    }, task.remainingMs);
+  }
+
   function cancel() {
     generation += 1;
     if (timerId !== null) clearTimer(timerId);
     timerId = null;
+    task = null;
+    paused = false;
   }
+
+  function pause() {
+    if (!task || paused || timerId === null) return;
+    task.remainingMs = Math.max(0, task.remainingMs - (now() - task.startedAt));
+    clearTimer(timerId);
+    timerId = null;
+    generation += 1;
+    paused = true;
+  }
+
+  function resume() {
+    if (!task || !paused) return;
+    paused = false;
+    armTimer();
+  }
+
+  function remainingMs() {
+    return task ? task.remainingMs : null;
+  }
+
   function schedule({ question, difficulty, onAnswer }) {
     cancel();
-    const currentGeneration = generation;
     const answerIndex = chooseCpuAnswer(question, difficulty, random);
-    timerId = setTimer(() => {
-      if (currentGeneration !== generation) return;
-      timerId = null;
-      onAnswer(answerIndex);
-    }, getCpuDelay(difficulty, random));
+    task = {
+      answerIndex,
+      onAnswer,
+      remainingMs: getCpuDelay(difficulty, random),
+      startedAt: null,
+    };
+    armTimer();
   }
-  return { schedule, cancel };
+  return { schedule, cancel, pause, resume, remainingMs };
 }

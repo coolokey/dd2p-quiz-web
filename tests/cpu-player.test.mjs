@@ -37,3 +37,63 @@ test('取消後舊計時器不得提交答案', () => {
   assert.deepEqual(answers, []);
   assert.deepEqual(cleared, [1]);
 });
+
+test('暫停後保留剩餘時間，恢復只建立一個計時器且舊回呼不得作答', () => {
+  const scheduled = [];
+  const cleared = [];
+  let currentTime = 1000;
+  const cpu = createCpuController({
+    setTimer: (callback, delay) => (scheduled.push({ callback, delay }), scheduled.length),
+    clearTimer: id => cleared.push(id),
+    now: () => currentTime,
+    random: () => 0,
+  });
+  const answers = [];
+  const task = {
+    question: { choices: ['A', 'B'], answerIndex: 0 },
+    difficulty: 'easy',
+    onAnswer: answer => answers.push(answer),
+  };
+
+  cpu.schedule(task);
+  assert.equal(scheduled[0].delay, 4000);
+  currentTime = 2500;
+  cpu.pause();
+  assert.equal(cpu.remainingMs(), 2500);
+  cpu.pause();
+  assert.equal(cpu.remainingMs(), 2500);
+  assert.deepEqual(cleared, [1]);
+
+  cpu.resume();
+  cpu.resume();
+  assert.equal(scheduled.length, 2);
+  assert.equal(scheduled[1].delay, 2500);
+  scheduled[0].callback();
+  assert.deepEqual(answers, []);
+  scheduled[1].callback();
+  assert.deepEqual(answers, [0]);
+});
+
+test('暫停時取消會清除任務，恢復不會重新建立計時器', () => {
+  const scheduled = [];
+  let currentTime = 1000;
+  const cpu = createCpuController({
+    setTimer: (callback, delay) => (scheduled.push({ callback, delay }), scheduled.length),
+    clearTimer: () => {},
+    now: () => currentTime,
+    random: () => 0,
+  });
+
+  cpu.schedule({
+    question: { choices: ['A', 'B'], answerIndex: 0 },
+    difficulty: 'easy',
+    onAnswer: () => {},
+  });
+  currentTime = 2500;
+  cpu.pause();
+  cpu.cancel();
+  cpu.resume();
+
+  assert.equal(cpu.remainingMs(), null);
+  assert.equal(scheduled.length, 1);
+});

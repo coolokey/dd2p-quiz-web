@@ -2,6 +2,15 @@ const fallbackEscape = value => String(value ?? '').replace(/[&<>"']/g, characte
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
 })[character]);
 
+export function resolveStartSceneUrl(scene, pageUrl) {
+  if (!scene) return '';
+  try {
+    return new URL(scene, pageUrl).href;
+  } catch {
+    return '';
+  }
+}
+
 export function buildStartScreen({
   quizCount,
   muted,
@@ -13,6 +22,7 @@ export function buildStartScreen({
 }) {
   const [leftImage = '', rightImage = ''] = fighters ?? [];
   const disabled = modesEnabled ? '' : ' disabled aria-disabled="true"';
+  const sceneStyle = scene ? ` style="--start-scene:url('${escape(scene)}')"` : '';
   const loadNotice = loadMessage
     ? `<div class="start-load-error" role="status">${escape(loadMessage)}<button id="retry-start-load">重新載入資料</button></div>`
     : '';
@@ -32,7 +42,7 @@ export function buildStartScreen({
         </div>
         <div class="start-stats"><span>${escape(quizCount)} QUIZ PACKS</span><span>${muted ? 'SOUND OFF' : 'SOUND ON'}</span></div>
       </section>
-      <section class="start-arena" style="--start-scene:url('${escape(scene)}')">
+      <section class="start-arena"${sceneStyle}>
         <img class="start-fighter start-fighter-left" src="${escape(leftImage)}" alt="紅方角色">
         <div class="start-versus">VS</div>
         <img class="start-fighter start-fighter-right" src="${escape(rightImage)}" alt="藍方角色">

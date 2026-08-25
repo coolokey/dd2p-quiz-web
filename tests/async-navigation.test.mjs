@@ -181,8 +181,41 @@ test('只有 start 成功 commit 後才開放答案輸入', async () => {
   assert.equal(inputGate.run(() => { score += 1; }), false);
   audio.resolve();
   assert.equal(await start, true);
-  assert.equal(inputGate.run(() => { score += 1; }), true);
+  assert.equal(inputGate.run(() => { score += 1; return score; }), 1);
   assert.equal(score, 1);
+});
+
+test('對戰輸入門會原樣回傳同步動作的值', () => {
+  const inputGate = createBattleInputGate();
+  inputGate.enable();
+
+  assert.equal(inputGate.run(() => 'submitted'), 'submitted');
+});
+
+test('對戰輸入門會原樣回傳非同步動作的 Promise 與結果', async () => {
+  const inputGate = createBattleInputGate();
+  inputGate.enable();
+
+  const result = inputGate.run(async () => 'settled');
+
+  assert.ok(result instanceof Promise);
+  assert.equal(await result, 'settled');
+});
+
+test('對戰輸入門不會吞掉非同步動作的拒絕', async () => {
+  const inputGate = createBattleInputGate();
+  inputGate.enable();
+  const failure = new Error('animation failed');
+
+  await assert.rejects(inputGate.run(async () => { throw failure; }), failure);
+});
+
+test('停用的對戰輸入門回傳 false 且不執行動作', () => {
+  const inputGate = createBattleInputGate();
+  let calls = 0;
+
+  assert.equal(inputGate.run(() => { calls += 1; }), false);
+  assert.equal(calls, 0);
 });
 
 test('題庫重試載入時停用重試按鈕並顯示 loading', () => {

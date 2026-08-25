@@ -56,8 +56,7 @@ export function createBattleInputGate() {
     },
     run(action) {
       if (!enabled) return false;
-      action();
-      return true;
+      return action();
     },
   };
 }

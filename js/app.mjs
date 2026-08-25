@@ -12,6 +12,7 @@ import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
 import { battleStatus, GAME_MODES, getCharacterSelectionReadiness, playersForKeyTest, selectCpuCharacter } from './game-mode.mjs';
 import { createCpuController } from './cpu-player.mjs';
 import { createBattleLifecycle } from './battle-lifecycle.mjs';
+import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs';
 import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
 
 const app = document.querySelector('#app');
@@ -19,7 +20,7 @@ let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, curr
 let quizState = null, combatState = null, audioManager = null, timerId = null;
 let timeLeft = 0, regulationLimit = 0, battleSettings = null;
 let characterSelection = createCharacterSelection(), keyHits = new Set();
-let pendingRegulationEnd = false, activeQuestionIndex = null;
+let activeQuestionIndex = null;
 let attackState = createAttackState();
 let activeSubject = '全部';
 let gameMode = null;
@@ -35,6 +36,13 @@ const battleLifecycle = createBattleLifecycle({
   revealAnswer: renderCorrectAnswerReveal,
   afterAnswer: afterBattleAnswer,
   submitCpuAnswer: input => battleLifecycle.submit(input),
+  onQuestionAdvanced: () => battleSession.questionAdvanced(),
+});
+const battleSession = createBattleSessionCoordinator({
+  lifecycle: battleLifecycle,
+  clearTimer: clearBattleTimer,
+  closeRegulation: closeRegulationState,
+  stopAudio: () => audioManager?.stop(),
 });
 let startAvailability = { ready: false, message: '正在載入遊戲資料……' };
 const startGameOnce = createStartGate(settings => startGame(settings));
@@ -56,19 +64,17 @@ function characterImage(character, state = 'idle') {
 }
 function characterById(id) { return battleManifest.characters.find(character => String(character.id) === String(id)); }
 function playUiSound(name = 'menu') { audioManager?.unlock(); audioManager?.playSfx(name); }
-function cancelCpuAnswer() {
-  battleLifecycle.cancel();
+function clearBattleTimer() {
+  if (timerId) clearInterval(timerId);
+  timerId = null;
 }
 
 function stopBattleActivity() {
-  cancelCpuAnswer();
-  if (timerId) clearInterval(timerId);
-  timerId = null;
-  audioManager?.stop();
+  battleSession.stopBattleActivity();
 }
 
 function renderStartScreen() {
-  cancelCpuAnswer();
+  battleSession.mainMenuOpened();
   const playable = battleManifest.characters.filter(character => character.playable !== false);
   app.innerHTML = buildStartScreen({
     quizCount: catalog.length,
@@ -126,8 +132,7 @@ function renderStartAudioSettings() {
 }
 
 function renderCatalog() {
-  cancelCpuAnswer();
-  audioManager?.stop();
+  battleSession.catalogOpened();
   const filters = buildSubjectFilters(catalog);
   const visibleCatalog = filterCatalog(catalog, activeSubject);
   app.innerHTML = shell(`<p class="lead">選一個題庫，把教室變成真正的搶答擂台。</p><nav class="subject-filters" aria-label="依科目篩選題庫">${buildSubjectButtons(filters, activeSubject)}</nav><div class="quiz-grid">${visibleCatalog.map(quiz => `<button class="quiz-card" data-quiz="${esc(quiz.id)}"><strong>${esc(quiz.name)}</strong><span>${quiz.questions} 題可用</span></button>`).join('')}</div><p class="hint">目前顯示 ${visibleCatalog.length} 份，共 ${catalog.length} 份題庫。空白或不完整題庫已自動排除。</p>`);
@@ -249,6 +254,7 @@ function renderKeyTest(settings) {
 
 async function startGame(settings) {
   battleLifecycle.reset();
+  battleSession.reset();
   battleSettings = settings;
   answerPositionState = createAnswerPositionState();
   try {
@@ -262,9 +268,9 @@ async function startGame(settings) {
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
   timeLeft = settings.mode === 'time' ? settings.limit : null;
-  pendingRegulationEnd = false; activeQuestionIndex = null;
+  activeQuestionIndex = null;
   attackState = createAttackState();
-  if (timerId) clearInterval(timerId);
+  clearBattleTimer();
   await audioManager?.setScene(settings.arenaId);
   await audioManager?.unlock();
   await audioManager?.playSfx('start');
@@ -281,10 +287,7 @@ function handleTimer() {
   if (combatState?.ended || combatState?.phase === 'sudden-death') return;
   timeLeft = Math.max(0, timeLeft - 1);
   if (timeLeft <= 0) {
-    clearInterval(timerId); timerId = null;
-    cancelCpuAnswer();
-    if (battleLifecycle.isAnimating()) pendingRegulationEnd = true;
-    else closeRegulation({ advanceQuestion: true });
+    battleSession.timerExpired();
   }
   if (!combatState.ended && !battleLifecycle.isAnimating()) renderGame();
 }
@@ -293,8 +296,7 @@ function ensureQuestion() {
     currentQuiz.activeQuestions.push(...prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState));
   }
 }
-function closeRegulation({ advanceQuestion = false } = {}) {
-  cancelCpuAnswer();
+function closeRegulationState({ advanceQuestion = false } = {}) {
   combatState = finishRegulation(combatState);
   if (combatState.ended) renderResult();
   else {
@@ -434,16 +436,13 @@ function renderCorrectAnswerReveal({ question, answerIndex, progress }) {
 
 function afterBattleAnswer() {
   if (combatState.ended) return renderResult();
-  if (pendingRegulationEnd) {
-    pendingRegulationEnd = false;
-    const needsFreshQuestion = quizState.questionIndex === activeQuestionIndex;
+  if (battleSession.finishAnswer({ questionIndex: quizState.questionIndex, activeQuestionIndex })) {
     activeQuestionIndex = null;
-    closeRegulation({ advanceQuestion: needsFreshQuestion });
     if (!combatState.ended) renderGame();
     return;
   }
   activeQuestionIndex = null;
-  if (battleSettings.mode === 'questions' && combatState.phase === 'regulation' && quizState.questionIndex >= regulationLimit) closeRegulation();
+  if (battleSettings.mode === 'questions' && combatState.phase === 'regulation' && quizState.questionIndex >= regulationLimit) battleSession.regulationEnded();
   if (!combatState.ended) renderGame();
 }
 
@@ -452,9 +451,8 @@ function processAnswer(input) {
 }
 
 function renderResult() {
-  cancelCpuAnswer();
+  battleSession.resultShown();
   if (app.querySelector('.result')) return;
-  if (timerId) clearInterval(timerId); timerId = null;
   const winner = combatState.winner ? playerName(combatState.winner) : '平手';
   const reason = combatState.endReason === 'ko' ? 'KO！' : combatState.endReason === 'sudden-death' ? '驟死決勝！' : '分數勝利！';
   if (combatState.endReason === 'ko') audioManager?.playSfx('ko');
@@ -462,7 +460,6 @@ function renderResult() {
   app.innerHTML = shell(`<article class="result"><p class="lead">本局結算　${esc(reason)}</p><div class="winner">${esc(winner)}獲勝！</div><p class="prompt">紅隊 ${combatState.scores.left} 分　：　藍隊 ${combatState.scores.right} 分</p><div class="actions"><button class="secondary" id="catalog">更換題庫</button><button class="secondary" id="main-menu">返回主選單</button><button class="primary" id="again">再玩一次</button></div></article>`);
   app.querySelector('#catalog').onclick = () => { characterSelection = createCharacterSelection(); renderCatalog(); };
   app.querySelector('#main-menu').onclick = () => {
-    if (timerId) clearInterval(timerId); timerId = null;
     characterSelection = createCharacterSelection(); gameMode = null; renderStartScreen();
   };
   app.querySelector('#again').onclick = () => { audioManager?.stop(); characterSelection = createCharacterSelection(); renderRules(); };

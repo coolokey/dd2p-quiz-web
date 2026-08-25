@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { bindCharacterActions, buildCharacterActions, createStartGate, isKeyTestComplete, recordKeyTestKey } from '../web/js/prebattle-flow.mjs';
+import { attemptBattleSetup, bindCharacterActions, buildCharacterActions, createStartGate, isKeyTestComplete, recordKeyTestKey } from '../web/js/prebattle-flow.mjs';
 
 test('選角完成後提供測試鍵盤與略過測試兩條入口', () => {
   const html = buildCharacterActions(true);
@@ -18,6 +18,25 @@ test('角色未選齊時停用兩個開始入口', () => {
 
 test('單人選角只要求玩家角色完成', () => {
   assert.doesNotMatch(buildCharacterActions(true), /disabled/);
+});
+
+test('無 CPU 候選角色時停用開始入口並顯示原因', () => {
+  const html = buildCharacterActions(false, '沒有可供 CPU 選擇的其他角色，請增加可用角色。');
+  assert.match(html, /id="test-keys"[^>]*disabled/);
+  assert.match(html, /id="skip-key-test"[^>]*disabled/);
+  assert.match(html, /class="error prebattle-error"[^>]*>沒有可供 CPU 選擇/);
+});
+
+test('開始前選角解析失敗會交給畫面錯誤回呼', () => {
+  const errors = [];
+  const result = attemptBattleSetup(
+    () => { throw new Error('沒有可供電腦選擇的角色，請重新選角'); },
+    () => assert.fail('不應進入對戰'),
+    error => errors.push(error.message),
+  );
+
+  assert.equal(result, false);
+  assert.deepEqual(errors, ['沒有可供電腦選擇的角色，請重新選角']);
 });
 
 test('單人鍵盤測試忽略右方按鍵，不增加計數也不解鎖', () => {

@@ -42,7 +42,20 @@ function drawAnswerPosition(state, count, random) {
   return position;
 }
 
+export function validateQuestionForRandomization(question) {
+  if (!Array.isArray(question?.choices) || question.choices.length < 2 || question.choices.length > 4) {
+    throw new RangeError('題目選項數必須介於 2 至 4');
+  }
+  if (!Number.isInteger(question.answerIndex)
+      || question.answerIndex < 0
+      || question.answerIndex >= question.choices.length) {
+    throw new RangeError('題目正確答案索引無效');
+  }
+  return question;
+}
+
 export function randomizeQuestionToPosition(question, targetPosition, random = Math.random) {
+  validateQuestionForRandomization(question);
   if (!Number.isInteger(targetPosition) || targetPosition < 0 || targetPosition >= question.choices.length) {
     throw new RangeError('正確答案目標位置超出選項範圍');
   }
@@ -56,6 +69,7 @@ export function randomizeQuestionToPosition(question, targetPosition, random = M
 export function prepareQuestionRound(questions, random = Math.random, state = createAnswerPositionState()) {
   return shuffleWithRandom(questions, random)
     .map(question => {
+      validateQuestionForRandomization(question);
       const position = drawAnswerPosition(state, question.choices.length, random);
       return randomizeQuestionToPosition(question, position, random);
     });

@@ -6,11 +6,12 @@ import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
 import { createAnswerPositionState, prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
-import { bindCharacterActions, buildCharacterActions, createStartGate, isKeyTestComplete, recordKeyTestKey } from './prebattle-flow.mjs';
+import { attemptBattleSetup, bindCharacterActions, buildCharacterActions, createStartGate, isKeyTestComplete, recordKeyTestKey } from './prebattle-flow.mjs';
 import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
 import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
-import { GAME_MODES, playersForKeyTest, requiredCharacterPlayers, selectCpuCharacter } from './game-mode.mjs';
+import { battleStatus, GAME_MODES, getCharacterSelectionReadiness, playersForKeyTest, selectCpuCharacter } from './game-mode.mjs';
 import { createCpuController } from './cpu-player.mjs';
+import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -27,6 +28,7 @@ let muted = localStorage.getItem('dd2p-muted') === 'true';
 const cpuController = createCpuController();
 let cpuQuestionIndex = null;
 let pendingCpuAnswer = null;
+let startAvailability = { ready: false, message: '正在載入遊戲資料……' };
 const startGameOnce = createStartGate(settings => startGame(settings));
 const storedVolume = (key, fallback) => {
   const stored = localStorage.getItem(key);
@@ -36,7 +38,7 @@ const storedVolume = (key, fallback) => {
 const audioVolumes = { master: storedVolume('dd2p-volume-master', 0.8), music: storedVolume('dd2p-volume-music', 0.65), effects: storedVolume('dd2p-volume-effects', 0.9) };
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' })[char]);
-const header = () => '<div class="masthead"><div><p class="eyebrow">DD2P BATTLE EDITION</p><h1 class="title">雙人知識對決</h1></div><div class="round">2P</div></div>';
+const header = () => '<div class="masthead"><div><p class="eyebrow">DDP BATTLE EDITION</p><h1 class="title">DDP 知識對決</h1></div><div class="round">DDP</div></div>';
 const shell = body => `<div class="shell">${header()}<section class="panel">${body}</section></div>`;
 const playerName = player => player === 'left' ? '左方紅隊' : '右方藍隊';
 
@@ -52,6 +54,13 @@ function cancelCpuAnswer() {
   pendingCpuAnswer = null;
 }
 
+function stopBattleActivity() {
+  cancelCpuAnswer();
+  if (timerId) clearInterval(timerId);
+  timerId = null;
+  audioManager?.stop();
+}
+
 function renderStartScreen() {
   cancelCpuAnswer();
   const playable = battleManifest.characters.filter(character => character.playable !== false);
@@ -60,15 +69,19 @@ function renderStartScreen() {
     muted,
     scene: battleManifest.scenes[0]?.image,
     fighters: [characterImage(playable[0]), characterImage(playable[1])],
+    modesEnabled: startAvailability.ready,
+    loadMessage: startAvailability.message,
     escape: esc,
   });
   bindStartScreen(app, {
     onMode: mode => {
-      if (!Object.values(GAME_MODES).includes(mode)) return;
+      if (!startAvailability.ready || !Object.values(GAME_MODES).includes(mode)) return;
       gameMode = mode; playUiSound('confirm'); renderCatalog();
     },
     onHelp: renderStartHelp,
     onAudio: renderStartAudioSettings,
+    onRetry: bootstrap,
+    onNavigate: () => playUiSound('menu'),
   });
 }
 
@@ -106,11 +119,6 @@ function renderStartAudioSettings() {
   app.querySelector('#back-start').onclick = renderStartScreen;
 }
 
-function renderLoadFailure() {
-  app.innerHTML = shell('<p class="error">題庫或對戰素材尚未產生。請先執行 npm run convert 與 npm run prepare:battle。</p><div class="actions"><button class="primary" id="reload-app">重新載入</button></div>');
-  app.querySelector('#reload-app').addEventListener('click', () => location.reload());
-}
-
 function renderCatalog() {
   cancelCpuAnswer();
   audioManager?.stop();
@@ -128,8 +136,18 @@ function renderCatalog() {
 }
 async function selectQuiz(id) {
   const item = catalog.find(quiz => quiz.id === id);
-  currentQuiz = await fetch(item.file).then(response => response.json());
-  renderRules();
+  try {
+    currentQuiz = await fetchJson(item.file, fetch);
+    renderRules();
+  } catch (error) {
+    renderQuizLoadFailure(item, error);
+  }
+}
+
+function renderQuizLoadFailure(item, error) {
+  app.innerHTML = shell(`<h2 class="selection-title">題庫載入失敗</h2><p class="error">無法載入「${esc(item.name)}」：${esc(error.message)}</p><div class="actions"><button class="secondary" id="back-catalog">返回題庫</button><button class="primary" id="retry-quiz">重試</button></div>`);
+  app.querySelector('#back-catalog').onclick = renderCatalog;
+  app.querySelector('#retry-quiz').onclick = () => { void selectQuiz(item.id); };
 }
 
 function renderRules() {
@@ -182,13 +200,13 @@ function selectedPreview(player) {
 }
 function renderCharacterSelect(settings) {
   const solo = gameMode === GAME_MODES.solo;
-  const ready = requiredCharacterPlayers(gameMode).every(player => characterSelection[player]);
+  const readiness = getCharacterSelectionReadiness(gameMode, characterSelection, battleManifest.characters);
   const rightSelection = solo
     ? '<section class="select-side right cpu-preview"><h3>CPU　藍隊</h3><div class="selected-fighter"><b>CPU 將隨機選角</b></div><p class="hint">開局時會從尚未選取的可用角色中隨機選擇。</p></section>'
     : `<section class="select-side right"><h3>右方玩家　藍隊</h3>${selectedPreview('right')}<div class="character-grid">${characterCards('right')}</div></section>`;
   const title = solo ? '選擇你的角色' : '雙方選擇角色';
   const lead = solo ? '選擇紅隊角色後，CPU 會在開局時隨機選擇另一名可用角色。' : '同一名角色不能重複選擇。請先選紅方，再選藍方。';
-  app.innerHTML = shell(`<h2 class="selection-title">${title}</h2><p class="lead">${lead}</p><div class="versus-select"><section class="select-side left"><h3>左方玩家　紅隊</h3>${selectedPreview('left')}<div class="character-grid">${characterCards('left')}</div></section><div class="select-vs">VS</div>${rightSelection}</div>${battleManifest.characters.length ? '' : '<p class="error">角色素材尚未完成，請重新執行素材準備程序。</p>'}${buildCharacterActions(ready)}`);
+  app.innerHTML = shell(`<h2 class="selection-title">${title}</h2><p class="lead">${lead}</p><div class="versus-select"><section class="select-side left"><h3>左方玩家　紅隊</h3>${selectedPreview('left')}<div class="character-grid">${characterCards('left')}</div></section><div class="select-vs">VS</div>${rightSelection}</div>${battleManifest.characters.length ? '' : '<p class="error">角色素材尚未完成，請重新執行素材準備程序。</p>'}${buildCharacterActions(readiness.ready, readiness.message)}`);
   app.querySelectorAll('[data-character]').forEach(button => button.onclick = () => {
     try {
       characterSelection = selectCharacter(characterSelection, button.dataset.player, characterById(button.dataset.character));
@@ -202,10 +220,14 @@ function renderCharacterSelect(settings) {
     }
     return { ...settings, gameMode, characters: selections };
   };
+  const showSetupError = error => {
+    const output = app.querySelector('.prebattle-error') ?? app.querySelector('.lead');
+    output.textContent = error.message;
+  };
   bindCharacterActions(app, {
     onBack: () => renderArenaSelect(settings, settings.arenaId),
-    onTest: () => { playUiSound('start'); renderKeyTest(selectedSettings()); },
-    onSkip: () => startGameOnce(selectedSettings()),
+    onTest: () => attemptBattleSetup(selectedSettings, selected => { playUiSound('start'); renderKeyTest(selected); }, showSetupError),
+    onSkip: () => attemptBattleSetup(selectedSettings, selected => startGameOnce(selected), showSetupError),
   });
 }
 
@@ -223,7 +245,13 @@ async function startGame(settings) {
   cancelCpuAnswer();
   battleSettings = settings;
   answerPositionState = createAnswerPositionState();
-  currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState) };
+  try {
+    currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState) };
+  } catch (error) {
+    stopBattleActivity();
+    renderQuizError(error);
+    return false;
+  }
   quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
@@ -236,6 +264,12 @@ async function startGame(settings) {
   await audioManager?.playSfx('start');
   if (settings.mode === 'time') timerId = setInterval(handleTimer, 1000);
   renderGame();
+  return true;
+}
+
+function renderQuizError(error) {
+  app.innerHTML = shell(`<h2 class="selection-title">題庫錯誤</h2><p class="error">無法開始此題庫：${esc(error.message)}</p><p class="hint">請更換題庫，或檢查每題是否有 2 至 4 個選項與有效正確答案。</p><div class="actions"><button class="primary" id="back-catalog">返回題庫</button></div>`);
+  app.querySelector('#back-catalog').onclick = renderCatalog;
 }
 function handleTimer() {
   if (combatState?.ended || combatState?.phase === 'sudden-death') return;
@@ -264,9 +298,7 @@ function closeRegulation({ advanceQuestion = false } = {}) {
   }
 }
 function currentStatus() {
-  if (combatState.phase === 'sudden-death') return '驟死決勝：第一位答對者立即獲勝！';
-  if (quizState.eligiblePlayers.length === 1) return `${playerName(quizState.eligiblePlayers[0])}可作答`;
-  return '兩位玩家請搶答　｜　答對攻擊 −10 HP，答錯交給對手';
+  return battleStatus(battleSettings?.gameMode, quizState.eligiblePlayers, combatState.phase);
 }
 function bindAudioToggle() {
   const button = app.querySelector('[data-audio-toggle]');
@@ -438,10 +470,14 @@ document.addEventListener('keydown', event => {
   if (input && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) processAnswer(input);
 });
 
-Promise.all([
-  fetch('./data/catalog.json').then(response => response.ok ? response.json() : Promise.reject(new Error('catalog'))),
-  fetch('./assets/battle/manifest.json').then(response => response.ok ? response.json() : Promise.reject(new Error('battle manifest'))),
-]).then(([data, manifest]) => {
-  catalog = data.quizzes; battleManifest = manifest;
-  audioManager = createAudioManager({ manifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects }); renderStartScreen();
-}).catch(renderLoadFailure);
+async function bootstrap() {
+  audioManager?.stop();
+  const resources = await loadBootstrapResources(fetch);
+  catalog = resources.catalog;
+  battleManifest = resources.manifest;
+  startAvailability = { ready: resources.ready, message: resources.message };
+  audioManager = createAudioManager({ manifest: battleManifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects });
+  renderStartScreen();
+}
+
+void bootstrap();

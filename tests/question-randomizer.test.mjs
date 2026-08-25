@@ -92,3 +92,20 @@ test('跨輪沿用位置狀態並避免邊界重複', () => {
   ], () => 0, state);
   assert.notEqual(first.at(-1).answerIndex, second[0].answerIndex);
 });
+
+test('拒絕單選項與超過四個選項的題目', () => {
+  assert.throws(
+    () => randomizeQuestionToPosition({ prompt: 'Q', choices: ['A'], answerIndex: 0 }, 0),
+    /選項數必須介於 2 至 4/,
+  );
+  assert.throws(
+    () => prepareQuestionRound([{ prompt: 'Q', choices: ['A', 'B', 'C', 'D', 'E'], answerIndex: 0 }]),
+    /選項數必須介於 2 至 4/,
+  );
+});
+
+test('拒絕不是整數或超出選項範圍的正確答案索引', () => {
+  const base = { prompt: 'Q', choices: ['A', 'B'] };
+  assert.throws(() => randomizeQuestionToPosition({ ...base, answerIndex: 2 }, 0), /正確答案索引無效/);
+  assert.throws(() => prepareQuestionRound([{ ...base, answerIndex: 0.5 }]), /正確答案索引無效/);
+});

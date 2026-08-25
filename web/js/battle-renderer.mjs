@@ -55,7 +55,10 @@ export function buildBattleMarkup(viewModel) {
       ${questionImage}
       <div class="battle-question-copy">
         <h1>${escapeHtml(viewModel.prompt)}</h1>
-        <div class="battle-choices">${viewModel.choices.map((choice, index) => `<div class="battle-choice"><span>${index + 1}</span>${escapeHtml(choice)}</div>`).join('')}</div>
+        <div class="battle-choices">${viewModel.choices.map((choice, index) => {
+          const revealed = index === viewModel.revealAnswerIndex;
+          return `<div class="battle-choice${revealed ? ' is-correct-reveal' : ''}"${revealed ? ' aria-label="答案揭示"' : ''}><span>${index + 1}</span>${escapeHtml(choice)}</div>`;
+        }).join('')}</div>
       </div>
     </article>
     <p class="battle-status" aria-live="polite">${escapeHtml(viewModel.status)}</p>

@@ -42,6 +42,12 @@ test('驟死階段顯示驟死提示', () => {
   assert.match(html, /驟死決勝/);
 });
 
+test('雙方皆錯時標示正確答案', () => {
+  const html = buildBattleMarkup({ ...viewModel, revealAnswerIndex: 2 });
+  assert.match(html, /battle-choice is-correct-reveal/);
+  assert.match(html, /答案揭示/);
+});
+
 test('場景網址以頁面根目錄解析，不會因 CSS 檔位置重複 assets 路徑', () => {
   assert.equal(
     resolveAssetUrl('./assets/battle/scenes/ship.png', 'http://localhost:4173/'),

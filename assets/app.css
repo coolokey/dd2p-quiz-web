@@ -1,7 +1,7 @@
 @font-face { font-family:'Noto Sans TC Local'; src:url('./fonts/NotoSansTC-Variable.woff2') format('woff2'); font-style:normal; font-weight:100 900; font-display:swap; }
-@font-face { font-family:'Orbitron Local'; src:url('./fonts/Orbitron-Variable.woff2') format('woff2'); font-style:normal; font-weight:400 900; font-display:swap; }
+@font-face { font-family:'VectorGrid Local'; src:url('./fonts/VectorGrid-Variable.woff2') format('woff2'); font-style:normal; font-weight:400 900; font-display:swap; }
 
-:root { --ink:#101522; --paper:#f5f0df; --yellow:#f7c948; --red:#ec5b53; --blue:#26a6d1; --muted:#71809a; --display:'Orbitron Local','Noto Sans TC Local',sans-serif; --body:'Noto Sans TC Local',sans-serif; }
+:root { --ink:#101522; --paper:#f5f0df; --yellow:#f7c948; --red:#ec5b53; --blue:#26a6d1; --muted:#71809a; --display:'VectorGrid Local','Noto Sans TC Local',sans-serif; --body:'Noto Sans TC Local',sans-serif; }
 * { box-sizing:border-box; }
 body { margin:0; min-height:100vh; color:var(--ink); font-family:var(--body); background:radial-gradient(circle at 15% 10%,#fbd56a 0 2%,transparent 18%),radial-gradient(circle at 84% 90%,#63c5e5 0 3%,transparent 25%),#e7e2d1; }
 button,input { font:inherit; } button { cursor:pointer; } button:focus-visible,a:focus-visible,input:focus-visible { outline:3px solid #fff36a; outline-offset:4px; } .noise { position:fixed; inset:0; pointer-events:none; opacity:.09; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E"); }
@@ -34,6 +34,8 @@ body:has(.start-screen) .noise { opacity:.06; mix-blend-mode:screen; }
 .start-mode:hover { transform:translateX(8px); filter:brightness(1.11) saturate(1.13); }.start-mode:focus-visible { outline-color:#fff; }
 .start-mode-solo { background:linear-gradient(100deg,#41e5ff,#53adf6 73%,#74a3ff); color:#061a29; box-shadow:0 9px 28px rgba(53,204,255,.25); }
 .start-mode-local { background:linear-gradient(100deg,#ff4aad,#ed2d7d 68%,#ba2181); color:#290817; box-shadow:0 9px 28px rgba(255,49,164,.21); }
+.start-mode:disabled { cursor:not-allowed; filter:grayscale(.72) brightness(.58); transform:none; box-shadow:none; }
+.start-load-error { position:relative; z-index:2; margin:3px 0 10px; padding:12px; border:1px solid #ff88ca; background:rgba(116,10,60,.56); color:#ffe1f2; font-size:14px; line-height:1.45; }.start-load-error button { display:block; width:100%; margin-top:10px; padding:9px; border:1px solid #ffb6df; background:#3e0c29; color:#fff; font-weight:900; }
 .start-minor-actions { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px; }
 .start-minor-actions button { min-height:51px; border:1px solid rgba(170,221,255,.46); background:rgba(105,162,206,.08); color:#dff2ff; font-weight:800; transition:background .18s ease,border-color .18s ease,transform .18s ease; }.start-minor-actions button:hover { border-color:#68dcff; background:rgba(61,211,255,.18); transform:translateY(-2px); }
 .start-stats { position:relative; z-index:1; display:flex; justify-content:space-between; gap:10px; margin-top:auto; padding-top:25px; color:#7fa8c3; font:700 10px/1.2 var(--display); letter-spacing:.08em; }.start-stats span:last-child { color:#ffb3dd; text-align:right; }
@@ -46,7 +48,7 @@ body:has(.start-screen) .noise { opacity:.06; mix-blend-mode:screen; }
 .start-arena p { position:absolute; z-index:4; right:8%; bottom:24px; left:8%; margin:0; color:#eef9ff; font-size:clamp(14px,1.6vw,19px); text-align:center; letter-spacing:.06em; }.start-arena p b { margin-right:10px; color:#64e6ff; font-family:var(--display); }
 @keyframes startFighterFloat { 0%,100% { translate:0 0; } 50% { translate:0 -12px; } }
 
-@media(max-width:900px) { .start-screen { width:min(100% - 28px,760px); overflow-x:clip; }.start-topbar { align-items:flex-start; flex-direction:column; margin-bottom:24px; }.start-topbar > b { align-self:flex-start; }.start-grid { grid-template-columns:1fr; }.start-control,.start-arena { min-height:0; }.start-control { order:2; }.start-control::after { content:none; }.start-arena { order:1; min-height:390px; }.start-fighter { max-height:330px; }.start-stats { margin-top:36px; } }
+@media(max-width:900px) { .start-screen { width:min(100% - 28px,760px); overflow-x:clip; }.start-topbar { align-items:flex-start; flex-direction:column; margin-bottom:24px; }.start-topbar > b { align-self:flex-start; }.start-grid { grid-template-columns:1fr; }.start-control,.start-arena { min-height:0; }.start-control { order:1; }.start-control::after { content:none; }.start-arena { order:2; min-height:390px; }.start-fighter { max-height:330px; }.start-stats { margin-top:36px; } }
 
 /* Original DD2P battle presentation */
 .selection-title { margin:0 0 8px; font-size:clamp(28px,4vw,48px); letter-spacing:-.05em; }

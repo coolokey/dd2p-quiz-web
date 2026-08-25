@@ -67,9 +67,9 @@ export function randomizeQuestionToPosition(question, targetPosition, random = M
 }
 
 export function prepareQuestionRound(questions, random = Math.random, state = createAnswerPositionState()) {
+  for (const question of questions) validateQuestionForRandomization(question);
   return shuffleWithRandom(questions, random)
     .map(question => {
-      validateQuestionForRandomization(question);
       const position = drawAnswerPosition(state, question.choices.length, random);
       return randomizeQuestionToPosition(question, position, random);
     });

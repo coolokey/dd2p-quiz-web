@@ -43,7 +43,7 @@ const battleLifecycle = createBattleLifecycle({
   revealAnswer: renderCorrectAnswerReveal,
   afterAnswer: afterBattleAnswer,
   onSettled: settleBattleAnswer,
-  submitCpuAnswer: input => battleLifecycle.submit(input),
+  submitCpuAnswer: input => processAnswer(input),
   onQuestionAdvanced: () => battleSession.questionAdvanced(),
 });
 const battleSession = createBattleSessionCoordinator({

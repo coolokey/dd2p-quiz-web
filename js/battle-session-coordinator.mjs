@@ -41,27 +41,27 @@ export function createBattleSessionCoordinator({
 
   function resultShown() {
     regulationEndPending = false;
-    lifecycle.cancel();
+    lifecycle.cancel({ invalidateSubmission: true });
     clearTimer();
   }
 
   function catalogOpened() {
     regulationEndPending = false;
-    lifecycle.cancel();
+    lifecycle.cancel({ invalidateSubmission: true });
     clearTimer();
     stopAudio();
   }
 
   function mainMenuOpened() {
     regulationEndPending = false;
-    lifecycle.cancel();
+    lifecycle.cancel({ invalidateSubmission: true });
     clearTimer();
     stopAudio();
   }
 
   function stopBattleActivity() {
     regulationEndPending = false;
-    lifecycle.cancel();
+    lifecycle.cancel({ invalidateSubmission: true });
     clearTimer();
     stopAudio();
   }

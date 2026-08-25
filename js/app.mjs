@@ -14,7 +14,7 @@ import { createCpuController } from './cpu-player.mjs';
 import { createBattleLifecycle } from './battle-lifecycle.mjs';
 import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs';
 import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
-import { createLatestSessionGate, runLatestRequest, runStartSession } from './async-navigation.mjs';
+import { createBattleInputGate, createLatestSessionGate, markQuizRequestLoading, runLatestRequest, runStartSession } from './async-navigation.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -50,6 +50,7 @@ let startAvailability = { ready: false, message: '正在載入遊戲資料……
 const bootstrapRequestGate = createLatestSessionGate();
 const quizRequestGate = createLatestSessionGate();
 const startSessionGate = createLatestSessionGate();
+const battleInputGate = createBattleInputGate();
 const startGameOnce = settings => startGame(settings);
 const storedVolume = (key, fallback) => {
   const stored = localStorage.getItem(key);
@@ -75,11 +76,13 @@ function clearBattleTimer() {
 }
 
 function stopBattleActivity() {
+  battleInputGate.disable();
   battleSession.stopBattleActivity();
   audioManager?.stopEffects?.();
 }
 
 function cancelPendingStart() {
+  battleInputGate.disable();
   startSessionGate.invalidate();
 }
 
@@ -92,16 +95,6 @@ function markStartLoading() {
     startButton.dataset.loading = 'true';
     startButton.textContent = '正在進入對戰……';
   }
-}
-
-function markQuizLoading(id) {
-  const button = [...app.querySelectorAll('[data-quiz]')]
-    .find(item => item.dataset.quiz === id);
-  if (!button) return;
-  button.disabled = true;
-  button.setAttribute('aria-busy', 'true');
-  const status = button.querySelector('span');
-  if (status) status.textContent = '載入中……';
 }
 
 function renderStartScreen() {
@@ -188,7 +181,7 @@ async function selectQuiz(id) {
   return runLatestRequest({
     gate: quizRequestGate,
     load: () => fetchJson(item.file, fetch),
-    onLoading: () => markQuizLoading(id),
+    onLoading: () => markQuizRequestLoading(app, id),
     onSuccess: quiz => {
       currentQuiz = quiz;
       renderRules();
@@ -303,6 +296,8 @@ async function startGame(settings) {
     gate: startSessionGate,
     onCancel: stopBattleActivity,
     onLoading: markStartLoading,
+    disableInput: battleInputGate.disable,
+    enableInput: battleInputGate.enable,
     prepare: () => prepareBattleStart(settings),
     stages: [
       () => audioManager?.setScene(settings.arenaId),
@@ -506,10 +501,11 @@ function settleBattleAnswer(_outcome, settlement) {
 }
 
 function processAnswer(input) {
-  return battleLifecycle.submit(input);
+  return battleInputGate.run(() => battleLifecycle.submit(input));
 }
 
 function renderResult() {
+  battleInputGate.disable();
   battleSession.resultShown();
   if (app.querySelector('.result')) return;
   const winner = combatState.winner ? playerName(combatState.winner) : '平手';
@@ -539,7 +535,7 @@ document.addEventListener('keydown', event => {
     return;
   }
   const input = getAnswerInput(event.code);
-  if (input && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) processAnswer(input);
+  if (input && battleInputGate.isEnabled() && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) processAnswer(input);
 });
 
 async function bootstrap() {

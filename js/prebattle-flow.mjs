@@ -36,17 +36,3 @@ export function recordKeyTestKey(keyHits, needed, code) {
 export function isKeyTestComplete(keyHits, needed) {
   return needed.every(code => keyHits.has(code));
 }
-
-export function createStartGate(start) {
-  let starting = false;
-  return async (...args) => {
-    if (starting) return false;
-    starting = true;
-    try {
-      await start(...args);
-      return true;
-    } finally {
-      starting = false;
-    }
-  };
-}

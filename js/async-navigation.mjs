@@ -42,6 +42,43 @@ export function createLatestSessionGate() {
   return { begin, invalidate };
 }
 
+export function createBattleInputGate() {
+  let enabled = false;
+  return {
+    disable() {
+      enabled = false;
+    },
+    enable() {
+      enabled = true;
+    },
+    isEnabled() {
+      return enabled;
+    },
+    run(action) {
+      if (!enabled) return false;
+      action();
+      return true;
+    },
+  };
+}
+
+export function markQuizRequestLoading(root, id) {
+  const retry = root.querySelector('#retry-quiz');
+  if (retry) {
+    retry.disabled = true;
+    retry.setAttribute('aria-busy', 'true');
+    retry.textContent = '載入中……';
+  }
+
+  const button = [...(root.querySelectorAll?.('[data-quiz]') ?? [])]
+    .find(item => item.dataset.quiz === id);
+  if (!button) return;
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  const status = button.querySelector('span');
+  if (status) status.textContent = '載入中……';
+}
+
 export async function runLatestRequest({
   gate,
   load,
@@ -71,14 +108,22 @@ export async function runStartSession({
   gate,
   onCancel = () => {},
   onLoading = () => {},
+  disableInput = () => {},
+  enableInput = () => {},
   prepare = () => {},
   stages = [],
   startTimer = () => {},
   renderBattle,
   onError,
 }) {
-  const session = gate.begin({ onCancel });
+  const session = gate.begin({
+    onCancel() {
+      disableInput();
+      onCancel();
+    },
+  });
   try {
+    disableInput();
     onLoading();
     prepare();
     if (!session.isCurrent()) return false;
@@ -87,6 +132,7 @@ export async function runStartSession({
       if (!session.isCurrent()) return false;
     }
     if (!session.commit(() => {
+      enableInput();
       startTimer();
       renderBattle?.();
     })) return false;

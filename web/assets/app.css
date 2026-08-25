@@ -14,6 +14,7 @@ button,input { font:inherit; } button { cursor:pointer; } button:focus-visible,a
 @media(max-width:650px){.shell{width:min(100% - 20px,1100px);padding-top:20px}.panel{box-shadow:6px 6px 0 var(--ink)}.subject-filter{flex:1 1 calc(33.333% - 10px);justify-content:center;padding:9px 8px}.form-row,.keytest,.choices{grid-template-columns:1fr}.scorebar{grid-template-columns:1fr auto}.score.right{grid-column:1/3;text-align:left}.title{letter-spacing:-.05em}.round{width:56px;font-size:9px}}
 
 /* DDP start console: a dark broadcast booth facing a live arena. */
+html:has(.start-screen) { overflow-x:clip; }
 body:has(.start-screen) { overflow-x:hidden; color:#edf7ff; background:radial-gradient(circle at 13% 8%,rgba(22,191,255,.22),transparent 24%),radial-gradient(circle at 87% 84%,rgba(255,45,176,.16),transparent 30%),linear-gradient(135deg,#060914 0%,#0a1426 48%,#080d1b 100%); }
 body:has(.start-screen) .noise { opacity:.06; mix-blend-mode:screen; }
 .start-screen { position:relative; isolation:isolate; width:min(1320px,calc(100% - 40px)); min-height:100vh; margin:0 auto; padding:clamp(24px,4vw,54px) 0; }
@@ -45,7 +46,7 @@ body:has(.start-screen) .noise { opacity:.06; mix-blend-mode:screen; }
 .start-arena p { position:absolute; z-index:4; right:8%; bottom:24px; left:8%; margin:0; color:#eef9ff; font-size:clamp(14px,1.6vw,19px); text-align:center; letter-spacing:.06em; }.start-arena p b { margin-right:10px; color:#64e6ff; font-family:var(--display); }
 @keyframes startFighterFloat { 0%,100% { translate:0 0; } 50% { translate:0 -12px; } }
 
-@media(max-width:900px) { .start-screen { width:min(100% - 28px,760px); }.start-topbar { align-items:flex-start; flex-direction:column; margin-bottom:24px; }.start-topbar > b { align-self:flex-start; }.start-grid { grid-template-columns:1fr; }.start-control,.start-arena { min-height:0; }.start-control { order:2; }.start-control::after { content:none; }.start-arena { order:1; min-height:390px; }.start-fighter { max-height:330px; }.start-stats { margin-top:36px; } }
+@media(max-width:900px) { .start-screen { width:min(100% - 28px,760px); overflow-x:clip; }.start-topbar { align-items:flex-start; flex-direction:column; margin-bottom:24px; }.start-topbar > b { align-self:flex-start; }.start-grid { grid-template-columns:1fr; }.start-control,.start-arena { min-height:0; }.start-control { order:2; }.start-control::after { content:none; }.start-arena { order:1; min-height:390px; }.start-fighter { max-height:330px; }.start-stats { margin-top:36px; } }
 
 /* Original DD2P battle presentation */
 .selection-title { margin:0 0 8px; font-size:clamp(28px,4vw,48px); letter-spacing:-.05em; }

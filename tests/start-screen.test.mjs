@@ -43,3 +43,11 @@ test('窄螢幕不保留會造成水平溢位的 MODE SELECT 裝飾字', () => {
 
   assert.match(mobileCss, /\.start-control::after\s*\{\s*content:none/);
 });
+
+test('起始畫面在根元素與窄螢幕容器都禁止水平捲動', () => {
+  const css = readFileSync(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  const mobileCss = css.slice(css.indexOf('@media(max-width:900px)'));
+
+  assert.match(css, /html:has\(\.start-screen\)\s*\{\s*overflow-x:clip/);
+  assert.match(mobileCss, /\.start-screen\s*\{[^}]*overflow-x:clip/);
+});

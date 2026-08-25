@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
 import { bindStartScreen, buildStartScreen } from '../web/js/start-screen.mjs';
 
 test('控制台包含兩種主要模式與兩個次要入口', () => {
@@ -22,4 +23,16 @@ test('兩個模式按鈕回傳正確模式', () => {
   elements.solo.onclick();
   elements.local.onclick();
   assert.deepEqual(modes, ['solo', 'local']);
+});
+
+test('起始畫面使用本地電競字型且提供響應式與減少動態樣式', () => {
+  const css = readFileSync(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.doesNotMatch(css, /fonts\.googleapis\.com/);
+  assert.match(css, /@font-face[\s\S]*NotoSansTC-Variable\.woff2/);
+  assert.match(css, /@font-face[\s\S]*Orbitron-Variable\.woff2/);
+  assert.match(css, /\.start-screen/);
+  assert.match(css, /@media\s*\(max-width:900px\)/);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:reduce\)/);
+  assert.ok(existsSync(new URL('../web/assets/fonts/NotoSansTC-Variable.woff2', import.meta.url)));
+  assert.ok(existsSync(new URL('../web/assets/fonts/Orbitron-Variable.woff2', import.meta.url)));
 });

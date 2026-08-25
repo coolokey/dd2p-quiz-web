@@ -16,17 +16,25 @@ test('單人模式在每題排程 CPU 並於換題及結束時取消', async () 
   const source = await readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
   assert.match(source, /createCpuController\(/);
   assert.match(source, /createBattleLifecycle\(/);
+  assert.match(source, /createBattleSessionCoordinator\(/);
   assert.match(source, /battleLifecycle\.scheduleCpu\(/);
-  assert.match(source, /battleLifecycle\.cancel\(/);
+  assert.match(source, /lifecycle: battleLifecycle/);
   assert.match(source, /battleLifecycle\.submit\(/);
   assert.match(source, /battleLifecycle\.reset\(/);
+  assert.match(source, /battleSession\.timerExpired\(/);
+  assert.match(source, /battleSession\.questionAdvanced\(/);
+  assert.match(source, /battleSession\.finishAnswer\(/);
+  assert.match(source, /battleSession\.regulationEnded\(/);
+  assert.match(source, /battleSession\.resultShown\(/);
+  assert.match(source, /battleSession\.catalogOpened\(/);
+  assert.match(source, /battleSession\.mainMenuOpened\(/);
   const timerHandler = source.slice(source.indexOf('function handleTimer'), source.indexOf('function ensureQuestion'));
-  assert.match(timerHandler, /timeLeft <= 0[\s\S]*?cancelCpuAnswer\(\)/);
+  assert.match(timerHandler, /timeLeft <= 0[\s\S]*?battleSession\.timerExpired\(\)/);
 });
 
 test('開局題庫驗證失敗會停止對戰活動並顯示返回題庫入口', async () => {
   const source = await readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
-  assert.match(source, /function stopBattleActivity\(\)[\s\S]*cancelCpuAnswer\(\)[\s\S]*clearInterval\(timerId\)[\s\S]*audioManager\?\.stop\(\)/);
+  assert.match(source, /function stopBattleActivity\(\)[\s\S]*battleSession\.stopBattleActivity\(\)/);
   assert.match(source, /catch \(error\) \{[\s\S]*stopBattleActivity\(\)[\s\S]*renderQuizError\(error\)/);
   assert.match(source, /function renderQuizError\([\s\S]*題庫錯誤[\s\S]*返回題庫/);
 });

@@ -11,9 +11,9 @@ const QUESTIONS = [
 ];
 
 function deferred() {
-  let resolve;
-  const promise = new Promise(done => { resolve = done; });
-  return { promise, resolve };
+  let resolve, reject;
+  const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
+  return { promise, resolve, reject };
 }
 
 function createHarness({ gameMode = 'solo' } = {}) {
@@ -41,6 +41,7 @@ function createHarness({ gameMode = 'solo' } = {}) {
   function resolveAnswer(input) {
     const before = quizState;
     const question = currentQuestion();
+    const activeQuestionKey = questionKey(combatState.phase, before.questionIndex);
     const next = submitBuzzerAnswer(before, input.player, input.answerIndex, question.answerIndex);
     if (next === before) return null;
     const correct = input.answerIndex === question.answerIndex;
@@ -48,9 +49,9 @@ function createHarness({ gameMode = 'solo' } = {}) {
     combatState = correct
       ? applyCorrectAnswer(combatState, input.player)
       : applyWrongAnswer(combatState, input.player);
-    events.push({ type: 'answer', player: input.player, correct, prompt: question.prompt });
+    events.push({ type: 'answer', player: input.player, correct, prompt: question.prompt, questionKey: activeQuestionKey });
     return {
-      questionKey: questionKey(combatState.phase, before.questionIndex),
+      questionKey: activeQuestionKey,
       question,
       answerIndex: question.answerIndex,
       correct,
@@ -99,6 +100,10 @@ function createHarness({ gameMode = 'solo' } = {}) {
       quizState = { ...quizState, questionIndex: quizState.questionIndex + 1 };
     },
     endBattle() { combatState = { ...combatState, ended: true, phase: 'ended' }; },
+    resetBattleState() {
+      quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
+      combatState = createBattleState();
+    },
     enterSuddenDeath() {
       combatState = finishRegulation(combatState);
       quizState = { ...quizState, phase: 'open', eligiblePlayers: ['left', 'right'], lockedPlayer: null, ended: false };
@@ -184,7 +189,7 @@ test('雙方皆錯只揭示原題正解一次，等待 900ms 完成後才前進'
   assert.equal(harness.reveals.length, 1);
 });
 
-test('CPU callback 落在玩家動畫期間只暫存一次，動畫完成才提交', async () => {
+test('CPU callback 落在玩家動畫期間只暫存一次，整條連續答題只收尾一次', async () => {
   const harness = createHarness();
   const animationGate = deferred();
   harness.setAnimationWait(animationGate);
@@ -203,6 +208,91 @@ test('CPU callback 落在玩家動畫期間只暫存一次，動畫完成才提�
 
   assert.deepEqual(harness.events.filter(event => event.type === 'answer').map(event => event.player), ['left', 'right']);
   assert.equal(harness.combatState.scores.right, 1);
+  assert.equal(harness.events.filter(event => event.type === 'after').length, 1);
+});
+
+test('動畫拋錯後會釋放作答鎖並允許合法玩家再作答', async () => {
+  const harness = createHarness();
+  const animationGate = deferred();
+  harness.setAnimationWait(animationGate);
+  const firstAnswer = harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  const rejected = assert.rejects(firstAnswer, /animation failed/);
+  animationGate.reject(new Error('animation failed'));
+  await rejected;
+
+  assert.equal(harness.lifecycle.isAnimating(), false);
+  harness.setAnimationWait(null);
+  assert.equal(await harness.lifecycle.submit({ player: 'right', answerIndex: 0 }), true);
+  assert.equal(harness.combatState.scores.right, 1);
+});
+
+test('pending CPU 的嵌套動畫拋錯後也會釋放鎖與 pending', async () => {
+  const harness = createHarness();
+  const playerAnimation = deferred();
+  const cpuAnimation = deferred();
+  harness.setAnimationWait(playerAnimation);
+  harness.schedule();
+  const answerChain = harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  await Promise.resolve();
+  await harness.schedules[0].onAnswer(0);
+
+  harness.setAnimationWait(cpuAnimation);
+  const rejected = assert.rejects(answerChain, /cpu animation failed/);
+  playerAnimation.resolve();
+  await Promise.resolve();
+  cpuAnimation.reject(new Error('cpu animation failed'));
+  await rejected;
+
+  assert.equal(harness.lifecycle.isAnimating(), false);
+  harness.setAnimationWait(null);
+  assert.equal(await harness.lifecycle.submit({ player: 'left', answerIndex: 1 }), true);
+});
+
+test('正解揭示等待拋錯後會釋放作答鎖並能進行新題', async () => {
+  const harness = createHarness();
+  const revealGate = deferred();
+  harness.schedule();
+  await harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  harness.setRevealWait(revealGate);
+  const secondAnswer = harness.schedules[0].onAnswer(1);
+  const rejected = assert.rejects(secondAnswer, /reveal failed/);
+  revealGate.reject(new Error('reveal failed'));
+  await rejected;
+
+  assert.equal(harness.lifecycle.isAnimating(), false);
+  harness.setRevealWait(null);
+  assert.equal(await harness.lifecycle.submit({ player: 'left', answerIndex: 1 }), true);
+  assert.equal(harness.combatState.scores.left, 1);
+});
+
+test('reset 後舊動畫完成不得清掉新鎖、新 pending CPU 或觸發舊收尾', async () => {
+  const harness = createHarness();
+  const oldAnimation = deferred();
+  harness.setAnimationWait(oldAnimation);
+  const oldAnswer = harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  await Promise.resolve();
+
+  harness.lifecycle.reset();
+  harness.resetBattleState();
+  const newAnimation = deferred();
+  harness.setAnimationWait(newAnimation);
+  harness.schedule();
+  const newAnswer = harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  await Promise.resolve();
+  await harness.schedules[0].onAnswer(0);
+
+  harness.setAnimationWait(null);
+  oldAnimation.resolve();
+  await oldAnswer;
+  assert.equal(harness.lifecycle.isAnimating(), true);
+  assert.deepEqual(harness.events.filter(event => event.type === 'answer').map(event => event.player), ['left', 'left']);
+  assert.equal(harness.events.filter(event => event.type === 'after').length, 0);
+  assert.equal(await harness.lifecycle.submit({ player: 'right', answerIndex: 0 }), false);
+
+  newAnimation.resolve();
+  await newAnswer;
+  assert.deepEqual(harness.events.filter(event => event.type === 'answer').map(event => event.player), ['left', 'left', 'right']);
+  assert.equal(harness.events.filter(event => event.type === 'after').length, 1);
 });
 
 test('CPU callback 在玩家動畫後若已換題或結算就丟棄', async t => {
@@ -226,21 +316,17 @@ test('CPU callback 在玩家動畫後若已換題或結算就丟棄', async t =>
   }
 });
 
-test('題目前進與各種離開戰鬥路徑都取消，stale callback 不得影響新題', async t => {
-  const routes = ['question-advance', 'timer-ended', 'regulation-ended', 'result', 'catalog', 'main-menu'];
-  for (const route of routes) {
-    await t.test(route, async () => {
-      const harness = createHarness();
-      harness.schedule();
-      const staleCallback = harness.schedules[0].onAnswer;
-      harness.lifecycle.cancel(route);
-      harness.advanceQuestion();
-      await staleCallback(0);
-      assert.equal(harness.cancelCount, 1);
-      assert.equal(harness.combatState.scores.right, 0);
-      assert.equal(harness.quizState.questionIndex, 1);
-    });
-  }
+test('lifecycle 取消後手動觸發 stale callback 仍不得影響新題', async () => {
+  const harness = createHarness();
+  harness.schedule();
+  const staleCallback = harness.schedules[0].onAnswer;
+  harness.lifecycle.cancel();
+  harness.advanceQuestion();
+  await staleCallback(0);
+
+  assert.equal(harness.cancelCount, 1);
+  assert.equal(harness.combatState.scores.right, 0);
+  assert.equal(harness.quizState.questionIndex, 1);
 });
 
 test('正規賽平手進驟死時取消舊排程，新題只排程一次', async () => {
@@ -260,5 +346,8 @@ test('正規賽平手進驟死時取消舊排程，新題只排程一次', async
   assert.equal(harness.combatState.scores.right, 1);
   assert.equal(harness.combatState.ended, true);
   assert.equal(harness.combatState.endReason, 'sudden-death');
-  assert.deepEqual(harness.events.filter(event => event.type === 'answer').map(event => event.player), ['right']);
+  assert.deepEqual(
+    harness.events.filter(event => event.type === 'answer').map(event => [event.player, event.questionKey]),
+    [['right', 'sudden-death:0']],
+  );
 });

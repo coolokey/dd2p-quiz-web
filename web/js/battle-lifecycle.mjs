@@ -17,11 +17,14 @@ export function createBattleLifecycle({
   wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
   afterAnswer = () => {},
   submitCpuAnswer,
+  onQuestionAdvanced,
   revealDelay = DEFAULT_REVEAL_DELAY,
 }) {
   let generation = 0;
+  let sessionEpoch = 0;
+  let submissionSequence = 0;
   let scheduledQuestionKey = null;
-  let animating = false;
+  let activeSubmission = null;
   let pendingCpuAnswer = null;
   const revealedQuestions = new Set();
 
@@ -34,7 +37,7 @@ export function createBattleLifecycle({
 
   function scheduleCpu({ questionKey, question, difficulty }) {
     const snapshot = getSnapshot();
-    if (animating || !cpuCanAnswer(snapshot, questionKey)) return false;
+    if (activeSubmission || !cpuCanAnswer(snapshot, questionKey)) return false;
     if (scheduledQuestionKey === questionKey) return false;
 
     scheduledQuestionKey = questionKey;
@@ -46,7 +49,7 @@ export function createBattleLifecycle({
         if (scheduledGeneration !== generation || scheduledQuestionKey !== questionKey) return false;
         if (!cpuCanAnswer(getSnapshot(), questionKey)) return false;
         const input = { player: 'right', answerIndex };
-        if (animating) {
+        if (activeSubmission) {
           pendingCpuAnswer ??= { questionKey, input };
           return true;
         }
@@ -70,37 +73,56 @@ export function createBattleLifecycle({
   }
 
   async function submit(input) {
-    if (animating || getSnapshot()?.ended) return false;
+    if (activeSubmission || getSnapshot()?.ended) return false;
     const outcome = resolveAnswer(input);
     if (!outcome) return false;
 
-    animating = true;
-    if (outcome.correct || outcome.questionAdvanced) cancel();
-    await animateAnswer(outcome);
-    if (!outcome.correct && outcome.questionAdvanced) await revealCorrectAnswer(outcome);
-    animating = false;
+    const token = { sessionEpoch, submissionId: ++submissionSequence };
+    activeSubmission = token;
+    const isCurrentSubmission = () => token.sessionEpoch === sessionEpoch && activeSubmission === token;
+    try {
+      if (outcome.correct || outcome.questionAdvanced) {
+        if (outcome.questionAdvanced && onQuestionAdvanced) onQuestionAdvanced();
+        else cancel();
+      }
+      await animateAnswer(outcome);
+      if (!isCurrentSubmission()) return false;
 
-    const snapshot = getSnapshot();
-    const pending = pendingCpuAnswer;
-    pendingCpuAnswer = null;
-    if (pending && cpuCanAnswer(snapshot, pending.questionKey)) {
-      await submitCpuAnswer(pending.input);
+      if (!outcome.correct && outcome.questionAdvanced) {
+        await revealCorrectAnswer(outcome);
+        if (!isCurrentSubmission()) return false;
+      }
+
+      const snapshot = getSnapshot();
+      const pending = pendingCpuAnswer;
+      if (pending && cpuCanAnswer(snapshot, pending.questionKey)) {
+        pendingCpuAnswer = null;
+        activeSubmission = null;
+        await submitCpuAnswer(pending.input);
+        return true;
+      }
+
+      await afterAnswer(outcome);
+      if (token.sessionEpoch !== sessionEpoch) return false;
       return true;
+    } finally {
+      if (isCurrentSubmission()) {
+        activeSubmission = null;
+        pendingCpuAnswer = null;
+      }
     }
-
-    await afterAnswer(outcome);
-    return true;
   }
 
   function reset() {
+    sessionEpoch += 1;
     cancel();
-    animating = false;
+    activeSubmission = null;
     revealedQuestions.clear();
   }
 
   return {
     cancel,
-    isAnimating: () => animating,
+    isAnimating: () => activeSubmission !== null,
     reset,
     scheduleCpu,
     submit,

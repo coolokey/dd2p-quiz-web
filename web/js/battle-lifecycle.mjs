@@ -29,10 +29,14 @@ export function createBattleLifecycle({
   let pendingCpuAnswer = null;
   const revealedQuestions = new Set();
 
-  function cancel() {
+  function cancel({ invalidateSubmission = false } = {}) {
     generation += 1;
     scheduledQuestionKey = null;
     pendingCpuAnswer = null;
+    if (invalidateSubmission) {
+      sessionEpoch += 1;
+      activeSubmission = null;
+    }
     cpuController.cancel();
   }
 

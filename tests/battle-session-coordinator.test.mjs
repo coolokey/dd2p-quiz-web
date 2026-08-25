@@ -5,7 +5,7 @@ import { createBattleSessionCoordinator } from '../web/js/battle-session-coordin
 function createHarness({ animating = false } = {}) {
   const events = [];
   const lifecycle = {
-    cancel: () => events.push({ type: 'cancel' }),
+    cancel: options => events.push(options ? { type: 'cancel', options } : { type: 'cancel' }),
     isAnimating: () => animating,
   };
   const coordinator = createBattleSessionCoordinator({
@@ -36,22 +36,22 @@ test('題目前進、正規賽結束與各離開路徑執行各自真實的清�
     {
       name: 'result',
       invoke: coordinator => coordinator.resultShown(),
-      expected: [{ type: 'cancel' }, { type: 'clear-timer' }],
+      expected: [{ type: 'cancel', options: { invalidateSubmission: true } }, { type: 'clear-timer' }],
     },
     {
       name: 'catalog',
       invoke: coordinator => coordinator.catalogOpened(),
-      expected: [{ type: 'cancel' }, { type: 'clear-timer' }, { type: 'stop-audio' }],
+      expected: [{ type: 'cancel', options: { invalidateSubmission: true } }, { type: 'clear-timer' }, { type: 'stop-audio' }],
     },
     {
       name: 'main-menu',
       invoke: coordinator => coordinator.mainMenuOpened(),
-      expected: [{ type: 'cancel' }, { type: 'clear-timer' }, { type: 'stop-audio' }],
+      expected: [{ type: 'cancel', options: { invalidateSubmission: true } }, { type: 'clear-timer' }, { type: 'stop-audio' }],
     },
     {
       name: 'battle-start-failure',
       invoke: coordinator => coordinator.stopBattleActivity(),
-      expected: [{ type: 'cancel' }, { type: 'clear-timer' }, { type: 'stop-audio' }],
+      expected: [{ type: 'cancel', options: { invalidateSubmission: true } }, { type: 'clear-timer' }, { type: 'stop-audio' }],
     },
   ];
 

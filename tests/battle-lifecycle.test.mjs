@@ -297,6 +297,24 @@ test('動畫拋錯後會釋放作答鎖並允許合法玩家再作答', async ()
   assert.equal(harness.combatState.scores.right, 1);
 });
 
+test('離場取消會使執行中作答失效且不再觸發舊收尾', async () => {
+  const harness = createHarness();
+  const animationGate = deferred();
+  harness.setAnimationWait(animationGate);
+  const answer = harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  await Promise.resolve();
+
+  harness.lifecycle.cancel({ invalidateSubmission: true });
+  animationGate.resolve();
+
+  assert.equal(await answer, false);
+  assert.equal(harness.lifecycle.isAnimating(), false);
+  assert.deepEqual(
+    harness.events.filter(event => ['after', 'settled'].includes(event.type)),
+    [],
+  );
+});
+
 test('pending CPU 的嵌套動畫拋錯後也會釋放鎖與 pending', async () => {
   const harness = createHarness();
   const playerAnimation = deferred();

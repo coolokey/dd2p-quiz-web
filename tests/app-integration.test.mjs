@@ -172,3 +172,10 @@ test('作答動畫會鎖定觸控，處理失敗會 await 並復原最新戰鬥'
   assert.match(answer, /if \(!combatState\?\.ended[\s\S]*renderGame\(\);[\s\S]*if \(!orientationPaused\) battleInputGate\.enable\(\);/);
   assert.match(answer, /return false;/);
 });
+
+test('CPU 作答也共用會捕捉 lifecycle 拒絕的 processAnswer', async () => {
+  const source = await readAppSource();
+
+  assert.match(source, /submitCpuAnswer: input => processAnswer\(input\)/);
+  assert.doesNotMatch(source, /submitCpuAnswer: input => battleLifecycle\.submit\(input\)/);
+});

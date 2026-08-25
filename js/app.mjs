@@ -15,6 +15,8 @@ import { createBattleLifecycle } from './battle-lifecycle.mjs';
 import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs';
 import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
 import { createBattleInputGate, createLatestSessionGate, markQuizRequestLoading, runLatestRequest, runStartSession } from './async-navigation.mjs';
+import { createBattleOrientationController } from './battle-orientation.mjs';
+import { bindMobileAnswerControls, setMobileAnswerControlsLocked } from './mobile-controls.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -27,8 +29,12 @@ let activeSubject = '全部';
 let gameMode = null;
 let answerPositionState = createAnswerPositionState();
 let keyTestPlayers = [];
+let orientationPaused = false;
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 const cpuController = createCpuController();
+const orientationController = createBattleOrientationController({
+  onPortraitChange: handleBattleOrientationChange,
+});
 const battleLifecycle = createBattleLifecycle({
   cpuController,
   getSnapshot: battleLifecycleSnapshot,
@@ -71,12 +77,47 @@ function characterImage(character, state = 'idle') {
 function characterById(id) { return battleManifest.characters.find(character => String(character.id) === String(id)); }
 function playUiSound(name = 'menu') { audioManager?.unlock(); audioManager?.playSfx(name); }
 function clearBattleTimer() {
-  if (timerId) clearInterval(timerId);
+  if (timerId !== null) clearInterval(timerId);
   timerId = null;
+}
+
+function hasLiveBattle() {
+  return Boolean(quizState && combatState && battleSettings && !combatState.ended);
+}
+
+function handleBattleOrientationChange(portrait) {
+  if (portrait) {
+    if (orientationPaused || !hasLiveBattle()) return false;
+    orientationPaused = true;
+    battleInputGate.disable();
+    cpuController.pause();
+    clearBattleTimer();
+    renderGame();
+    return true;
+  }
+  if (!orientationPaused || !hasLiveBattle()) return false;
+  orientationPaused = false;
+  renderGame();
+  cpuController.resume();
+  battleInputGate.enable();
+  startBattleTimer();
+  return true;
+}
+
+function startBattleTimer() {
+  if (timerId !== null || orientationPaused || battleSettings?.mode !== 'time' || !combatState || combatState?.ended) return false;
+  timerId = setInterval(handleTimer, 1000);
+  return true;
+}
+
+function exitBattleOrientation() {
+  orientationController.exitBattle();
+  orientationPaused = false;
 }
 
 function stopBattleActivity() {
   battleInputGate.disable();
+  exitBattleOrientation();
   battleSession.stopBattleActivity();
   audioManager?.stopEffects?.();
 }
@@ -97,9 +138,16 @@ function markStartLoading() {
   }
 }
 
+function returnToMainMenu() {
+  characterSelection = createCharacterSelection();
+  gameMode = null;
+  renderStartScreen();
+}
+
 function renderStartScreen() {
   cancelPendingStart();
   quizRequestGate.invalidate();
+  exitBattleOrientation();
   battleSession.mainMenuOpened();
   const playable = battleManifest.characters.filter(character => character.playable !== false);
   app.innerHTML = buildStartScreen({
@@ -162,6 +210,7 @@ function renderStartAudioSettings() {
 function renderCatalog() {
   cancelPendingStart();
   quizRequestGate.invalidate();
+  exitBattleOrientation();
   battleSession.catalogOpened();
   const filters = buildSubjectFilters(catalog);
   const visibleCatalog = filterCatalog(catalog, activeSubject);
@@ -292,7 +341,7 @@ function renderKeyTest(settings) {
 }
 
 async function startGame(settings) {
-  return runStartSession({
+  const started = await runStartSession({
     gate: startSessionGate,
     onCancel: stopBattleActivity,
     onLoading: markStartLoading,
@@ -304,12 +353,14 @@ async function startGame(settings) {
       () => audioManager?.unlock(),
       () => audioManager?.playSfx('start'),
     ],
-    startTimer: () => {
-      if (settings.mode === 'time') timerId = setInterval(handleTimer, 1000);
-    },
+    startTimer: startBattleTimer,
     renderBattle: renderGame,
     onError: renderQuizError,
   });
+  if (started) {
+    void orientationController.enterBattle().catch(error => console.warn('無法啟用對戰螢幕方向控制。', error));
+  }
+  return started;
 }
 
 function prepareBattleStart(settings) {
@@ -328,6 +379,7 @@ function prepareBattleStart(settings) {
 }
 
 function renderQuizError(error) {
+  stopBattleActivity();
   app.innerHTML = shell(`<h2 class="selection-title">題庫錯誤</h2><p class="error">無法開始此題庫：${esc(error.message)}</p><p class="hint">請更換題庫，或檢查每題是否有 2 至 4 個選項與有效正確答案。</p><div class="actions"><button class="primary" id="back-catalog">返回題庫</button></div>`);
   app.querySelector('#back-catalog').onclick = renderCatalog;
 }
@@ -394,6 +446,10 @@ function renderGame({
     scene,
     baseUrl: location.href,
     audio: audioVolumes,
+    gameMode: battleSettings.gameMode,
+    eligiblePlayers: quizState.eligiblePlayers,
+    mobileInputLocked: battleLifecycle.isAnimating(),
+    orientationPaused,
     players: {
       left: { name: left.name || `角色 ${left.id}`, health: combatState.health.left, score: combatState.scores.left, image: characterImage(left) },
       right: { name: right.name || `角色 ${right.id}`, health: combatState.health.right, score: combatState.scores.right, image: characterImage(right) },
@@ -403,11 +459,15 @@ function renderGame({
     status: statusOverride ?? currentStatus(), phase: combatState.phase, revealAnswerIndex,
   });
   bindAudioToggle();
+  bindMobileAnswerControls(app, { onAnswer: input => void processAnswer(input) });
+  const returnButton = app.querySelector('[data-return-main-menu]');
+  if (returnButton) returnButton.onclick = returnToMainMenu;
   if (!questionOverride) scheduleCpuForCurrentQuestion(question);
 }
 
 function scheduleCpuForCurrentQuestion(question) {
-  battleLifecycle.scheduleCpu({
+  if (orientationPaused) return false;
+  return battleLifecycle.scheduleCpu({
     questionKey: battleQuestionKey(),
     question,
     difficulty: battleSettings.cpuDifficulty,
@@ -455,6 +515,7 @@ function resolveBattleAnswer(input) {
 }
 
 async function animateBattleAnswer(outcome) {
+  setMobileAnswerControlsLocked(app, true);
   if (outcome.correct) {
     const animation = playBattleAnimation(app, combatState.animation, {
       attackType: outcome.attack.attackType,
@@ -500,12 +561,29 @@ function settleBattleAnswer(_outcome, settlement) {
   if (settlement?.renderBattle) renderGame();
 }
 
-function processAnswer(input) {
-  return battleInputGate.run(() => battleLifecycle.submit(input));
+async function processAnswer(input) {
+  try {
+    return await battleInputGate.run(() => battleLifecycle.submit(input));
+  } catch (error) {
+    console.error('對戰作答流程失敗。', {
+      error,
+      phase: combatState?.phase,
+      questionIndex: quizState?.questionIndex,
+    });
+    battleInputGate.disable();
+    battleLifecycle.cancel();
+    cpuController.cancel();
+    if (!combatState?.ended && quizState && battleSettings) {
+      renderGame();
+      if (!orientationPaused) battleInputGate.enable();
+    }
+    return false;
+  }
 }
 
 function renderResult() {
   battleInputGate.disable();
+  exitBattleOrientation();
   battleSession.resultShown();
   if (app.querySelector('.result')) return;
   const winner = combatState.winner ? playerName(combatState.winner) : '平手';
@@ -514,9 +592,7 @@ function renderResult() {
   audioManager?.playSfx('win'); audioManager?.playSfx('lose');
   app.innerHTML = shell(`<article class="result"><p class="lead">本局結算　${esc(reason)}</p><div class="winner">${esc(winner)}獲勝！</div><p class="prompt">紅隊 ${combatState.scores.left} 分　：　藍隊 ${combatState.scores.right} 分</p><div class="actions"><button class="secondary" id="catalog">更換題庫</button><button class="secondary" id="main-menu">返回主選單</button><button class="primary" id="again">再玩一次</button></div></article>`);
   app.querySelector('#catalog').onclick = () => { characterSelection = createCharacterSelection(); renderCatalog(); };
-  app.querySelector('#main-menu').onclick = () => {
-    characterSelection = createCharacterSelection(); gameMode = null; renderStartScreen();
-  };
+  app.querySelector('#main-menu').onclick = returnToMainMenu;
   app.querySelector('#again').onclick = () => { audioManager?.stop(); characterSelection = createCharacterSelection(); renderRules(); };
 }
 
@@ -535,7 +611,7 @@ document.addEventListener('keydown', event => {
     return;
   }
   const input = getAnswerInput(event.code);
-  if (input && battleInputGate.isEnabled() && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) processAnswer(input);
+  if (input && battleInputGate.isEnabled() && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) void processAnswer(input);
 });
 
 async function bootstrap() {

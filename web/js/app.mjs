@@ -11,13 +11,14 @@ import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catal
 import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
 import { battleStatus, GAME_MODES, getCharacterSelectionReadiness, playersForKeyTest, selectCpuCharacter } from './game-mode.mjs';
 import { createCpuController } from './cpu-player.mjs';
+import { createBattleLifecycle } from './battle-lifecycle.mjs';
 import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
 let quizState = null, combatState = null, audioManager = null, timerId = null;
 let timeLeft = 0, regulationLimit = 0, battleSettings = null;
-let characterSelection = createCharacterSelection(), keyHits = new Set(), animating = false;
+let characterSelection = createCharacterSelection(), keyHits = new Set();
 let pendingRegulationEnd = false, activeQuestionIndex = null;
 let attackState = createAttackState();
 let activeSubject = '全部';
@@ -26,8 +27,15 @@ let answerPositionState = createAnswerPositionState();
 let keyTestPlayers = [];
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 const cpuController = createCpuController();
-let cpuQuestionIndex = null;
-let pendingCpuAnswer = null;
+const battleLifecycle = createBattleLifecycle({
+  cpuController,
+  getSnapshot: battleLifecycleSnapshot,
+  resolveAnswer: resolveBattleAnswer,
+  animateAnswer: animateBattleAnswer,
+  revealAnswer: renderCorrectAnswerReveal,
+  afterAnswer: afterBattleAnswer,
+  submitCpuAnswer: input => battleLifecycle.submit(input),
+});
 let startAvailability = { ready: false, message: '正在載入遊戲資料……' };
 const startGameOnce = createStartGate(settings => startGame(settings));
 const storedVolume = (key, fallback) => {
@@ -49,9 +57,7 @@ function characterImage(character, state = 'idle') {
 function characterById(id) { return battleManifest.characters.find(character => String(character.id) === String(id)); }
 function playUiSound(name = 'menu') { audioManager?.unlock(); audioManager?.playSfx(name); }
 function cancelCpuAnswer() {
-  cpuController.cancel();
-  cpuQuestionIndex = null;
-  pendingCpuAnswer = null;
+  battleLifecycle.cancel();
 }
 
 function stopBattleActivity() {
@@ -242,7 +248,7 @@ function renderKeyTest(settings) {
 }
 
 async function startGame(settings) {
-  cancelCpuAnswer();
+  battleLifecycle.reset();
   battleSettings = settings;
   answerPositionState = createAnswerPositionState();
   try {
@@ -256,7 +262,7 @@ async function startGame(settings) {
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
   timeLeft = settings.mode === 'time' ? settings.limit : null;
-  animating = false; pendingRegulationEnd = false; activeQuestionIndex = null;
+  pendingRegulationEnd = false; activeQuestionIndex = null;
   attackState = createAttackState();
   if (timerId) clearInterval(timerId);
   await audioManager?.setScene(settings.arenaId);
@@ -277,10 +283,10 @@ function handleTimer() {
   if (timeLeft <= 0) {
     clearInterval(timerId); timerId = null;
     cancelCpuAnswer();
-    if (animating) pendingRegulationEnd = true;
+    if (battleLifecycle.isAnimating()) pendingRegulationEnd = true;
     else closeRegulation({ advanceQuestion: true });
   }
-  if (!combatState.ended && !animating) renderGame();
+  if (!combatState.ended && !battleLifecycle.isAnimating()) renderGame();
 }
 function ensureQuestion() {
   if (quizState.questionIndex >= currentQuiz.activeQuestions.length) {
@@ -351,77 +357,83 @@ function renderGame({
 }
 
 function scheduleCpuForCurrentQuestion(question) {
-  if (battleSettings?.gameMode !== GAME_MODES.solo || animating || quizState?.phase !== 'open') return;
-  if (!quizState.eligiblePlayers.includes('right')) return;
-  if (cpuQuestionIndex === quizState.questionIndex) return;
-  cpuQuestionIndex = quizState.questionIndex;
-  cpuController.schedule({
+  battleLifecycle.scheduleCpu({
+    questionKey: battleQuestionKey(),
     question,
     difficulty: battleSettings.cpuDifficulty,
-    onAnswer(answerIndex) {
-      if (cpuQuestionIndex !== quizState.questionIndex || combatState.ended) return;
-      if (!quizState.eligiblePlayers.includes('right')) return;
-      if (animating) pendingCpuAnswer = { questionIndex: cpuQuestionIndex, answerIndex };
-      else void processAnswer({ player: 'right', answerIndex });
-    },
   });
 }
 
-async function processAnswer(input) {
-  if (animating || !quizState || combatState.ended) return;
+function battleQuestionKey(phase = combatState?.phase, index = quizState?.questionIndex) {
+  return `${phase}:${index}`;
+}
+
+function battleLifecycleSnapshot() {
+  return {
+    gameMode: battleSettings?.gameMode,
+    questionKey: battleQuestionKey(),
+    phase: quizState?.phase,
+    eligiblePlayers: quizState?.eligiblePlayers ?? [],
+    ended: !quizState || !combatState || combatState.ended,
+  };
+}
+
+function resolveBattleAnswer(input) {
   ensureQuestion();
   activeQuestionIndex = quizState.questionIndex;
+  const questionKey = battleQuestionKey(combatState.phase, activeQuestionIndex);
   const question = currentQuiz.activeQuestions[quizState.questionIndex];
   const nextQuizState = submitBuzzerAnswer(quizState, input.player, input.answerIndex, question.answerIndex);
-  if (nextQuizState === quizState) return;
+  if (nextQuizState === quizState) return null;
   const correct = input.answerIndex === question.answerIndex;
-  quizState = nextQuizState; animating = true;
+  quizState = nextQuizState;
   const questionAdvanced = quizState.questionIndex > activeQuestionIndex;
-  if (correct || questionAdvanced) cancelCpuAnswer();
   const answerProgress = combatState.phase === 'sudden-death' ? 'SUDDEN' : timeLeft === null ? `${Math.min(activeQuestionIndex + 1, regulationLimit)}／${regulationLimit}` : `${timeLeft}s`;
+  const actor = characterById(battleSettings.characters[input.player]);
   if (correct) {
     combatState = applyCorrectAnswer(combatState, input.player); renderGame({ allowEnded: true, questionOverride: question, progressOverride: answerProgress });
     audioManager?.playSfx('buzz'); audioManager?.playSfx('correct'); audioManager?.playSfx('attack');
-    const actor = characterById(battleSettings.characters[input.player]);
     const attack = drawAttack(attackState, input.player);
     attackState = attack.state;
     const timing = attackTiming(attack.attackType);
+    return { questionKey, question, answerIndex: question.answerIndex, progress: answerProgress, correct, questionAdvanced, actor, attack, timing };
+  }
+
+  combatState = applyWrongAnswer(combatState, input.player); renderGame({ questionOverride: question, progressOverride: answerProgress });
+  audioManager?.playSfx('buzz'); audioManager?.playSfx('wrong');
+  return { questionKey, question, answerIndex: question.answerIndex, progress: answerProgress, correct, questionAdvanced, actor };
+}
+
+async function animateBattleAnswer(outcome) {
+  if (outcome.correct) {
     const animation = playBattleAnimation(app, combatState.animation, {
-      attackType: attack.attackType,
-      weapon: actor?.weapon,
-      attackFrames: actor?.states?.attack,
+      attackType: outcome.attack.attackType,
+      weapon: outcome.actor?.weapon,
+      attackFrames: outcome.actor?.states?.attack,
       duration: 650,
-      impactDelay: timing.impactDelay,
+      impactDelay: outcome.timing.impactDelay,
     });
-    if (timing.swingDelay === 0) audioManager?.playSfx('weapon');
-    else setTimeout(() => audioManager?.playSfx('weapon'), timing.swingDelay);
-    await new Promise(resolve => setTimeout(resolve, timing.impactDelay));
+    if (outcome.timing.swingDelay === 0) audioManager?.playSfx('weapon');
+    else setTimeout(() => audioManager?.playSfx('weapon'), outcome.timing.swingDelay);
+    await new Promise(resolve => setTimeout(resolve, outcome.timing.impactDelay));
     audioManager?.playSfx('hit'); audioManager?.playSfx('hurt');
     await animation;
-  } else {
-    combatState = applyWrongAnswer(combatState, input.player); renderGame({ questionOverride: question, progressOverride: answerProgress });
-    audioManager?.playSfx('buzz'); audioManager?.playSfx('wrong');
-    const actor = characterById(battleSettings.characters[input.player]);
-    await playBattleAnimation(app, combatState.animation, { attackFrames: actor?.states?.miss, duration: 500 });
-    if (questionAdvanced) {
-      renderGame({
-        questionOverride: question,
-        progressOverride: answerProgress,
-        statusOverride: `正確答案：${question.choices[question.answerIndex]}`,
-        revealAnswerIndex: question.answerIndex,
-      });
-      await new Promise(resolve => setTimeout(resolve, 900));
-    }
-  }
-  animating = false;
-  if (combatState.ended) return renderResult();
-  if (pendingCpuAnswer?.questionIndex === quizState.questionIndex && quizState.eligiblePlayers.includes('right')) {
-    const answer = pendingCpuAnswer;
-    pendingCpuAnswer = null;
-    void processAnswer({ player: 'right', answerIndex: answer.answerIndex });
     return;
   }
-  pendingCpuAnswer = null;
+  await playBattleAnimation(app, combatState.animation, { attackFrames: outcome.actor?.states?.miss, duration: 500 });
+}
+
+function renderCorrectAnswerReveal({ question, answerIndex, progress }) {
+  renderGame({
+    questionOverride: question,
+    progressOverride: progress,
+    statusOverride: `正確答案：${question.choices[answerIndex]}`,
+    revealAnswerIndex: answerIndex,
+  });
+}
+
+function afterBattleAnswer() {
+  if (combatState.ended) return renderResult();
   if (pendingRegulationEnd) {
     pendingRegulationEnd = false;
     const needsFreshQuestion = quizState.questionIndex === activeQuestionIndex;
@@ -433,6 +445,10 @@ async function processAnswer(input) {
   activeQuestionIndex = null;
   if (battleSettings.mode === 'questions' && combatState.phase === 'regulation' && quizState.questionIndex >= regulationLimit) closeRegulation();
   if (!combatState.ended) renderGame();
+}
+
+function processAnswer(input) {
+  return battleLifecycle.submit(input);
 }
 
 function renderResult() {

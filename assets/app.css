@@ -149,3 +149,106 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 @media(max-width:760px){.arena-grid{grid-template-columns:1fr}.versus-select{grid-template-columns:1fr}.select-vs{display:none}.prebattle-actions{flex-wrap:wrap}.arena{height:390px;grid-template-columns:1fr 38px 1fr}.fighter{--melee-approach:70%;--melee-distance:92%;--melee-recoil:84%;--kick-approach:64%;--kick-distance:88%;--kick-recoil:78%}.fighter-hud{margin:8px 3px 0;padding:7px}.fighter-meta{font-size:11px;display:block}.fighter-stage{padding-bottom:2%}.fighter-sprite{max-width:105%;height:68%}.versus-mark{margin-top:90px;font-size:14px}.battle-console{grid-template-columns:1fr;padding:12px}.battle-question-image{width:100%;max-height:150px}.battle-choices{grid-template-columns:1fr}.battle-topbar{grid-template-columns:auto 1fr}.arena-name{display:none}.audio-controls label{display:none}.melee-strike{--punch-reach:275%;--punch-recoil:257%;--kick-reach:245%;--kick-recoil:205%;width:69px;height:55px;scale:.72}.strike-fist{width:64px;height:50px;font-size:28px}.strike-boot{width:69px;height:48px;font-size:27px}.strike-trail{scale:.72}.melee-symbol{width:86px;height:86px;font-size:49px}.melee-symbol-kick{width:94px;height:70px}.attack-callout{top:35%;padding:6px 8px;font-size:16px}.damage-left,.impact-burst.damage-left,.melee-impact.damage-left{left:5%}.damage-right,.impact-burst.damage-right,.melee-impact.damage-right{right:5%}.attack-callout.damage-left{left:3%}.attack-callout.damage-right{right:3%}}
 @media(prefers-reduced-motion:reduce){.fighter.attack-energy .fighter-sprite{animation:reducedEnergy .5s ease-in-out!important}.fighter.attack-punch .fighter-sprite{animation:reducedPunch .5s ease-in-out!important}.fighter.attack-kick .fighter-sprite{animation:reducedKick .5s ease-in-out!important}.fighter.is-hit .fighter-sprite{animation:reducedHit .5s ease-in-out!important}.fighter.is-missing .fighter-sprite{animation:reducedMiss .45s ease!important}.flying-weapon,.energy-bolt{animation-duration:.5s!important}.melee-strike{--punch-reach:240%;--punch-recoil:222%;--kick-reach:220%;--kick-recoil:180%;animation-duration:.55s!important}.impact-burst,.melee-impact,.attack-callout,.damage-pop{animation-duration:.6s!important}.sudden-death{animation:none!important}@keyframes reducedEnergy{50%{filter:brightness(1.7) drop-shadow(0 0 14px #54dfff)}}@keyframes reducedPunch{50%{translate:12% 0;filter:brightness(1.4)}}@keyframes reducedKick{50%{translate:10% -4%;rotate:8deg;filter:brightness(1.4)}}@keyframes reducedHit{40%{filter:brightness(2) sepia(1) saturate(4)}}@keyframes reducedMiss{50%{filter:grayscale(1);opacity:.65}}}
 @media(prefers-reduced-motion:reduce){.start-fighter{animation:none!important}}
+
+/* Mobile controls are rendered for every battle, but only surfaced on touch-first landscape devices. */
+.mobile-answer-controls { display:none; }
+.orientation-blocker { display:none; }
+
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  .mobile-answer-controls {
+    display:flex;
+    position:fixed;
+    z-index:40;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .mobile-answer-pad {
+    display:grid;
+    gap:8px;
+  }
+  .mobile-answer {
+    min-width:48px;
+    min-height:48px;
+    border:3px solid #fff;
+    border-radius:12px;
+    color:#fff;
+    font:900 clamp(19px,3vw,28px)/1 var(--display);
+    cursor:pointer;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+    box-shadow:0 4px 0 rgba(0,0,0,.45), inset 0 0 0 2px rgba(0,0,0,.25);
+  }
+  .mobile-answer:disabled {
+    cursor:not-allowed;
+    opacity:.42;
+    filter:grayscale(.9);
+    box-shadow:none;
+  }
+  .mobile-answer:not(:disabled):active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.45); }
+  .mobile-answer-pad-left .mobile-answer { background:linear-gradient(145deg,#ff8577,#b91f2a); }
+  .mobile-answer-pad-right .mobile-answer { background:linear-gradient(145deg,#54cffa,#1457bb); }
+
+  .mode-solo {
+    right:0;
+    bottom:0;
+    left:0;
+  }
+  .mode-solo .mobile-answer-pad-left {
+    width:100%;
+    grid-auto-flow:column;
+    grid-auto-columns:minmax(48px,1fr);
+  }
+
+  .mode-local {
+    inset:0;
+    align-items:center;
+    justify-content:space-between;
+    pointer-events:none;
+  }
+  .mode-local .mobile-answer-pad {
+    width:clamp(52px,10vw,76px);
+    max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 18px);
+    grid-auto-rows:minmax(48px,1fr);
+    pointer-events:auto;
+  }
+  .mode-local .mobile-answer-pad-left { margin-right:auto; }
+  .mode-local .mobile-answer-pad-right { margin-left:auto; }
+}
+
+@media (orientation: portrait) {
+  body:has(.orientation-blocker) { overflow:hidden; }
+  .orientation-blocker {
+    position:fixed;
+    z-index:100;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding:calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+    overflow:hidden;
+    background:rgba(4,9,20,.97);
+    color:#fff;
+    text-align:center;
+  }
+  .orientation-blocker-icon { color:#63d9ff; font:900 76px/1 system-ui,sans-serif; }
+  .orientation-blocker h2 { margin:0; font:900 clamp(28px,8vw,42px)/1.2 var(--display); }
+  .orientation-blocker p { margin:0; font-size:18px; }
+  .orientation-blocker button { min-width:160px; min-height:48px; border:3px solid #fff; border-radius:10px; background:#ffd64f; color:#101522; font:900 18px var(--body); }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .battle-shell { min-height:100dvh; }
+  .battle-topbar { min-height:38px; padding:4px 10px; }
+  .arena { height:clamp(150px,42vh,245px); }
+  .fighter-hud { margin-top:4px; padding:4px 6px; }
+  .fighter-stage { padding-bottom:0; }
+  .fighter-sprite { height:62%; }
+  .battle-console { min-height:0; margin-top:4px; padding:7px 12px; gap:8px; }
+  .battle-question-image { max-height:82px; }
+  .battle-question-copy h1 { margin-bottom:5px; font-size:clamp(16px,2.7vw,23px); }
+  .battle-choice { min-height:36px; padding:5px 8px; font-size:clamp(13px,2vw,17px); }
+  .battle-choice span { width:22px; height:22px; margin-right:5px; }
+  .battle-status { min-height:0; margin-top:3px; padding:3px 6px; }
+}

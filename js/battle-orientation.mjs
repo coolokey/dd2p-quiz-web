@@ -6,6 +6,71 @@ export function isPortraitViewport({ width, height } = {}) {
     && height > width;
 }
 
+export function createBattlePauseCoordinator({
+  isLiveBattle = () => false,
+  disableInput = () => {},
+  pauseCpu = () => {},
+  clearTimer = () => {},
+  renderBattle = () => {},
+  resumeCpu = () => {},
+  enableInput = () => {},
+  startTimer = () => {},
+} = {}) {
+  let orientationPaused = false;
+  let backgroundPaused = false;
+
+  function isPaused() {
+    return orientationPaused || backgroundPaused;
+  }
+
+  function pauseBattle() {
+    disableInput();
+    pauseCpu();
+    clearTimer();
+    renderBattle();
+  }
+
+  function resumeBattle() {
+    renderBattle();
+    if (isPaused()) return;
+    resumeCpu();
+    enableInput();
+    startTimer();
+  }
+
+  function setOrientationPaused(paused) {
+    const next = Boolean(paused);
+    if (next === orientationPaused || !isLiveBattle()) return false;
+    orientationPaused = next;
+    if (next) pauseBattle();
+    else resumeBattle();
+    return true;
+  }
+
+  function setBackgroundPaused(paused) {
+    const next = Boolean(paused);
+    if (next === backgroundPaused || !isLiveBattle()) return false;
+    backgroundPaused = next;
+    if (next) pauseBattle();
+    else resumeBattle();
+    return true;
+  }
+
+  function reset() {
+    orientationPaused = false;
+    backgroundPaused = false;
+  }
+
+  return {
+    isBackgroundPaused: () => backgroundPaused,
+    isOrientationPaused: () => orientationPaused,
+    isPaused,
+    reset,
+    setBackgroundPaused,
+    setOrientationPaused,
+  };
+}
+
 function browserDefaults() {
   const root = globalThis;
   return {
@@ -20,6 +85,7 @@ export function createBattleOrientationController({
   documentRef,
   screenRef,
   onPortraitChange = () => {},
+  onVisibilityChange = () => {},
 } = {}) {
   const defaults = browserDefaults();
   const viewport = windowRef ?? defaults.windowRef;
@@ -28,20 +94,33 @@ export function createBattleOrientationController({
   const orientation = screen?.orientation;
   let active = false;
   let lastPortrait;
+  let lastHidden;
   let session = 0;
   const registrations = [];
 
-  function sync() {
+  function sync({ force = false } = {}) {
     if (!active || !viewport) return;
     const portrait = isPortraitViewport({ width: viewport.innerWidth, height: viewport.innerHeight });
-    if (portrait === lastPortrait) return;
+    if (!force && portrait === lastPortrait) return;
     lastPortrait = portrait;
     onPortraitChange(portrait);
   }
 
-  function addListener(target, type) {
+  function syncVisibility({ force = false } = {}) {
+    if (!active || !document) return;
+    const hidden = document.visibilityState === 'hidden';
+    if (!force && hidden === lastHidden) return;
+    lastHidden = hidden;
+    onVisibilityChange(hidden);
+  }
+
+  function refresh() {
+    sync({ force: true });
+    syncVisibility({ force: true });
+  }
+
+  function addListener(target, type, listener = sync) {
     if (!target?.addEventListener) return;
-    const listener = sync;
     target.addEventListener(type, listener);
     registrations.push({ target, type, listener });
   }
@@ -51,10 +130,11 @@ export function createBattleOrientationController({
     const currentSession = ++session;
     active = true;
     sync();
+    syncVisibility();
     addListener(viewport, 'resize');
     addListener(orientation, 'change');
     addListener(document, 'fullscreenchange');
-    addListener(document, 'visibilitychange');
+    addListener(document, 'visibilitychange', syncVisibility);
 
     try {
       await document?.documentElement?.requestFullscreen?.();
@@ -69,6 +149,7 @@ export function createBattleOrientationController({
     }
     if (!active || currentSession !== session) return;
     sync();
+    syncVisibility();
   }
 
   function exitBattle() {
@@ -79,6 +160,7 @@ export function createBattleOrientationController({
       target.removeEventListener(type, listener);
     }
     lastPortrait = undefined;
+    lastHidden = undefined;
     try {
       const result = orientation?.unlock?.();
       result?.catch?.(() => {});
@@ -91,6 +173,7 @@ export function createBattleOrientationController({
     enterBattle,
     exitBattle,
     isActive: () => active,
+    refresh,
     sync,
   };
 }

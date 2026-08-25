@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as orientationModule from '../web/js/battle-orientation.mjs';
 import { createBattleOrientationController, isPortraitViewport } from '../web/js/battle-orientation.mjs';
 
 function eventTarget() {
@@ -111,4 +112,86 @@ test('全螢幕請求等待期間離場，不得在離場後鎖定方向', async
   resolveFullscreen();
   await entering;
   assert.equal(lockCalls, 0);
+});
+
+test('visibility 與 viewport 分開通知，重複狀態不重複發布', async () => {
+  const browser = fakeBrowser({ width: 844, height: 390 });
+  const portraitStates = [];
+  const hiddenStates = [];
+  const controller = createBattleOrientationController({
+    ...browser,
+    onPortraitChange: state => portraitStates.push(state),
+    onVisibilityChange: state => hiddenStates.push(state),
+  });
+
+  await controller.enterBattle();
+  browser.documentRef.visibilityState = 'hidden';
+  browser.documentRef.dispatch('visibilitychange');
+  browser.documentRef.dispatch('visibilitychange');
+  browser.documentRef.visibilityState = 'visible';
+  browser.documentRef.dispatch('visibilitychange');
+
+  assert.deepEqual(portraitStates, [false]);
+  assert.deepEqual(hiddenStates, [false, true, false]);
+});
+
+test('refresh 會強制重新發布目前方向與背景狀態', async () => {
+  const browser = fakeBrowser({ width: 844, height: 390 });
+  const states = [];
+  const controller = createBattleOrientationController({
+    ...browser,
+    onPortraitChange: state => states.push(`portrait:${state}`),
+    onVisibilityChange: state => states.push(`hidden:${state}`),
+  });
+
+  await controller.enterBattle();
+  assert.equal(typeof controller.refresh, 'function');
+  controller.refresh();
+
+  assert.deepEqual(states, [
+    'portrait:false',
+    'hidden:false',
+    'portrait:false',
+    'hidden:false',
+  ]);
+});
+
+test('背景暫停與直向暫停分離，只在兩者都解除後恢復對戰', () => {
+  assert.equal(typeof orientationModule.createBattlePauseCoordinator, 'function');
+  const events = [];
+  let live = true;
+  const coordinator = orientationModule.createBattlePauseCoordinator({
+    isLiveBattle: () => live,
+    disableInput: () => events.push('disable-input'),
+    pauseCpu: () => events.push('pause-cpu'),
+    clearTimer: () => events.push('clear-timer'),
+    renderBattle: () => events.push('render'),
+    resumeCpu: () => events.push('resume-cpu'),
+    enableInput: () => events.push('enable-input'),
+    startTimer: () => events.push('start-timer'),
+  });
+
+  assert.equal(coordinator.setBackgroundPaused(true), true);
+  assert.equal(coordinator.setBackgroundPaused(true), false);
+  assert.deepEqual(events, ['disable-input', 'pause-cpu', 'clear-timer', 'render']);
+  assert.equal(coordinator.isBackgroundPaused(), true);
+  assert.equal(coordinator.isOrientationPaused(), false);
+
+  coordinator.setOrientationPaused(true);
+  events.length = 0;
+  assert.equal(coordinator.setBackgroundPaused(false), true);
+  assert.deepEqual(events, ['render']);
+  assert.equal(coordinator.isPaused(), true);
+
+  assert.equal(coordinator.setOrientationPaused(false), true);
+  assert.deepEqual(events, ['render', 'render', 'resume-cpu', 'enable-input', 'start-timer']);
+  assert.equal(coordinator.isPaused(), false);
+
+  coordinator.setBackgroundPaused(true);
+  live = false;
+  events.length = 0;
+  assert.equal(coordinator.setBackgroundPaused(false), false);
+  assert.deepEqual(events, []);
+  coordinator.reset();
+  assert.equal(coordinator.isPaused(), false);
 });

@@ -15,7 +15,7 @@ import { createBattleLifecycle } from './battle-lifecycle.mjs';
 import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs';
 import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
 import { createBattleInputGate, createLatestSessionGate, markQuizRequestLoading, runLatestRequest, runStartSession } from './async-navigation.mjs';
-import { createBattleOrientationController } from './battle-orientation.mjs';
+import { createBattleOrientationController, createBattlePauseCoordinator } from './battle-orientation.mjs';
 import { bindMobileAnswerControls, setMobileAnswerControlsLocked } from './mobile-controls.mjs';
 
 const app = document.querySelector('#app');
@@ -29,11 +29,21 @@ let activeSubject = '全部';
 let gameMode = null;
 let answerPositionState = createAnswerPositionState();
 let keyTestPlayers = [];
-let orientationPaused = false;
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 const cpuController = createCpuController();
+const battlePause = createBattlePauseCoordinator({
+  isLiveBattle: hasLiveBattle,
+  disableInput: () => battleInputGate.disable(),
+  pauseCpu: pauseBattleCpu,
+  clearTimer: clearBattleTimer,
+  renderBattle: () => renderGame(),
+  resumeCpu: () => cpuController.resume(),
+  enableInput: () => battleInputGate.enable(),
+  startTimer: startBattleTimer,
+});
 const orientationController = createBattleOrientationController({
   onPortraitChange: handleBattleOrientationChange,
+  onVisibilityChange: battlePause.setBackgroundPaused,
 });
 const battleLifecycle = createBattleLifecycle({
   cpuController,
@@ -57,7 +67,10 @@ const bootstrapRequestGate = createLatestSessionGate();
 const quizRequestGate = createLatestSessionGate();
 const startSessionGate = createLatestSessionGate();
 const battleInputGate = createBattleInputGate();
-const startGameOnce = settings => startGame(settings);
+const startGameOnce = settings => {
+  requestBattleOrientation();
+  return startGame(settings);
+};
 const storedVolume = (key, fallback) => {
   const stored = localStorage.getItem(key);
   const value = Number(stored);
@@ -82,37 +95,35 @@ function clearBattleTimer() {
 }
 
 function hasLiveBattle() {
-  return Boolean(quizState && combatState && battleSettings && !combatState.ended);
+  return Boolean(
+    currentQuiz
+    && quizState
+    && Number.isInteger(quizState.questionIndex)
+    && combatState
+    && battleSettings
+    && !quizState.ended
+    && !combatState.ended
+  );
 }
 
 function handleBattleOrientationChange(portrait) {
-  if (portrait) {
-    if (orientationPaused || !hasLiveBattle()) return false;
-    orientationPaused = true;
-    battleInputGate.disable();
-    cpuController.pause();
-    clearBattleTimer();
-    renderGame();
-    return true;
-  }
-  if (!orientationPaused || !hasLiveBattle()) return false;
-  orientationPaused = false;
-  renderGame();
-  cpuController.resume();
-  battleInputGate.enable();
-  startBattleTimer();
-  return true;
+  return battlePause.setOrientationPaused(portrait);
+}
+
+function pauseBattleCpu() {
+  cpuController.pause();
+  if (battleLifecycle.isAnimating() && cpuController.remainingMs() === null) battleLifecycle.cancel();
 }
 
 function startBattleTimer() {
-  if (timerId !== null || orientationPaused || battleSettings?.mode !== 'time' || !combatState || combatState?.ended) return false;
+  if (timerId !== null || battlePause.isPaused() || battleSettings?.mode !== 'time' || !combatState || combatState?.ended) return false;
   timerId = setInterval(handleTimer, 1000);
   return true;
 }
 
 function exitBattleOrientation() {
   orientationController.exitBattle();
-  orientationPaused = false;
+  battlePause.reset();
 }
 
 function stopBattleActivity() {
@@ -136,6 +147,10 @@ function markStartLoading() {
     startButton.dataset.loading = 'true';
     startButton.textContent = '正在進入對戰……';
   }
+}
+
+function requestBattleOrientation() {
+  void orientationController.enterBattle().catch(error => console.warn('無法啟用對戰螢幕方向控制。', error));
 }
 
 function returnToMainMenu() {
@@ -341,13 +356,16 @@ function renderKeyTest(settings) {
 }
 
 async function startGame(settings) {
-  const started = await runStartSession({
+  return runStartSession({
     gate: startSessionGate,
     onCancel: stopBattleActivity,
     onLoading: markStartLoading,
     disableInput: battleInputGate.disable,
-    enableInput: battleInputGate.enable,
-    prepare: () => prepareBattleStart(settings),
+    enableInput: () => { if (!battlePause.isPaused()) battleInputGate.enable(); },
+    prepare: () => {
+      prepareBattleStart(settings);
+      orientationController.refresh();
+    },
     stages: [
       () => audioManager?.setScene(settings.arenaId),
       () => audioManager?.unlock(),
@@ -357,10 +375,6 @@ async function startGame(settings) {
     renderBattle: renderGame,
     onError: renderQuizError,
   });
-  if (started) {
-    void orientationController.enterBattle().catch(error => console.warn('無法啟用對戰螢幕方向控制。', error));
-  }
-  return started;
 }
 
 function prepareBattleStart(settings) {
@@ -449,7 +463,7 @@ function renderGame({
     gameMode: battleSettings.gameMode,
     eligiblePlayers: quizState.eligiblePlayers,
     mobileInputLocked: battleLifecycle.isAnimating(),
-    orientationPaused,
+    orientationPaused: battlePause.isOrientationPaused(),
     players: {
       left: { name: left.name || `角色 ${left.id}`, health: combatState.health.left, score: combatState.scores.left, image: characterImage(left) },
       right: { name: right.name || `角色 ${right.id}`, health: combatState.health.right, score: combatState.scores.right, image: characterImage(right) },
@@ -466,7 +480,7 @@ function renderGame({
 }
 
 function scheduleCpuForCurrentQuestion(question) {
-  if (orientationPaused) return false;
+  if (battlePause.isPaused()) return false;
   return battleLifecycle.scheduleCpu({
     questionKey: battleQuestionKey(),
     question,
@@ -575,7 +589,7 @@ async function processAnswer(input) {
     cpuController.cancel();
     if (!combatState?.ended && quizState && battleSettings) {
       renderGame();
-      if (!orientationPaused) battleInputGate.enable();
+      if (!battlePause.isPaused()) battleInputGate.enable();
     }
     return false;
   }

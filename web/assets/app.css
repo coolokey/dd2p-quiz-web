@@ -45,7 +45,7 @@ body:has(.start-screen) .noise { opacity:.06; mix-blend-mode:screen; }
 .start-arena p { position:absolute; z-index:4; right:8%; bottom:24px; left:8%; margin:0; color:#eef9ff; font-size:clamp(14px,1.6vw,19px); text-align:center; letter-spacing:.06em; }.start-arena p b { margin-right:10px; color:#64e6ff; font-family:var(--display); }
 @keyframes startFighterFloat { 0%,100% { translate:0 0; } 50% { translate:0 -12px; } }
 
-@media(max-width:900px) { .start-screen { width:min(100% - 28px,760px); }.start-topbar { align-items:flex-start; flex-direction:column; margin-bottom:24px; }.start-topbar > b { align-self:flex-start; }.start-grid { grid-template-columns:1fr; }.start-control,.start-arena { min-height:0; }.start-control { order:2; }.start-arena { order:1; min-height:390px; }.start-fighter { max-height:330px; }.start-stats { margin-top:36px; } }
+@media(max-width:900px) { .start-screen { width:min(100% - 28px,760px); }.start-topbar { align-items:flex-start; flex-direction:column; margin-bottom:24px; }.start-topbar > b { align-self:flex-start; }.start-grid { grid-template-columns:1fr; }.start-control,.start-arena { min-height:0; }.start-control { order:2; }.start-control::after { content:none; }.start-arena { order:1; min-height:390px; }.start-fighter { max-height:330px; }.start-stats { margin-top:36px; } }
 
 /* Original DD2P battle presentation */
 .selection-title { margin:0 0 8px; font-size:clamp(28px,4vw,48px); letter-spacing:-.05em; }

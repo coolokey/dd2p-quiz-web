@@ -36,3 +36,10 @@ test('起始畫面使用本地電競字型且提供響應式與減少動態樣�
   assert.ok(existsSync(new URL('../web/assets/fonts/NotoSansTC-Variable.woff2', import.meta.url)));
   assert.ok(existsSync(new URL('../web/assets/fonts/Orbitron-Variable.woff2', import.meta.url)));
 });
+
+test('窄螢幕不保留會造成水平溢位的 MODE SELECT 裝飾字', () => {
+  const css = readFileSync(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  const mobileCss = css.slice(css.indexOf('@media(max-width:900px)'));
+
+  assert.match(mobileCss, /\.start-control::after\s*\{\s*content:none/);
+});

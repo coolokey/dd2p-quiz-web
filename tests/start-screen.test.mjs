@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { bindStartScreen, buildStartScreen, resolveStartSceneUrl } from '../web/js/start-screen.mjs';
+import { bindStartScreen, buildStartScreen, escapeCssString, resolveStartSceneUrl } from '../web/js/start-screen.mjs';
 
 test('起始戰場圖片依頁面 URL 解析，保留 GitHub Pages 子路徑', () => {
   assert.equal(
@@ -21,6 +21,16 @@ test('沒有起始戰場圖片時保留安全漸層，且不插入 undefined URL
   assert.doesNotMatch(html, /url\('undefined'\)/);
   assert.doesNotMatch(html, /--start-scene:url/);
   assert.match(css, /var\(--start-scene,\s*none\)/);
+});
+
+test('起始戰場 style 跳脫 CSS 反斜線與單引號，不允許額外宣告', () => {
+  const scene = "https://example.test/a\\file/a'quote.png";
+  const html = buildStartScreen({ quizCount: 0, muted: false, scene, fighters: [] });
+  const style = html.match(/<section class="start-arena" style="([^"]+)"/)?.[1];
+
+  assert.equal(escapeCssString(scene), "https://example.test/a\\\\file/a\\'quote.png");
+  assert.equal(style, "--start-scene:url('https://example.test/a\\\\file/a\\&#039;quote.png')");
+  assert.doesNotMatch(style, /;\s*[a-z-]+\s*:/i);
 });
 
 test('控制台包含兩種主要模式與兩個次要入口', () => {

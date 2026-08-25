@@ -57,3 +57,12 @@ test('應用程式實際共用 latest session gate 保護資料載入與開局',
   assert.match(source, /quizRequestGate/);
   assert.match(source, /startSessionGate/);
 });
+
+test('開局完成前與所有離場路徑會關閉答案輸入', async () => {
+  const source = await readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
+  assert.match(source, /createBattleInputGate/);
+  assert.match(source, /disableInput: battleInputGate\.disable/);
+  assert.match(source, /enableInput: battleInputGate\.enable/);
+  assert.match(source, /function processAnswer\(input\) \{[\s\S]*battleInputGate\.run/);
+  assert.match(source, /if \(input && battleInputGate\.isEnabled\(\)/);
+});

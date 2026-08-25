@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  createBattleInputGate,
   createLatestSessionGate,
+  markQuizRequestLoading,
   runLatestRequest,
   runStartSession,
 } from '../web/js/async-navigation.mjs';
@@ -134,4 +136,70 @@ test('舊 start 慢完成時只有已開始的新 start 能開 timer 與渲染�
     'new:timer',
     'new:battle',
   ]);
+});
+
+test('開局音訊等待與取消返回後，答案輸入都不能計分或渲染戰鬥', async () => {
+  const gate = createLatestSessionGate();
+  const inputGate = createBattleInputGate();
+  const audio = deferred();
+  let score = 0;
+  let battleRenders = 0;
+  const submitAnswer = () => inputGate.run(() => {
+    score += 1;
+    battleRenders += 1;
+  });
+  const start = runStartSession({
+    gate,
+    disableInput: inputGate.disable,
+    enableInput: inputGate.enable,
+    stages: [() => audio.promise],
+    renderBattle: () => { battleRenders += 1; },
+  });
+
+  assert.equal(submitAnswer(), false);
+  gate.invalidate();
+  assert.equal(submitAnswer(), false);
+  audio.resolve();
+
+  assert.equal(await start, false);
+  assert.equal(score, 0);
+  assert.equal(battleRenders, 0);
+});
+
+test('只有 start 成功 commit 後才開放答案輸入', async () => {
+  const gate = createLatestSessionGate();
+  const inputGate = createBattleInputGate();
+  const audio = deferred();
+  let score = 0;
+  const start = runStartSession({
+    gate,
+    disableInput: inputGate.disable,
+    enableInput: inputGate.enable,
+    stages: [() => audio.promise],
+  });
+
+  assert.equal(inputGate.run(() => { score += 1; }), false);
+  audio.resolve();
+  assert.equal(await start, true);
+  assert.equal(inputGate.run(() => { score += 1; }), true);
+  assert.equal(score, 1);
+});
+
+test('題庫重試載入時停用重試按鈕並顯示 loading', () => {
+  const retry = {
+    disabled: false,
+    textContent: '重試',
+    attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; },
+  };
+  const root = {
+    querySelector: selector => selector === '#retry-quiz' ? retry : null,
+    querySelectorAll: () => [],
+  };
+
+  markQuizRequestLoading(root, 'math');
+
+  assert.equal(retry.disabled, true);
+  assert.equal(retry.textContent, '載入中……');
+  assert.equal(retry.attributes['aria-busy'], 'true');
 });

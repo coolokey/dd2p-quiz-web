@@ -262,6 +262,7 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 
 @media (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   .battle-console { grid-template-columns:auto 1fr; }
+  .battle-console--text-only .battle-question-copy { grid-column:1 / -1; }
   .battle-question-image { width:min(18vw,120px); }
   .battle-choices { grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px; }
   .mode-local .mobile-answer-pad { width:48px; gap:4px; }

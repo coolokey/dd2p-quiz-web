@@ -67,7 +67,7 @@ export function buildBattleMarkup(viewModel) {
       <div class="weapon-layer" data-weapon></div>
       <div class="impact-layer" data-impact aria-hidden="true"></div>
     </div>
-    <article class="battle-console">
+    <article class="battle-console${questionImage ? ' battle-console--with-image' : ' battle-console--text-only'}">
       ${questionImage}
       <div class="battle-question-copy">
         <h1>${escapeHtml(viewModel.prompt)}</h1>

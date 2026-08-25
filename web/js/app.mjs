@@ -6,7 +6,7 @@ import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
 import { createAnswerPositionState, prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
-import { bindCharacterActions, buildCharacterActions, createStartGate } from './prebattle-flow.mjs';
+import { bindCharacterActions, buildCharacterActions, createStartGate, isKeyTestComplete, recordKeyTestKey } from './prebattle-flow.mjs';
 import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
 import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
 import { GAME_MODES, playersForKeyTest, requiredCharacterPlayers, selectCpuCharacter } from './game-mode.mjs';
@@ -201,7 +201,7 @@ function renderCharacterSelect(settings) {
 function keysFor(player) { return [...PLAYER_KEYS[player].navigation, ...PLAYER_KEYS[player].answers]; }
 function renderKeyTest(settings) {
   keyHits = new Set();
-  keyTestPlayers = playersForKeyTest(gameMode);
+  keyTestPlayers = playersForKeyTest(settings.gameMode);
   const instruction = keyTestPlayers.length === 1 ? '請按一次自己的全部按鍵。亮起黃色即表示已偵測。' : '請兩位玩家各按一次自己的全部按鍵。亮起黃色即表示已偵測。';
   app.innerHTML = shell(`<p class="lead">${instruction}</p><div class="keytest">${keyTestPlayers.map(player => `<div class="player ${player}"><b>${playerName(player)}</b><div class="keys">${keysFor(player).map(code => `<span class="key" data-key="${code}">${esc(code.replace('Key','').replace('Digit',''))}</span>`).join('')}</div></div>`).join('')}</div><p id="key-hint" class="hint">請開始測試按鍵。</p><div class="actions"><button class="secondary" id="back">返回選角</button><button class="primary" id="start" disabled>開始對戰</button></div>`);
   app.querySelector('#back').onclick = () => renderCharacterSelect(settings);
@@ -370,10 +370,11 @@ document.addEventListener('keydown', event => {
   event.preventDefault();
   if (event.repeat) return;
   if (app.querySelector('#key-hint')) {
-    keyHits.add(event.code); app.querySelector(`[data-key="${event.code}"]`)?.classList.add('hit');
     const needed = keyTestPlayers.flatMap(keysFor);
+    keyHits = recordKeyTestKey(keyHits, needed, event.code);
+    if (needed.includes(event.code)) app.querySelector(`[data-key="${event.code}"]`)?.classList.add('hit');
     app.querySelector('#key-hint').textContent = `已偵測 ${keyHits.size}／${needed.length} 個按鍵。`;
-    if (needed.every(code => keyHits.has(code))) app.querySelector('#start').disabled = false;
+    if (isKeyTestComplete(keyHits, needed)) app.querySelector('#start').disabled = false;
     return;
   }
   const input = getAnswerInput(event.code); if (input) processAnswer(input);

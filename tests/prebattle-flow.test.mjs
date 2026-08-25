@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { bindCharacterActions, buildCharacterActions, createStartGate } from '../web/js/prebattle-flow.mjs';
+import { bindCharacterActions, buildCharacterActions, createStartGate, isKeyTestComplete, recordKeyTestKey } from '../web/js/prebattle-flow.mjs';
 
 test('選角完成後提供測試鍵盤與略過測試兩條入口', () => {
   const html = buildCharacterActions(true);
@@ -18,6 +18,18 @@ test('角色未選齊時停用兩個開始入口', () => {
 
 test('單人選角只要求玩家角色完成', () => {
   assert.doesNotMatch(buildCharacterActions(true), /disabled/);
+});
+
+test('單人鍵盤測試忽略右方按鍵，不增加計數也不解鎖', () => {
+  const needed = ['KeyW', 'KeyX'];
+  const afterRightPlayerKey = recordKeyTestKey(new Set(), needed, 'ArrowUp');
+
+  assert.equal(afterRightPlayerKey.size, 0);
+  assert.equal(isKeyTestComplete(afterRightPlayerKey, needed), false);
+
+  const afterLeftPlayerKeys = recordKeyTestKey(recordKeyTestKey(afterRightPlayerKey, needed, 'KeyW'), needed, 'KeyX');
+  assert.equal(afterLeftPlayerKeys.size, 2);
+  assert.equal(isKeyTestComplete(afterLeftPlayerKeys, needed), true);
 });
 
 test('兩個入口分別觸發測試與略過回呼', () => {

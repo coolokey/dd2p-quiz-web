@@ -13,6 +13,15 @@ export function bindCharacterActions(root, { onBack, onTest, onSkip }) {
   root.querySelector('#skip-key-test').onclick = onSkip;
 }
 
+export function recordKeyTestKey(keyHits, needed, code) {
+  if (!needed.includes(code)) return keyHits;
+  return new Set([...keyHits, code]);
+}
+
+export function isKeyTestComplete(keyHits, needed) {
+  return needed.every(code => keyHits.has(code));
+}
+
 export function createStartGate(start) {
   let starting = false;
   return async (...args) => {

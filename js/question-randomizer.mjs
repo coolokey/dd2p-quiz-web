@@ -20,7 +20,43 @@ export function randomizeQuestion(question, random = Math.random) {
   };
 }
 
-export function prepareQuestionRound(questions, random = Math.random) {
+export function createAnswerPositionState() {
+  return { bags: new Map(), lastPositions: new Map() };
+}
+
+function refillPositionBag(count, random, lastPosition) {
+  const bag = shuffleWithRandom(Array.from({ length: count }, (_, index) => index), random);
+  if (bag.length > 1 && bag[0] === lastPosition) {
+    const swapIndex = bag.findIndex(position => position !== lastPosition);
+    [bag[0], bag[swapIndex]] = [bag[swapIndex], bag[0]];
+  }
+  return bag;
+}
+
+function drawAnswerPosition(state, count, random) {
+  let bag = state.bags.get(count) ?? [];
+  if (bag.length === 0) bag = refillPositionBag(count, random, state.lastPositions.get(count));
+  const position = bag.shift();
+  state.bags.set(count, bag);
+  state.lastPositions.set(count, position);
+  return position;
+}
+
+export function randomizeQuestionToPosition(question, targetPosition, random = Math.random) {
+  if (!Number.isInteger(targetPosition) || targetPosition < 0 || targetPosition >= question.choices.length) {
+    throw new RangeError('正確答案目標位置超出選項範圍');
+  }
+  const correct = question.choices[question.answerIndex];
+  const wrong = shuffleWithRandom(question.choices.filter((_, index) => index !== question.answerIndex), random);
+  const choices = [...wrong];
+  choices.splice(targetPosition, 0, correct);
+  return { ...question, choices, answerIndex: targetPosition };
+}
+
+export function prepareQuestionRound(questions, random = Math.random, state = createAnswerPositionState()) {
   return shuffleWithRandom(questions, random)
-    .map(question => randomizeQuestion(question, random));
+    .map(question => {
+      const position = drawAnswerPosition(state, question.choices.length, random);
+      return randomizeQuestionToPosition(question, position, random);
+    });
 }

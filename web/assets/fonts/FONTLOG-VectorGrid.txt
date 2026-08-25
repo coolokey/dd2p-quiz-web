@@ -13,4 +13,5 @@ The source variable TTF was converted to WOFF2 with fontTools subset using the
 complete glyph set and --no-hinting. Because that optimization creates a
 modified font, all user-facing family, full, unique, and PostScript name-table
 entries were renamed to VectorGrid. The application-local CSS family is
-"VectorGrid Local" and the derivative file is VectorGrid-Variable.woff2.
+"VectorGrid Local" and the derivative file is VectorGrid-Variable.woff2. All
+named variable-font instances also use VectorGrid-prefixed PostScript names.

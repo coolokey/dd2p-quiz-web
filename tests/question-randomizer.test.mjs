@@ -109,3 +109,15 @@ test('拒絕不是整數或超出選項範圍的正確答案索引', () => {
   assert.throws(() => randomizeQuestionToPosition({ ...base, answerIndex: 2 }, 0), /正確答案索引無效/);
   assert.throws(() => prepareQuestionRound([{ ...base, answerIndex: 0.5 }]), /正確答案索引無效/);
 });
+
+test('整輪題目全部驗證通過前不消耗答案位置狀態', () => {
+  const state = createAnswerPositionState();
+  const before = structuredClone(state);
+  const questions = [
+    { prompt: '有效題', choices: ['正確', '錯誤'], answerIndex: 0 },
+    { prompt: '無效題', choices: ['唯一選項'], answerIndex: 0 },
+  ];
+
+  assert.throws(() => prepareQuestionRound(questions, () => 0.99, state), /選項數必須介於 2 至 4/);
+  assert.deepEqual(state, before);
+});

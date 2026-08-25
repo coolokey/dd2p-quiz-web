@@ -22,12 +22,25 @@ NAME_VALUES = {
 }
 
 
+def set_name_value(font: TTFont, name_id: int, value: str) -> None:
+    records = [record for record in font["name"].names if record.nameID == name_id]
+    if not records:
+        font["name"].setName(value, name_id, 3, 1, 0x409)
+        return
+    for record in records:
+        record.string = value.encode(record.getEncoding())
+
+
 def rename_font(source: Path, destination: Path) -> None:
     font = TTFont(source)
-    for record in font["name"].names:
-        value = NAME_VALUES.get(record.nameID)
-        if value is not None:
-            record.string = value.encode(record.getEncoding())
+    for name_id, value in NAME_VALUES.items():
+        set_name_value(font, name_id, value)
+    for instance in font["fvar"].instances:
+        if instance.postscriptNameID == 0xFFFF:
+            continue
+        subfamily = font["name"].getDebugName(instance.subfamilyNameID) or "Regular"
+        postscript_style = "".join(character for character in subfamily if character.isascii() and character.isalnum())
+        set_name_value(font, instance.postscriptNameID, f"VectorGrid-{postscript_style or 'Regular'}")
     font.flavor = "woff2"
     font.save(destination)
 

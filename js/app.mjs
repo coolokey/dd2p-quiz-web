@@ -35,6 +35,7 @@ const battleLifecycle = createBattleLifecycle({
   animateAnswer: animateBattleAnswer,
   revealAnswer: renderCorrectAnswerReveal,
   afterAnswer: afterBattleAnswer,
+  onSettled: settleBattleAnswer,
   submitCpuAnswer: input => battleLifecycle.submit(input),
   onQuestionAdvanced: () => battleSession.questionAdvanced(),
 });
@@ -435,15 +436,21 @@ function renderCorrectAnswerReveal({ question, answerIndex, progress }) {
 }
 
 function afterBattleAnswer() {
-  if (combatState.ended) return renderResult();
+  if (combatState.ended) {
+    renderResult();
+    return { renderBattle: false };
+  }
   if (battleSession.finishAnswer({ questionIndex: quizState.questionIndex, activeQuestionIndex })) {
     activeQuestionIndex = null;
-    if (!combatState.ended) renderGame();
-    return;
+    return { renderBattle: !combatState.ended };
   }
   activeQuestionIndex = null;
   if (battleSettings.mode === 'questions' && combatState.phase === 'regulation' && quizState.questionIndex >= regulationLimit) battleSession.regulationEnded();
-  if (!combatState.ended) renderGame();
+  return { renderBattle: !combatState.ended };
+}
+
+function settleBattleAnswer(_outcome, settlement) {
+  if (settlement?.renderBattle) renderGame();
 }
 
 function processAnswer(input) {

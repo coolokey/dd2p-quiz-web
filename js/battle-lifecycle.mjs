@@ -16,6 +16,7 @@ export function createBattleLifecycle({
   revealAnswer,
   wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
   afterAnswer = () => {},
+  onSettled = () => {},
   submitCpuAnswer,
   onQuestionAdvanced,
   revealDelay = DEFAULT_REVEAL_DELAY,
@@ -102,7 +103,12 @@ export function createBattleLifecycle({
         return true;
       }
 
-      await afterAnswer(outcome);
+      const settlement = await afterAnswer(outcome);
+      if (!isCurrentSubmission()) return false;
+
+      activeSubmission = null;
+      pendingCpuAnswer = null;
+      await onSettled(outcome, settlement);
       if (token.sessionEpoch !== sessionEpoch) return false;
       return true;
     } finally {

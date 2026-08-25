@@ -37,6 +37,77 @@ test('戰鬥畫面包含場景、雙方角色、血條、題目與音量控制',
   assert.match(html, /data-effects-volume/);
 });
 
+test('本機四選題建立兩側觸控答題板與八個按鈕', () => {
+  const html = buildBattleMarkup({
+    ...viewModel,
+    gameMode: 'local',
+    eligiblePlayers: ['left', 'right'],
+    mobileInputLocked: false,
+  });
+  assert.match(html, /mobile-answer-controls mode-local/);
+  assert.match(html, /mobile-answer-pad-left/);
+  assert.match(html, /mobile-answer-pad-right/);
+  assert.equal((html.match(/data-touch-answer=/g) ?? []).length, 8);
+  assert.ok(html.indexOf('battle-console') < html.indexOf('mobile-answer-controls'));
+  assert.ok(html.indexOf('mobile-answer-controls') < html.indexOf('battle-status'));
+});
+
+test('只有右方可作答時，左方觸控按鈕停用而右方保持可用', () => {
+  const html = buildBattleMarkup({
+    ...viewModel,
+    gameMode: 'local',
+    eligiblePlayers: ['right'],
+    mobileInputLocked: false,
+  });
+  const leftPad = html.match(/mobile-answer-pad-left[\s\S]*?<\/div>/)?.[0] ?? '';
+  const rightPad = html.match(/mobile-answer-pad-right[\s\S]*?<\/div>/)?.[0] ?? '';
+  assert.equal((leftPad.match(/ disabled/g) ?? []).length, 4);
+  assert.equal((rightPad.match(/ disabled/g) ?? []).length, 0);
+});
+
+test('單人模式只建立左方觸控答題板', () => {
+  const html = buildBattleMarkup({
+    ...viewModel,
+    gameMode: 'solo',
+    eligiblePlayers: ['left'],
+    mobileInputLocked: false,
+  });
+  assert.match(html, /mobile-answer-controls mode-solo/);
+  assert.match(html, /mobile-answer-pad-left/);
+  assert.doesNotMatch(html, /mobile-answer-pad-right/);
+});
+
+test('行動輸入鎖定時會停用所有觸控作答按鈕', () => {
+  const html = buildBattleMarkup({
+    ...viewModel,
+    gameMode: 'local',
+    eligiblePlayers: ['left', 'right'],
+    mobileInputLocked: true,
+  });
+  assert.equal((html.match(/data-touch-answer=[^>]* disabled/g) ?? []).length, 8);
+});
+
+test('直向暫停時顯示無障礙旋轉提示並停用全部觸控按鈕', () => {
+  const html = buildBattleMarkup({
+    ...viewModel,
+    gameMode: 'local',
+    eligiblePlayers: ['left', 'right'],
+    mobileInputLocked: false,
+    orientationPaused: true,
+  });
+  assert.match(html, /class="orientation-blocker"[^>]*role="dialog"[^>]*aria-modal="true"/);
+  assert.match(html, /請將裝置轉成橫向/);
+  assert.match(html, /轉為橫向後會繼續目前對戰。/);
+  assert.match(html, /aria-hidden="true"/);
+  assert.match(html, /type="button" data-return-main-menu[^>]*>返回主選單/);
+  assert.equal((html.match(/data-touch-answer=[^>]* disabled/g) ?? []).length, 8);
+});
+
+test('未直向暫停的戰鬥畫面不含旋轉提示遮罩', () => {
+  const html = buildBattleMarkup({ ...viewModel, orientationPaused: false });
+  assert.doesNotMatch(html, /orientation-blocker/);
+});
+
 test('驟死階段顯示驟死提示', () => {
   const html = buildBattleMarkup({ ...viewModel, phase: 'sudden-death' });
   assert.match(html, /驟死決勝/);
@@ -184,6 +255,28 @@ test('減少動態模式仍保留可辨識的攻擊與命中效果', async () =>
   const reducedMotion = css.slice(css.indexOf('@media(prefers-reduced-motion:reduce)'));
   assert.doesNotMatch(reducedMotion, /animation-duration:\s*\.01ms/);
   assert.match(css, /\.energy-bolt/);
+});
+
+test('行動橫向觸控介面提供安全區、觸控尺寸、直向遮罩與小高度規則', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.match(css, /\.mobile-answer-controls\s*\{[^}]*display:\s*none/);
+  assert.match(css, /@media\s*\(hover:\s*none\)\s*and\s*\(pointer:\s*coarse\)\s*and\s*\(orientation:\s*landscape\)/);
+  assert.match(css, /\.mobile-answer-controls\s*\{[^}]*display:\s*(?:flex|grid)/);
+  assert.match(css, /env\(safe-area-inset-top\)/);
+  assert.match(css, /env\(safe-area-inset-right\)/);
+  assert.match(css, /env\(safe-area-inset-bottom\)/);
+  assert.match(css, /env\(safe-area-inset-left\)/);
+  assert.match(css, /\.mobile-answer\s*\{[^}]*min-(?:width|height):\s*48px/);
+  assert.match(css, /\.mobile-answer\s*\{[^}]*touch-action:\s*none/);
+  assert.match(css, /\.mobile-answer\s*\{[^}]*user-select:\s*none/);
+  assert.match(css, /\.mode-solo/);
+  assert.match(css, /\.mode-local/);
+  assert.match(css, /\.mobile-answer-pad-left/);
+  assert.match(css, /\.mobile-answer-pad-right/);
+  assert.match(css, /\.mobile-answer:disabled/);
+  assert.match(css, /\.orientation-blocker/);
+  assert.match(css, /@media\s*\(orientation:\s*portrait\)/);
+  assert.match(css, /@media\s*\(orientation:\s*landscape\)\s*and\s*\(max-height:\s*500px\)/);
 });
 
 test('CSS 包含三種攻擊與三種受擊動畫', async () => {

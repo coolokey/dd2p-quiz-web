@@ -1,3 +1,5 @@
+import { buildMobileAnswerControls } from './mobile-controls.mjs';
+
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
 })[character]);
@@ -30,6 +32,20 @@ export function buildBattleMarkup(viewModel) {
   const suddenDeath = viewModel.phase === 'sudden-death'
     ? '<div class="sudden-death" role="status">驟死決勝</div>'
     : '';
+  const mobileControls = buildMobileAnswerControls({
+    gameMode: viewModel.gameMode,
+    choiceCount: viewModel.choices.length,
+    eligiblePlayers: viewModel.eligiblePlayers,
+    locked: viewModel.mobileInputLocked || viewModel.orientationPaused,
+  });
+  const orientationBlocker = viewModel.orientationPaused
+    ? `<aside class="orientation-blocker" role="dialog" aria-modal="true">
+      <span class="orientation-blocker-icon" aria-hidden="true">↻</span>
+      <h2>請將裝置轉成橫向</h2>
+      <p>轉為橫向後會繼續目前對戰。</p>
+      <button type="button" data-return-main-menu>返回主選單</button>
+    </aside>`
+    : '';
 
   return `<div class="battle-shell" style="--scene:url('${escapeHtml(sceneImage)}')">
     <header class="battle-topbar">
@@ -61,6 +77,8 @@ export function buildBattleMarkup(viewModel) {
         }).join('')}</div>
       </div>
     </article>
+    ${mobileControls}
+    ${orientationBlocker}
     <p class="battle-status" aria-live="polite">${escapeHtml(viewModel.status)}</p>
   </div>`;
 }

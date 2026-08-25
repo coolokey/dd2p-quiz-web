@@ -8,6 +8,8 @@ import { prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
 import { bindCharacterActions, buildCharacterActions, createStartGate } from './prebattle-flow.mjs';
 import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
+import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
+import { GAME_MODES } from './game-mode.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -17,6 +19,7 @@ let characterSelection = createCharacterSelection(), keyHits = new Set(), animat
 let pendingRegulationEnd = false, activeQuestionIndex = null;
 let attackState = createAttackState();
 let activeSubject = '全部';
+let gameMode = null;
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 const startGameOnce = createStartGate(settings => startGame(settings));
 const storedVolume = (key, fallback) => {
@@ -37,6 +40,64 @@ function characterImage(character, state = 'idle') {
 }
 function characterById(id) { return battleManifest.characters.find(character => String(character.id) === String(id)); }
 function playUiSound(name = 'menu') { audioManager?.unlock(); audioManager?.playSfx(name); }
+
+function renderStartScreen() {
+  const playable = battleManifest.characters.filter(character => character.playable !== false);
+  app.innerHTML = buildStartScreen({
+    quizCount: catalog.length,
+    muted,
+    scene: battleManifest.scenes[0]?.image,
+    fighters: [characterImage(playable[0]), characterImage(playable[1])],
+    escape: esc,
+  });
+  bindStartScreen(app, {
+    onMode: mode => {
+      if (!Object.values(GAME_MODES).includes(mode)) return;
+      gameMode = mode; playUiSound('confirm'); renderCatalog();
+    },
+    onHelp: renderStartHelp,
+    onAudio: renderStartAudioSettings,
+  });
+}
+
+function renderStartHelp() {
+  app.innerHTML = shell(`<h2 class="selection-title">操作說明</h2>
+    <div class="help-content">
+      <section><h3>左方玩家　紅隊</h3><p>移動與選擇：W、X、A、D；作答：1、2、3、4。</p></section>
+      <section><h3>右方玩家　藍隊</h3><p>移動與選擇：↑、↓、←、→；作答：0、−、＝、反斜線（\\）。</p></section>
+      <section><h3>單人／雙人模式</h3><p>單人模式由玩家對戰電腦；本機雙人對戰由兩位玩家使用同一台鍵盤同場搶答。</p></section>
+    </div>
+    <div class="actions"><button class="primary" id="back-start">返回主選單</button></div>`);
+  app.querySelector('#back-start').onclick = renderStartScreen;
+}
+
+function renderStartAudioSettings() {
+  app.innerHTML = shell(`<h2 class="selection-title">音效設定</h2>
+    <label class="volume-setting">主音量<input data-start-volume="master" type="range" min="0" max="1" step="0.05" value="${audioVolumes.master}"></label>
+    <label class="volume-setting">背景音樂<input data-start-volume="music" type="range" min="0" max="1" step="0.05" value="${audioVolumes.music}"></label>
+    <label class="volume-setting">音效<input data-start-volume="effects" type="range" min="0" max="1" step="0.05" value="${audioVolumes.effects}"></label>
+    <div class="actions"><button class="secondary" id="toggle-start-muted">${muted ? '解除靜音' : '全部靜音'}</button><button class="primary" id="back-start">返回主選單</button></div>`);
+  const methods = { master: 'setVolume', music: 'setMusicVolume', effects: 'setEffectsVolume' };
+  const keys = { master: 'dd2p-volume-master', music: 'dd2p-volume-music', effects: 'dd2p-volume-effects' };
+  app.querySelectorAll('[data-start-volume]').forEach(slider => slider.oninput = () => {
+    const kind = slider.dataset.startVolume;
+    audioVolumes[kind] = Number(slider.value);
+    localStorage.setItem(keys[kind], slider.value);
+    audioManager?.[methods[kind]](audioVolumes[kind]);
+  });
+  app.querySelector('#toggle-start-muted').onclick = () => {
+    muted = !muted;
+    localStorage.setItem('dd2p-muted', String(muted));
+    audioManager?.setMuted(muted);
+    renderStartAudioSettings();
+  };
+  app.querySelector('#back-start').onclick = renderStartScreen;
+}
+
+function renderLoadFailure() {
+  app.innerHTML = shell('<p class="error">題庫或對戰素材尚未產生。請先執行 npm run convert 與 npm run prepare:battle。</p><div class="actions"><button class="primary" id="reload-app">重新載入</button></div>');
+  app.querySelector('#reload-app').addEventListener('click', () => location.reload());
+}
 
 function renderCatalog() {
   audioManager?.stop();
@@ -297,5 +358,5 @@ Promise.all([
   fetch('./assets/battle/manifest.json').then(response => response.ok ? response.json() : Promise.reject(new Error('battle manifest'))),
 ]).then(([data, manifest]) => {
   catalog = data.quizzes; battleManifest = manifest;
-  audioManager = createAudioManager({ manifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects }); renderCatalog();
-}).catch(() => { app.innerHTML = shell('<p class="error">題庫或對戰素材尚未產生。請先執行 npm run convert 與 npm run prepare:battle。</p>'); });
+  audioManager = createAudioManager({ manifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects }); renderStartScreen();
+}).catch(renderLoadFailure);

@@ -108,6 +108,15 @@ test('未直向暫停的戰鬥畫面不含旋轉提示遮罩', () => {
   assert.doesNotMatch(html, /orientation-blocker/);
 });
 
+test('矮橫式可用題圖 class 判斷題目區是否需要跨滿雙欄', async () => {
+  const withImage = buildBattleMarkup({ ...viewModel, questionImage: './question.png' });
+  const withoutImage = buildBattleMarkup({ ...viewModel, questionImage: null });
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.match(withImage, /class="battle-console battle-console--with-image"/);
+  assert.match(withoutImage, /class="battle-console battle-console--text-only"/);
+  assert.match(css, /\.battle-console--text-only \.battle-question-copy\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/);
+});
+
 test('驟死階段顯示驟死提示', () => {
   const html = buildBattleMarkup({ ...viewModel, phase: 'sudden-death' });
   assert.match(html, /驟死決勝/);

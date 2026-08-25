@@ -16,6 +16,10 @@ test('角色未選齊時停用兩個開始入口', () => {
   assert.match(html, /id="skip-key-test"[^>]*disabled/);
 });
 
+test('單人選角只要求玩家角色完成', () => {
+  assert.doesNotMatch(buildCharacterActions(true), /disabled/);
+});
+
 test('兩個入口分別觸發測試與略過回呼', () => {
   const buttons = Object.fromEntries(['#back', '#test-keys', '#skip-key-test'].map(id => [id, {}]));
   const calls = [];

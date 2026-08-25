@@ -4,12 +4,12 @@ import { applyCorrectAnswer, applyWrongAnswer, createBattleState, finishRegulati
 import { createCharacterSelection, selectCharacter } from './character-select.mjs';
 import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
-import { prepareQuestionRound } from './question-randomizer.mjs';
+import { createAnswerPositionState, prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
 import { bindCharacterActions, buildCharacterActions, createStartGate } from './prebattle-flow.mjs';
 import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
 import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
-import { GAME_MODES } from './game-mode.mjs';
+import { GAME_MODES, playersForKeyTest, requiredCharacterPlayers, selectCpuCharacter } from './game-mode.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -20,6 +20,8 @@ let pendingRegulationEnd = false, activeQuestionIndex = null;
 let attackState = createAttackState();
 let activeSubject = '全部';
 let gameMode = null;
+let answerPositionState = createAnswerPositionState();
+let keyTestPlayers = [];
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 const startGameOnce = createStartGate(settings => startGame(settings));
 const storedVolume = (key, fallback) => {
@@ -120,7 +122,10 @@ async function selectQuiz(id) {
 }
 
 function renderRules() {
-  app.innerHTML = shell(`<p class="lead"><b>${esc(currentQuiz.name)}</b>　${currentQuiz.questions.length} 題可用</p><div class="form-row"><label class="mode"><input type="radio" name="mode" value="questions" checked><b>固定題數制</b><small>答完指定題數後結算；平手進入驟死題。</small></label><label class="mode"><input type="radio" name="mode" value="time"><b>限時制</b><small>時間到結算；平手進入驟死題。</small></label></div><label><span id="limit-label">題數</span><input id="limit" class="number" type="number" min="1" max="${currentQuiz.questions.length}" value="${Math.min(10,currentQuiz.questions.length)}"></label><div class="actions"><button class="secondary" id="back">返回題庫</button><button class="primary" id="next">選擇戰場</button></div>`);
+  const cpuDifficulty = gameMode === GAME_MODES.solo
+    ? `<fieldset class="cpu-difficulty"><legend>CPU 難度</legend><label><input type="radio" name="cpu-difficulty" value="easy">簡單</label><label><input type="radio" name="cpu-difficulty" value="normal" checked>普通</label><label><input type="radio" name="cpu-difficulty" value="hard">困難</label></fieldset>`
+    : '';
+  app.innerHTML = shell(`<p class="lead"><b>${esc(currentQuiz.name)}</b>　${currentQuiz.questions.length} 題可用</p><div class="form-row"><label class="mode"><input type="radio" name="mode" value="questions" checked><b>固定題數制</b><small>答完指定題數後結算；平手進入驟死題。</small></label><label class="mode"><input type="radio" name="mode" value="time"><b>限時制</b><small>時間到結算；平手進入驟死題。</small></label></div><label><span id="limit-label">題數</span><input id="limit" class="number" type="number" min="1" max="${currentQuiz.questions.length}" value="${Math.min(10,currentQuiz.questions.length)}"></label>${cpuDifficulty}<div class="actions"><button class="secondary" id="back">返回題庫</button><button class="primary" id="next">選擇戰場</button></div>`);
   const limit = app.querySelector('#limit');
   app.querySelectorAll('[name=mode]').forEach(input => input.onchange = () => {
     const timed = input.value === 'time' && input.checked;
@@ -134,7 +139,8 @@ function renderRules() {
     const mode = app.querySelector('[name=mode]:checked').value;
     const maximum = mode === 'time' ? 600 : currentQuiz.questions.length;
     const value = Math.min(maximum, Math.max(1, Number(limit.value) || (mode === 'time' ? 60 : 10)));
-    renderArenaSelect({ mode, limit: value });
+    const cpuDifficulty = app.querySelector('[name="cpu-difficulty"]:checked')?.value;
+    renderArenaSelect({ mode, limit: value, gameMode, cpuDifficulty });
   };
 }
 
@@ -164,14 +170,27 @@ function selectedPreview(player) {
   return character ? `<div class="selected-fighter"><img src="${esc(characterImage(character))}" alt="${esc(character.name || `角色 ${character.id}`)}"></div>` : '<div class="selected-fighter"><b>尚未選擇</b></div>';
 }
 function renderCharacterSelect(settings) {
-  app.innerHTML = shell(`<h2 class="selection-title">雙方選擇角色</h2><p class="lead">同一名角色不能重複選擇。請先選紅方，再選藍方。</p><div class="versus-select"><section class="select-side left"><h3>左方玩家　紅隊</h3>${selectedPreview('left')}<div class="character-grid">${characterCards('left')}</div></section><div class="select-vs">VS</div><section class="select-side right"><h3>右方玩家　藍隊</h3>${selectedPreview('right')}<div class="character-grid">${characterCards('right')}</div></section></div>${battleManifest.characters.length ? '' : '<p class="error">角色素材尚未完成，請重新執行素材準備程序。</p>'}${buildCharacterActions(Boolean(characterSelection.left && characterSelection.right))}`);
+  const solo = gameMode === GAME_MODES.solo;
+  const ready = requiredCharacterPlayers(gameMode).every(player => characterSelection[player]);
+  const rightSelection = solo
+    ? '<section class="select-side right cpu-preview"><h3>CPU　藍隊</h3><div class="selected-fighter"><b>CPU 將隨機選角</b></div><p class="hint">開局時會從尚未選取的可用角色中隨機選擇。</p></section>'
+    : `<section class="select-side right"><h3>右方玩家　藍隊</h3>${selectedPreview('right')}<div class="character-grid">${characterCards('right')}</div></section>`;
+  const title = solo ? '選擇你的角色' : '雙方選擇角色';
+  const lead = solo ? '選擇紅隊角色後，CPU 會在開局時隨機選擇另一名可用角色。' : '同一名角色不能重複選擇。請先選紅方，再選藍方。';
+  app.innerHTML = shell(`<h2 class="selection-title">${title}</h2><p class="lead">${lead}</p><div class="versus-select"><section class="select-side left"><h3>左方玩家　紅隊</h3>${selectedPreview('left')}<div class="character-grid">${characterCards('left')}</div></section><div class="select-vs">VS</div>${rightSelection}</div>${battleManifest.characters.length ? '' : '<p class="error">角色素材尚未完成，請重新執行素材準備程序。</p>'}${buildCharacterActions(ready)}`);
   app.querySelectorAll('[data-character]').forEach(button => button.onclick = () => {
     try {
       characterSelection = selectCharacter(characterSelection, button.dataset.player, characterById(button.dataset.character));
       playUiSound(); renderCharacterSelect(settings);
     } catch (error) { app.querySelector('.lead').textContent = error.message; }
   });
-  const selectedSettings = () => ({ ...settings, characters: { ...characterSelection } });
+  const selectedSettings = () => {
+    const selections = { ...characterSelection };
+    if (gameMode === GAME_MODES.solo) {
+      selections.right = String(selectCpuCharacter(battleManifest.characters, selections.left).id);
+    }
+    return { ...settings, gameMode, characters: selections };
+  };
   bindCharacterActions(app, {
     onBack: () => renderArenaSelect(settings, settings.arenaId),
     onTest: () => { playUiSound('start'); renderKeyTest(selectedSettings()); },
@@ -182,14 +201,17 @@ function renderCharacterSelect(settings) {
 function keysFor(player) { return [...PLAYER_KEYS[player].navigation, ...PLAYER_KEYS[player].answers]; }
 function renderKeyTest(settings) {
   keyHits = new Set();
-  app.innerHTML = shell(`<p class="lead">請兩位玩家各按一次自己的全部按鍵。亮起黃色即表示已偵測。</p><div class="keytest">${['left','right'].map(player => `<div class="player ${player}"><b>${playerName(player)}</b><div class="keys">${keysFor(player).map(code => `<span class="key" data-key="${code}">${esc(code.replace('Key','').replace('Digit',''))}</span>`).join('')}</div></div>`).join('')}</div><p id="key-hint" class="hint">請開始測試按鍵。</p><div class="actions"><button class="secondary" id="back">返回選角</button><button class="primary" id="start" disabled>開始對戰</button></div>`);
+  keyTestPlayers = playersForKeyTest(gameMode);
+  const instruction = keyTestPlayers.length === 1 ? '請按一次自己的全部按鍵。亮起黃色即表示已偵測。' : '請兩位玩家各按一次自己的全部按鍵。亮起黃色即表示已偵測。';
+  app.innerHTML = shell(`<p class="lead">${instruction}</p><div class="keytest">${keyTestPlayers.map(player => `<div class="player ${player}"><b>${playerName(player)}</b><div class="keys">${keysFor(player).map(code => `<span class="key" data-key="${code}">${esc(code.replace('Key','').replace('Digit',''))}</span>`).join('')}</div></div>`).join('')}</div><p id="key-hint" class="hint">請開始測試按鍵。</p><div class="actions"><button class="secondary" id="back">返回選角</button><button class="primary" id="start" disabled>開始對戰</button></div>`);
   app.querySelector('#back').onclick = () => renderCharacterSelect(settings);
   app.querySelector('#start').onclick = () => startGameOnce(settings);
 }
 
 async function startGame(settings) {
   battleSettings = settings;
-  currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions) };
+  answerPositionState = createAnswerPositionState();
+  currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState) };
   quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
@@ -215,7 +237,7 @@ function handleTimer() {
 }
 function ensureQuestion() {
   if (quizState.questionIndex >= currentQuiz.activeQuestions.length) {
-    currentQuiz.activeQuestions.push(...prepareQuestionRound(currentQuiz.questions));
+    currentQuiz.activeQuestions.push(...prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState));
   }
 }
 function closeRegulation({ advanceQuestion = false } = {}) {
@@ -332,8 +354,12 @@ function renderResult() {
   const reason = combatState.endReason === 'ko' ? 'KO！' : combatState.endReason === 'sudden-death' ? '驟死決勝！' : '分數勝利！';
   if (combatState.endReason === 'ko') audioManager?.playSfx('ko');
   audioManager?.playSfx('win'); audioManager?.playSfx('lose');
-  app.innerHTML = shell(`<article class="result"><p class="lead">本局結算　${esc(reason)}</p><div class="winner">${esc(winner)}獲勝！</div><p class="prompt">紅隊 ${combatState.scores.left} 分　：　藍隊 ${combatState.scores.right} 分</p><div class="actions"><button class="secondary" id="catalog">更換題庫</button><button class="primary" id="again">再玩一次</button></div></article>`);
+  app.innerHTML = shell(`<article class="result"><p class="lead">本局結算　${esc(reason)}</p><div class="winner">${esc(winner)}獲勝！</div><p class="prompt">紅隊 ${combatState.scores.left} 分　：　藍隊 ${combatState.scores.right} 分</p><div class="actions"><button class="secondary" id="catalog">更換題庫</button><button class="secondary" id="main-menu">返回主選單</button><button class="primary" id="again">再玩一次</button></div></article>`);
   app.querySelector('#catalog').onclick = () => { characterSelection = createCharacterSelection(); renderCatalog(); };
+  app.querySelector('#main-menu').onclick = () => {
+    if (timerId) clearInterval(timerId); timerId = null;
+    characterSelection = createCharacterSelection(); gameMode = null; renderStartScreen();
+  };
   app.querySelector('#again').onclick = () => { audioManager?.stop(); characterSelection = createCharacterSelection(); renderRules(); };
 }
 
@@ -345,7 +371,7 @@ document.addEventListener('keydown', event => {
   if (event.repeat) return;
   if (app.querySelector('#key-hint')) {
     keyHits.add(event.code); app.querySelector(`[data-key="${event.code}"]`)?.classList.add('hit');
-    const needed = Object.values(PLAYER_KEYS).flatMap(keys => [...keys.navigation, ...keys.answers]);
+    const needed = keyTestPlayers.flatMap(keysFor);
     app.querySelector('#key-hint').textContent = `已偵測 ${keyHits.size}／${needed.length} 個按鍵。`;
     if (needed.every(code => keyHits.has(code))) app.querySelector('#start').disabled = false;
     return;

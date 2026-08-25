@@ -114,6 +114,7 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 .fighter { --melee-approach:113%; --melee-distance:145%; --melee-recoil:133%; --kick-approach:99%; --kick-distance:138%; --kick-recoil:124%; }.fighter.attack-energy .fighter-sprite { animation:energyChargeLeft .65s ease-in-out; }.fighter-right.attack-energy .fighter-sprite { animation:energyChargeRight .65s ease-in-out; }.fighter-left.attack-punch .fighter-sprite { animation:punchLeft .65s ease-in-out; }.fighter-right.attack-punch .fighter-sprite { animation:punchRight .65s ease-in-out; }.fighter-left.attack-kick .fighter-sprite { animation:kickLeft .65s ease-in-out; }.fighter-right.attack-kick .fighter-sprite { animation:kickRight .65s ease-in-out; }.fighter.is-hit .fighter-sprite { filter:brightness(2) sepia(1) saturate(4) drop-shadow(0 0 20px #ff2b1c); }.fighter-left.hit-energy .fighter-sprite { animation:hitEnergyLeft .6s ease-out; }.fighter-right.hit-energy .fighter-sprite { animation:hitEnergyRight .6s ease-out; }.fighter-left.hit-punch .fighter-sprite { animation:hitPunchLeft .6s ease-out; }.fighter-right.hit-punch .fighter-sprite { animation:hitPunchRight .6s ease-out; }.fighter-left.hit-kick .fighter-sprite { animation:hitKickLeft .6s ease-out; }.fighter-right.hit-kick .fighter-sprite { animation:hitKickRight .6s ease-out; }.fighter.is-missing .fighter-sprite { animation:missDrop .6s ease; filter:grayscale(.6); }
 .battle-console { position:relative; z-index:15; display:grid; grid-template-columns:auto 1fr; gap:18px; align-items:center; min-height:190px; margin-top:10px; padding:16px 20px; border:4px solid #03050a; background:linear-gradient(145deg,#192331,#080c12); box-shadow:inset 0 0 0 2px #6f8095; }
 .battle-question-image { width:min(31vw,330px); max-height:210px; object-fit:contain; border:3px solid #8190a4; background:white; }.battle-question-copy { min-width:0; }.battle-question-copy h1 { margin:0 0 12px; font-size:clamp(20px,3vw,34px); line-height:1.3; text-shadow:2px 2px #000; }
+.battle-console--text-only .battle-question-copy { grid-column:1 / -1; }
 .battle-choices { display:grid; grid-template-columns:1fr 1fr; gap:8px; }.battle-choice { min-height:52px; padding:10px 12px; border:2px solid #718096; background:linear-gradient(90deg,#26374c,#121a25); font-size:clamp(15px,2vw,21px); font-weight:700; }.battle-choice span { display:inline-grid; place-items:center; width:28px; height:28px; margin-right:8px; border-radius:50%; background:#ffd54e; color:#101522; font-weight:900; }.battle-choice.is-correct-reveal { border-color:#fff36a; background:linear-gradient(90deg,#47701d,#1d3710); box-shadow:0 0 18px #fff36a,inset 0 0 18px #b9ff55; color:#fff; animation:answerReveal .9s ease-in-out both; }.battle-choice.is-correct-reveal::after { content:'正確答案'; display:inline-block; margin-left:10px; color:#fff36a; font-size:.8em; }.battle-choice.is-correct-reveal span { background:#fff36a; box-shadow:0 0 10px #fff36a; }
 .battle-status { min-height:34px; margin:6px 0 0; padding:7px; border:2px solid #444f60; background:#111822; color:#ffd85c; text-align:center; font-weight:900; letter-spacing:.04em; }
 
@@ -150,11 +151,11 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 @media(prefers-reduced-motion:reduce){.fighter.attack-energy .fighter-sprite{animation:reducedEnergy .5s ease-in-out!important}.fighter.attack-punch .fighter-sprite{animation:reducedPunch .5s ease-in-out!important}.fighter.attack-kick .fighter-sprite{animation:reducedKick .5s ease-in-out!important}.fighter.is-hit .fighter-sprite{animation:reducedHit .5s ease-in-out!important}.fighter.is-missing .fighter-sprite{animation:reducedMiss .45s ease!important}.flying-weapon,.energy-bolt{animation-duration:.5s!important}.melee-strike{--punch-reach:240%;--punch-recoil:222%;--kick-reach:220%;--kick-recoil:180%;animation-duration:.55s!important}.impact-burst,.melee-impact,.attack-callout,.damage-pop{animation-duration:.6s!important}.sudden-death{animation:none!important}@keyframes reducedEnergy{50%{filter:brightness(1.7) drop-shadow(0 0 14px #54dfff)}}@keyframes reducedPunch{50%{translate:12% 0;filter:brightness(1.4)}}@keyframes reducedKick{50%{translate:10% -4%;rotate:8deg;filter:brightness(1.4)}}@keyframes reducedHit{40%{filter:brightness(2) sepia(1) saturate(4)}}@keyframes reducedMiss{50%{filter:grayscale(1);opacity:.65}}}
 @media(prefers-reduced-motion:reduce){.start-fighter{animation:none!important}}
 
-/* Mobile controls are rendered for every battle, but only surfaced on touch-first landscape devices. */
+/* Mobile controls are rendered for every battle, but only surfaced on touch-capable landscape devices. */
 .mobile-answer-controls { display:none; }
 .orientation-blocker { display:none; }
 
-@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+@media (any-pointer: coarse) and (orientation: landscape) {
   .mobile-answer-controls {
     display:flex;
     position:fixed;
@@ -222,7 +223,7 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
   }
 }
 
-@media (orientation: portrait) {
+@media (any-pointer: coarse) and (orientation: portrait) {
   body:has(.orientation-blocker) { overflow:hidden; }
   .orientation-blocker {
     position:fixed;
@@ -245,7 +246,7 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
   .orientation-blocker button { min-width:160px; min-height:48px; border:3px solid #fff; border-radius:10px; background:#ffd64f; color:#101522; font:900 18px var(--body); }
 }
 
-@media (orientation: landscape) and (max-height: 500px) {
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   .battle-shell { min-height:100dvh; }
   .battle-topbar { min-height:32px; padding:3px 8px; }
   .arena { height:clamp(104px,32vh,180px); }
@@ -260,9 +261,8 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
   .battle-status { min-height:0; margin-top:2px; padding:2px 5px; font-size:12px; }
 }
 
-@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   .battle-console { grid-template-columns:auto 1fr; }
-  .battle-console--text-only .battle-question-copy { grid-column:1 / -1; }
   .battle-question-image { width:min(18vw,120px); }
   .battle-choices { grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px; }
   .mode-local .mobile-answer-pad { width:48px; gap:4px; }

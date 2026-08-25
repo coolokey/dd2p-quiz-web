@@ -86,6 +86,18 @@ test('支援所有指定戰鬥音效事件並允許音效重疊', async () => {
   assert.ok(audios.every((audio) => audio.playCount === 1));
 });
 
+test('取消開局時可停止已經開始的短音效', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  await manager.unlock();
+  await manager.playSfx('correct');
+
+  manager.stopEffects();
+
+  assert.equal(audios[0].pauseCount, 1);
+  assert.equal(audios[0].currentTime, 0);
+});
+
 test('缺少場景或音效檔時優雅略過', async () => {
   const { audios, audioFactory } = createAudioHarness();
   const manager = createAudioManager({ manifest: { scenes: [], sfx: {} }, audioFactory });

@@ -86,16 +86,27 @@ export function createAudioManager({
     for (const [audio, kind] of activeAudios) audio.volume = effectiveVolume(kind);
   }
 
-  function stopBackgroundMusic() {
-    if (!backgroundMusic) return;
-    backgroundMusic.pause?.();
+  function stopAudio(audio) {
+    if (!audio) return;
+    audio.pause?.();
     try {
-      backgroundMusic.currentTime = 0;
+      audio.currentTime = 0;
     } catch {
       // Some streams do not allow seeking before metadata is available.
     }
-    activeAudios.delete(backgroundMusic);
+    activeAudios.delete(audio);
+  }
+
+  function stopBackgroundMusic() {
+    if (!backgroundMusic) return;
+    stopAudio(backgroundMusic);
     backgroundMusic = null;
+  }
+
+  function stopEffects() {
+    for (const [audio, kind] of activeAudios) {
+      if (kind === 'effect') stopAudio(audio);
+    }
   }
 
   async function startBackgroundMusic() {
@@ -155,5 +166,7 @@ export function createAudioManager({
       stopBackgroundMusic();
       selectedScene = null;
     },
+
+    stopEffects,
   };
 }

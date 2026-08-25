@@ -28,6 +28,7 @@ export function createBattleOrientationController({
   const orientation = screen?.orientation;
   let active = false;
   let lastPortrait;
+  let session = 0;
   const registrations = [];
 
   function sync() {
@@ -47,6 +48,7 @@ export function createBattleOrientationController({
 
   async function enterBattle() {
     if (active) return;
+    const currentSession = ++session;
     active = true;
     sync();
     addListener(viewport, 'resize');
@@ -59,17 +61,20 @@ export function createBattleOrientationController({
     } catch {
       // Fullscreen is an enhancement; viewport fallback remains available.
     }
+    if (!active || currentSession !== session) return;
     try {
       await orientation?.lock?.('landscape');
     } catch {
       // Orientation lock is an enhancement; viewport fallback remains available.
     }
+    if (!active || currentSession !== session) return;
     sync();
   }
 
   function exitBattle() {
     if (!active) return;
     active = false;
+    session += 1;
     for (const { target, type, listener } of registrations.splice(0)) {
       target.removeEventListener(type, listener);
     }

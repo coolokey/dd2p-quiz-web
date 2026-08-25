@@ -92,3 +92,23 @@ test('離開移除所有監聽器一次且後續事件不通知，重複離開�
   browser.windowRef.dispatch('resize');
   assert.deepEqual(states, [true]);
 });
+
+test('全螢幕請求等待期間離場，不得在離場後鎖定方向', async () => {
+  let resolveFullscreen;
+  let lockCalls = 0;
+  let unlockCalls = 0;
+  const browser = fakeBrowser({
+    requestFullscreen: () => new Promise(resolve => { resolveFullscreen = resolve; }),
+    lock: async () => { lockCalls += 1; },
+    unlock: () => { unlockCalls += 1; },
+  });
+  const controller = createBattleOrientationController({ ...browser, onPortraitChange: () => {} });
+  const entering = controller.enterBattle();
+  await Promise.resolve();
+  controller.exitBattle();
+  assert.equal(controller.isActive(), false);
+  assert.equal(unlockCalls, 1);
+  resolveFullscreen();
+  await entering;
+  assert.equal(lockCalls, 0);
+});

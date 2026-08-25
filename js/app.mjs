@@ -6,7 +6,7 @@ import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
 import { createAnswerPositionState, prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
-import { attemptBattleSetup, bindCharacterActions, buildCharacterActions, createStartGate, isKeyTestComplete, recordKeyTestKey } from './prebattle-flow.mjs';
+import { attemptBattleSetup, bindCharacterActions, buildCharacterActions, isKeyTestComplete, recordKeyTestKey } from './prebattle-flow.mjs';
 import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
 import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
 import { battleStatus, GAME_MODES, getCharacterSelectionReadiness, playersForKeyTest, selectCpuCharacter } from './game-mode.mjs';
@@ -14,6 +14,7 @@ import { createCpuController } from './cpu-player.mjs';
 import { createBattleLifecycle } from './battle-lifecycle.mjs';
 import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs';
 import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
+import { createLatestSessionGate, runLatestRequest, runStartSession } from './async-navigation.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -46,7 +47,10 @@ const battleSession = createBattleSessionCoordinator({
   stopAudio: () => audioManager?.stop(),
 });
 let startAvailability = { ready: false, message: '正在載入遊戲資料……' };
-const startGameOnce = createStartGate(settings => startGame(settings));
+const bootstrapRequestGate = createLatestSessionGate();
+const quizRequestGate = createLatestSessionGate();
+const startSessionGate = createLatestSessionGate();
+const startGameOnce = settings => startGame(settings);
 const storedVolume = (key, fallback) => {
   const stored = localStorage.getItem(key);
   const value = Number(stored);
@@ -72,9 +76,37 @@ function clearBattleTimer() {
 
 function stopBattleActivity() {
   battleSession.stopBattleActivity();
+  audioManager?.stopEffects?.();
+}
+
+function cancelPendingStart() {
+  startSessionGate.invalidate();
+}
+
+function markStartLoading() {
+  const startButton = app.querySelector('#start') ?? app.querySelector('#skip-key-test');
+  for (const button of [startButton, app.querySelector('#test-keys')]) {
+    if (button) button.disabled = true;
+  }
+  if (startButton) {
+    startButton.dataset.loading = 'true';
+    startButton.textContent = '正在進入對戰……';
+  }
+}
+
+function markQuizLoading(id) {
+  const button = [...app.querySelectorAll('[data-quiz]')]
+    .find(item => item.dataset.quiz === id);
+  if (!button) return;
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  const status = button.querySelector('span');
+  if (status) status.textContent = '載入中……';
 }
 
 function renderStartScreen() {
+  cancelPendingStart();
+  quizRequestGate.invalidate();
   battleSession.mainMenuOpened();
   const playable = battleManifest.characters.filter(character => character.playable !== false);
   app.innerHTML = buildStartScreen({
@@ -99,6 +131,7 @@ function renderStartScreen() {
 }
 
 function renderStartHelp() {
+  cancelPendingStart();
   app.innerHTML = shell(`<h2 class="selection-title">操作說明</h2>
     <div class="help-content">
       <section><h3>左方玩家　紅隊</h3><p>移動與選擇：W、X、A、D；作答：1、2、3、4。</p></section>
@@ -110,6 +143,7 @@ function renderStartHelp() {
 }
 
 function renderStartAudioSettings() {
+  cancelPendingStart();
   app.innerHTML = shell(`<h2 class="selection-title">音效設定</h2>
     <label class="volume-setting">主音量<input data-start-volume="master" type="range" min="0" max="1" step="0.05" value="${audioVolumes.master}"></label>
     <label class="volume-setting">背景音樂<input data-start-volume="music" type="range" min="0" max="1" step="0.05" value="${audioVolumes.music}"></label>
@@ -133,6 +167,8 @@ function renderStartAudioSettings() {
 }
 
 function renderCatalog() {
+  cancelPendingStart();
+  quizRequestGate.invalidate();
   battleSession.catalogOpened();
   const filters = buildSubjectFilters(catalog);
   const visibleCatalog = filterCatalog(catalog, activeSubject);
@@ -148,12 +184,17 @@ function renderCatalog() {
 }
 async function selectQuiz(id) {
   const item = catalog.find(quiz => quiz.id === id);
-  try {
-    currentQuiz = await fetchJson(item.file, fetch);
-    renderRules();
-  } catch (error) {
-    renderQuizLoadFailure(item, error);
-  }
+  if (!item) return false;
+  return runLatestRequest({
+    gate: quizRequestGate,
+    load: () => fetchJson(item.file, fetch),
+    onLoading: () => markQuizLoading(id),
+    onSuccess: quiz => {
+      currentQuiz = quiz;
+      renderRules();
+    },
+    onError: error => renderQuizLoadFailure(item, error),
+  });
 }
 
 function renderQuizLoadFailure(item, error) {
@@ -163,6 +204,7 @@ function renderQuizLoadFailure(item, error) {
 }
 
 function renderRules() {
+  cancelPendingStart();
   const cpuDifficulty = gameMode === GAME_MODES.solo
     ? `<fieldset class="cpu-difficulty"><legend>CPU 難度</legend><label><input type="radio" name="cpu-difficulty" value="easy">簡單</label><label><input type="radio" name="cpu-difficulty" value="normal" checked>普通</label><label><input type="radio" name="cpu-difficulty" value="hard">困難</label></fieldset>`
     : '';
@@ -186,6 +228,7 @@ function renderRules() {
 }
 
 function renderArenaSelect(settings, selectedId = battleManifest.scenes[0]?.id) {
+  cancelPendingStart();
   const cards = battleManifest.scenes.map(scene => `<button class="arena-card ${scene.id === selectedId ? 'is-selected' : ''}" data-arena-id="${esc(scene.id)}"><img src="${esc(scene.image)}" alt="${esc(scene.label)}"><span>${esc(scene.label)}</span></button>`).join('');
   app.innerHTML = shell(`<h2 class="selection-title">選擇本局戰場</h2><p class="lead">三個原版場景都能使用，並各自搭配原版背景音樂。</p><div class="arena-grid">${cards}</div><div class="actions"><button class="secondary" id="back">返回規則</button><button class="primary" id="next">選擇角色</button></div>`);
   let arenaId = selectedId;
@@ -211,6 +254,7 @@ function selectedPreview(player) {
   return character ? `<div class="selected-fighter"><img src="${esc(characterImage(character))}" alt="${esc(character.name || `角色 ${character.id}`)}"></div>` : '<div class="selected-fighter"><b>尚未選擇</b></div>';
 }
 function renderCharacterSelect(settings) {
+  cancelPendingStart();
   const solo = gameMode === GAME_MODES.solo;
   const readiness = getCharacterSelectionReadiness(gameMode, characterSelection, battleManifest.characters);
   const rightSelection = solo
@@ -245,6 +289,7 @@ function renderCharacterSelect(settings) {
 
 function keysFor(player) { return [...PLAYER_KEYS[player].navigation, ...PLAYER_KEYS[player].answers]; }
 function renderKeyTest(settings) {
+  cancelPendingStart();
   keyHits = new Set();
   keyTestPlayers = playersForKeyTest(settings.gameMode);
   const instruction = keyTestPlayers.length === 1 ? '請按一次自己的全部按鍵。亮起黃色即表示已偵測。' : '請兩位玩家各按一次自己的全部按鍵。亮起黃色即表示已偵測。';
@@ -254,17 +299,30 @@ function renderKeyTest(settings) {
 }
 
 async function startGame(settings) {
+  return runStartSession({
+    gate: startSessionGate,
+    onCancel: stopBattleActivity,
+    onLoading: markStartLoading,
+    prepare: () => prepareBattleStart(settings),
+    stages: [
+      () => audioManager?.setScene(settings.arenaId),
+      () => audioManager?.unlock(),
+      () => audioManager?.playSfx('start'),
+    ],
+    startTimer: () => {
+      if (settings.mode === 'time') timerId = setInterval(handleTimer, 1000);
+    },
+    renderBattle: renderGame,
+    onError: renderQuizError,
+  });
+}
+
+function prepareBattleStart(settings) {
   battleLifecycle.reset();
   battleSession.reset();
   battleSettings = settings;
   answerPositionState = createAnswerPositionState();
-  try {
-    currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState) };
-  } catch (error) {
-    stopBattleActivity();
-    renderQuizError(error);
-    return false;
-  }
+  currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState) };
   quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
@@ -272,12 +330,6 @@ async function startGame(settings) {
   activeQuestionIndex = null;
   attackState = createAttackState();
   clearBattleTimer();
-  await audioManager?.setScene(settings.arenaId);
-  await audioManager?.unlock();
-  await audioManager?.playSfx('start');
-  if (settings.mode === 'time') timerId = setInterval(handleTimer, 1000);
-  renderGame();
-  return true;
 }
 
 function renderQuizError(error) {
@@ -491,13 +543,31 @@ document.addEventListener('keydown', event => {
 });
 
 async function bootstrap() {
-  audioManager?.stop();
-  const resources = await loadBootstrapResources(fetch);
-  catalog = resources.catalog;
-  battleManifest = resources.manifest;
-  startAvailability = { ready: resources.ready, message: resources.message };
-  audioManager = createAudioManager({ manifest: battleManifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects });
-  renderStartScreen();
+  return runLatestRequest({
+    gate: bootstrapRequestGate,
+    load: () => loadBootstrapResources(fetch),
+    onLoading: () => {
+      startAvailability = { ready: false, message: '正在載入遊戲資料……' };
+      renderStartScreen();
+      const retry = app.querySelector('#retry-start-load');
+      if (retry) {
+        retry.disabled = true;
+        retry.setAttribute('aria-busy', 'true');
+        retry.textContent = '載入中……';
+      }
+    },
+    onSuccess: resources => {
+      catalog = resources.catalog;
+      battleManifest = resources.manifest;
+      startAvailability = { ready: resources.ready, message: resources.message };
+      audioManager = createAudioManager({ manifest: battleManifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects });
+      renderStartScreen();
+    },
+    onError: error => {
+      startAvailability = { ready: false, message: `遊戲資料載入失敗：${error.message}，請重試。` };
+      renderStartScreen();
+    },
+  });
 }
 
 void bootstrap();

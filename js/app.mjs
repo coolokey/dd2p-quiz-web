@@ -10,6 +10,7 @@ import { bindCharacterActions, buildCharacterActions, createStartGate, isKeyTest
 import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
 import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
 import { GAME_MODES, playersForKeyTest, requiredCharacterPlayers, selectCpuCharacter } from './game-mode.mjs';
+import { createCpuController } from './cpu-player.mjs';
 
 const app = document.querySelector('#app');
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
@@ -23,6 +24,9 @@ let gameMode = null;
 let answerPositionState = createAnswerPositionState();
 let keyTestPlayers = [];
 let muted = localStorage.getItem('dd2p-muted') === 'true';
+const cpuController = createCpuController();
+let cpuQuestionIndex = null;
+let pendingCpuAnswer = null;
 const startGameOnce = createStartGate(settings => startGame(settings));
 const storedVolume = (key, fallback) => {
   const stored = localStorage.getItem(key);
@@ -42,8 +46,14 @@ function characterImage(character, state = 'idle') {
 }
 function characterById(id) { return battleManifest.characters.find(character => String(character.id) === String(id)); }
 function playUiSound(name = 'menu') { audioManager?.unlock(); audioManager?.playSfx(name); }
+function cancelCpuAnswer() {
+  cpuController.cancel();
+  cpuQuestionIndex = null;
+  pendingCpuAnswer = null;
+}
 
 function renderStartScreen() {
+  cancelCpuAnswer();
   const playable = battleManifest.characters.filter(character => character.playable !== false);
   app.innerHTML = buildStartScreen({
     quizCount: catalog.length,
@@ -102,6 +112,7 @@ function renderLoadFailure() {
 }
 
 function renderCatalog() {
+  cancelCpuAnswer();
   audioManager?.stop();
   const filters = buildSubjectFilters(catalog);
   const visibleCatalog = filterCatalog(catalog, activeSubject);
@@ -209,6 +220,7 @@ function renderKeyTest(settings) {
 }
 
 async function startGame(settings) {
+  cancelCpuAnswer();
   battleSettings = settings;
   answerPositionState = createAnswerPositionState();
   currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState) };
@@ -230,6 +242,7 @@ function handleTimer() {
   timeLeft = Math.max(0, timeLeft - 1);
   if (timeLeft <= 0) {
     clearInterval(timerId); timerId = null;
+    cancelCpuAnswer();
     if (animating) pendingRegulationEnd = true;
     else closeRegulation({ advanceQuestion: true });
   }
@@ -241,6 +254,7 @@ function ensureQuestion() {
   }
 }
 function closeRegulation({ advanceQuestion = false } = {}) {
+  cancelCpuAnswer();
   combatState = finishRegulation(combatState);
   if (combatState.ended) renderResult();
   else {
@@ -276,7 +290,13 @@ function bindAudioToggle() {
     };
   }
 }
-function renderGame({ allowEnded = false, questionOverride = null, progressOverride = null } = {}) {
+function renderGame({
+  allowEnded = false,
+  questionOverride = null,
+  progressOverride = null,
+  statusOverride = null,
+  revealAnswerIndex = null,
+} = {}) {
   if (combatState.ended && !allowEnded) return renderResult();
   ensureQuestion();
   const question = questionOverride ?? currentQuiz.activeQuestions[quizState.questionIndex];
@@ -292,9 +312,27 @@ function renderGame({ allowEnded = false, questionOverride = null, progressOverr
     },
     progress: progressOverride ?? (combatState.phase === 'sudden-death' ? 'SUDDEN' : timeLeft === null ? `${Math.min(quizState.questionIndex + 1, regulationLimit)}／${regulationLimit}` : `${timeLeft}s`),
     prompt: question.prompt, questionImage: question.image, choices: question.choices,
-    status: currentStatus(), phase: combatState.phase,
+    status: statusOverride ?? currentStatus(), phase: combatState.phase, revealAnswerIndex,
   });
   bindAudioToggle();
+  if (!questionOverride) scheduleCpuForCurrentQuestion(question);
+}
+
+function scheduleCpuForCurrentQuestion(question) {
+  if (battleSettings?.gameMode !== GAME_MODES.solo || animating || quizState?.phase !== 'open') return;
+  if (!quizState.eligiblePlayers.includes('right')) return;
+  if (cpuQuestionIndex === quizState.questionIndex) return;
+  cpuQuestionIndex = quizState.questionIndex;
+  cpuController.schedule({
+    question,
+    difficulty: battleSettings.cpuDifficulty,
+    onAnswer(answerIndex) {
+      if (cpuQuestionIndex !== quizState.questionIndex || combatState.ended) return;
+      if (!quizState.eligiblePlayers.includes('right')) return;
+      if (animating) pendingCpuAnswer = { questionIndex: cpuQuestionIndex, answerIndex };
+      else void processAnswer({ player: 'right', answerIndex });
+    },
+  });
 }
 
 async function processAnswer(input) {
@@ -306,6 +344,8 @@ async function processAnswer(input) {
   if (nextQuizState === quizState) return;
   const correct = input.answerIndex === question.answerIndex;
   quizState = nextQuizState; animating = true;
+  const questionAdvanced = quizState.questionIndex > activeQuestionIndex;
+  if (correct || questionAdvanced) cancelCpuAnswer();
   const answerProgress = combatState.phase === 'sudden-death' ? 'SUDDEN' : timeLeft === null ? `${Math.min(activeQuestionIndex + 1, regulationLimit)}／${regulationLimit}` : `${timeLeft}s`;
   if (correct) {
     combatState = applyCorrectAnswer(combatState, input.player); renderGame({ allowEnded: true, questionOverride: question, progressOverride: answerProgress });
@@ -331,9 +371,25 @@ async function processAnswer(input) {
     audioManager?.playSfx('buzz'); audioManager?.playSfx('wrong');
     const actor = characterById(battleSettings.characters[input.player]);
     await playBattleAnimation(app, combatState.animation, { attackFrames: actor?.states?.miss, duration: 500 });
+    if (questionAdvanced) {
+      renderGame({
+        questionOverride: question,
+        progressOverride: answerProgress,
+        statusOverride: `正確答案：${question.choices[question.answerIndex]}`,
+        revealAnswerIndex: question.answerIndex,
+      });
+      await new Promise(resolve => setTimeout(resolve, 900));
+    }
   }
   animating = false;
   if (combatState.ended) return renderResult();
+  if (pendingCpuAnswer?.questionIndex === quizState.questionIndex && quizState.eligiblePlayers.includes('right')) {
+    const answer = pendingCpuAnswer;
+    pendingCpuAnswer = null;
+    void processAnswer({ player: 'right', answerIndex: answer.answerIndex });
+    return;
+  }
+  pendingCpuAnswer = null;
   if (pendingRegulationEnd) {
     pendingRegulationEnd = false;
     const needsFreshQuestion = quizState.questionIndex === activeQuestionIndex;
@@ -348,6 +404,7 @@ async function processAnswer(input) {
 }
 
 function renderResult() {
+  cancelCpuAnswer();
   if (app.querySelector('.result')) return;
   if (timerId) clearInterval(timerId); timerId = null;
   const winner = combatState.winner ? playerName(combatState.winner) : '平手';
@@ -377,7 +434,8 @@ document.addEventListener('keydown', event => {
     if (isKeyTestComplete(keyHits, needed)) app.querySelector('#start').disabled = false;
     return;
   }
-  const input = getAnswerInput(event.code); if (input) processAnswer(input);
+  const input = getAnswerInput(event.code);
+  if (input && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) processAnswer(input);
 });
 
 Promise.all([

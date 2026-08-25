@@ -11,6 +11,14 @@ export function resolveStartSceneUrl(scene, pageUrl) {
   }
 }
 
+export function escapeCssString(value) {
+  return String(value ?? '').replace(/[\\\\'\x00-\x1f\x7f]/g, character => {
+    if (character === '\\') return '\\\\';
+    if (character === "'") return "\\'";
+    return `\\${character.codePointAt(0).toString(16)} `;
+  });
+}
+
 export function buildStartScreen({
   quizCount,
   muted,
@@ -22,7 +30,7 @@ export function buildStartScreen({
 }) {
   const [leftImage = '', rightImage = ''] = fighters ?? [];
   const disabled = modesEnabled ? '' : ' disabled aria-disabled="true"';
-  const sceneStyle = scene ? ` style="--start-scene:url('${escape(scene)}')"` : '';
+  const sceneStyle = scene ? ` style="--start-scene:url('${escape(escapeCssString(scene))}')"` : '';
   const loadNotice = loadMessage
     ? `<div class="start-load-error" role="status">${escape(loadMessage)}<button id="retry-start-load">重新載入資料</button></div>`
     : '';

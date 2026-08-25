@@ -8,7 +8,7 @@ import { createAnswerPositionState, prepareQuestionRound } from './question-rand
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
 import { attemptBattleSetup, bindCharacterActions, buildCharacterActions, isKeyTestComplete, recordKeyTestKey } from './prebattle-flow.mjs';
 import { buildSubjectButtons, buildSubjectFilters, filterCatalog } from './catalog-filter.mjs';
-import { bindStartScreen, buildStartScreen } from './start-screen.mjs';
+import { bindStartScreen, buildStartScreen, resolveStartSceneUrl } from './start-screen.mjs';
 import { battleStatus, GAME_MODES, getCharacterSelectionReadiness, playersForKeyTest, selectCpuCharacter } from './game-mode.mjs';
 import { createCpuController } from './cpu-player.mjs';
 import { createBattleLifecycle } from './battle-lifecycle.mjs';
@@ -105,7 +105,7 @@ function renderStartScreen() {
   app.innerHTML = buildStartScreen({
     quizCount: catalog.length,
     muted,
-    scene: battleManifest.scenes[0]?.image,
+    scene: resolveStartSceneUrl(battleManifest.scenes[0]?.image, location.href),
     fighters: [characterImage(playable[0]), characterImage(playable[1])],
     modesEnabled: startAvailability.ready,
     loadMessage: startAvailability.message,

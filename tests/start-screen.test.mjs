@@ -1,7 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { bindStartScreen, buildStartScreen } from '../web/js/start-screen.mjs';
+import { bindStartScreen, buildStartScreen, resolveStartSceneUrl } from '../web/js/start-screen.mjs';
+
+test('起始戰場圖片依頁面 URL 解析，保留 GitHub Pages 子路徑', () => {
+  assert.equal(
+    resolveStartSceneUrl('./assets/battle/scenes/palace.png', 'http://localhost:4173/'),
+    'http://localhost:4173/assets/battle/scenes/palace.png',
+  );
+  assert.equal(
+    resolveStartSceneUrl('./assets/battle/scenes/palace.png', 'https://coolokey.github.io/dd2p-quiz-web/'),
+    'https://coolokey.github.io/dd2p-quiz-web/assets/battle/scenes/palace.png',
+  );
+});
+
+test('沒有起始戰場圖片時保留安全漸層，且不插入 undefined URL', () => {
+  const html = buildStartScreen({ quizCount: 0, muted: false, scene: '', fighters: [] });
+  const css = readFileSync(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(html, /url\('undefined'\)/);
+  assert.doesNotMatch(html, /--start-scene:url/);
+  assert.match(css, /var\(--start-scene,\s*none\)/);
+});
 
 test('控制台包含兩種主要模式與兩個次要入口', () => {
   const html = buildStartScreen({ quizCount: 31, muted: false, scene: './scene.png', fighters: ['./left.png', './right.png'] });

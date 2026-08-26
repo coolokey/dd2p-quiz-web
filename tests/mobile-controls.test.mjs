@@ -4,8 +4,28 @@ import {
   answerInputFromTouchTarget,
   bindMobileAnswerControls,
   buildMobileAnswerControls,
+  hasTouchCapability,
   setMobileAnswerControlsLocked,
+  syncTouchCapabilityClass,
 } from '../web/js/mobile-controls.mjs';
+
+test('只將具有觸控點數的裝置判定為可觸控', () => {
+  assert.equal(hasTouchCapability({ maxTouchPoints: 5 }), true);
+  assert.equal(hasTouchCapability({ maxTouchPoints: 0 }), false);
+  assert.equal(hasTouchCapability({}), false);
+  assert.equal(hasTouchCapability({ msMaxTouchPoints: 2 }), true);
+});
+
+test('依觸控能力同步根元素類別', () => {
+  const changes = [];
+  const root = { classList: { toggle: (name, enabled) => changes.push([name, enabled]) } };
+  assert.equal(syncTouchCapabilityClass(root, { maxTouchPoints: 3 }), true);
+  assert.equal(syncTouchCapabilityClass(root, { maxTouchPoints: 0 }), false);
+  assert.deepEqual(changes, [
+    ['touch-capable', true],
+    ['touch-capable', false],
+  ]);
+});
 
 test('單人模式四選項只建立左方答案鍵', () => {
   const solo = buildMobileAnswerControls({ gameMode: 'solo', choiceCount: 4, eligiblePlayers: ['left'] });

@@ -16,9 +16,10 @@ import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs
 import { fetchJson, loadBootstrapResources } from './resource-loader.mjs';
 import { createBattleInputGate, createLatestSessionGate, markQuizRequestLoading, runLatestRequest, runStartSession } from './async-navigation.mjs';
 import { createBattleOrientationController, createBattlePauseCoordinator } from './battle-orientation.mjs';
-import { bindMobileAnswerControls, setMobileAnswerControlsLocked } from './mobile-controls.mjs';
+import { bindMobileAnswerControls, setMobileAnswerControlsLocked, syncTouchCapabilityClass } from './mobile-controls.mjs';
 
 const app = document.querySelector('#app');
+syncTouchCapabilityClass(document.documentElement, navigator);
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
 let quizState = null, combatState = null, audioManager = null, timerId = null;
 let timeLeft = 0, regulationLimit = 0, battleSettings = null;

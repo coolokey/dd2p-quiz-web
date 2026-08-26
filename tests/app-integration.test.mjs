@@ -81,7 +81,8 @@ test('應用程式匯入並建立螢幕方向與觸控作答整合', async () =>
   const source = await readAppSource();
 
   assert.match(source, /import \{ createBattleOrientationController, createBattlePauseCoordinator \} from '\.\/battle-orientation\.mjs';/);
-  assert.match(source, /import \{ bindMobileAnswerControls, setMobileAnswerControlsLocked \} from '\.\/mobile-controls\.mjs';/);
+  assert.match(source, /import \{ bindMobileAnswerControls, setMobileAnswerControlsLocked, syncTouchCapabilityClass \} from '\.\/mobile-controls\.mjs';/);
+  assert.match(source, /syncTouchCapabilityClass\(document\.documentElement, navigator\);/);
   assert.match(source, /createBattlePauseCoordinator\(/);
   assert.match(source, /createBattleOrientationController\(\{[\s\S]*onPortraitChange: handleBattleOrientationChange[\s\S]*\}\)/);
   assert.match(source, /orientationController\.enterBattle\(\)\.catch\(/);

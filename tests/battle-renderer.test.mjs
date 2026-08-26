@@ -117,7 +117,7 @@ test('矮橫式可用題圖 class 判斷題目區是否需要跨滿雙欄', asyn
   assert.match(css, /\.battle-console--text-only \.battle-question-copy\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/);
   assert.ok(
     css.indexOf('.battle-console--text-only .battle-question-copy')
-      < css.indexOf('@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 500px)'),
+      < css.indexOf('@media (orientation: landscape) and (max-height: 500px)'),
   );
 });
 
@@ -273,8 +273,8 @@ test('減少動態模式仍保留可辨識的攻擊與命中效果', async () =>
 test('行動橫向觸控介面提供安全區、觸控尺寸、直向遮罩與小高度規則', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
   assert.match(css, /\.mobile-answer-controls\s*\{[^}]*display:\s*none/);
-  assert.match(css, /@media\s*\(any-pointer:\s*coarse\)\s*and\s*\(orientation:\s*landscape\)/);
-  assert.match(css, /\.mobile-answer-controls\s*\{[^}]*display:\s*(?:flex|grid)/);
+  assert.match(css, /@media\s*\(orientation:\s*landscape\)/);
+  assert.match(css, /\.touch-capable \.mobile-answer-controls\s*\{[^}]*display:\s*(?:flex|grid)/);
   assert.match(css, /env\(safe-area-inset-top\)/);
   assert.match(css, /env\(safe-area-inset-right\)/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
@@ -289,31 +289,31 @@ test('行動橫向觸控介面提供安全區、觸控尺寸、直向遮罩與�
   assert.match(css, /\.mobile-answer:disabled/);
   assert.match(css, /\.orientation-blocker/);
   assert.match(css, /@media\s*\(orientation:\s*portrait\)/);
-  assert.match(css, /@media\s*\(any-pointer:\s*coarse\)\s*and\s*\(orientation:\s*landscape\)\s*and\s*\(max-height:\s*500px\)/);
+  assert.match(css, /@media\s*\(orientation:\s*landscape\)\s*and\s*\(max-height:\s*500px\)/);
 });
 
 test('觸控橫向版為雙人側鍵與單人底鍵保留核心戰區空間', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
-  assert.match(css, /body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-left:\s*max\(88px,\s*calc\(env\(safe-area-inset-left\) \+ 88px\)\)/);
-  assert.match(css, /body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-right:\s*max\(88px,\s*calc\(env\(safe-area-inset-right\) \+ 88px\)\)/);
-  assert.match(css, /body:has\(\.mode-solo\) \.battle-shell\s*\{[^}]*padding-bottom:\s*calc\(env\(safe-area-inset-bottom\) \+ 64px\)/);
+  assert.match(css, /\.touch-capable body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-left:\s*max\(88px,\s*calc\(env\(safe-area-inset-left\) \+ 88px\)\)/);
+  assert.match(css, /\.touch-capable body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-right:\s*max\(88px,\s*calc\(env\(safe-area-inset-right\) \+ 88px\)\)/);
+  assert.match(css, /\.touch-capable body:has\(\.mode-solo\) \.battle-shell\s*\{[^}]*padding-bottom:\s*calc\(env\(safe-area-inset-bottom\) \+ 64px\)/);
 });
 
 test('矮橫式觸控版維持雙欄答案並額外壓縮戰區高度', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
-  assert.match(css, /@media \(any-pointer: coarse\) and \(orientation: landscape\) and \(max-height: 500px\)/);
-  assert.match(css, /\.battle-choices\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0,1fr\)\)/);
-  assert.match(css, /\.arena\s*\{[^}]*height:\s*clamp\(104px,32vh,180px\)/);
+  assert.match(css, /@media \(orientation: landscape\) and \(max-height: 500px\)/);
+  assert.match(css, /\.touch-capable \.battle-choices\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0,1fr\)\)/);
+  assert.match(css, /\.touch-capable \.arena\s*\{[^}]*height:\s*clamp\(104px,32vh,180px\)/);
   assert.match(css, /\.battle-question-image\s*\{[^}]*max-height:\s*58px/);
   assert.match(css, /\.battle-status\s*\{[^}]*font-size:\s*12px/);
 });
 
-test('混合輸入觸控裝置以 any-pointer 條件顯示控制並套用同一方向規則', async () => {
+test('觸控能力類別控制混合輸入裝置並避免非觸控電腦套用控制版面', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
-  assert.match(css, /@media \(any-pointer: coarse\) and \(orientation: landscape\)\s*\{[\s\S]*?\.mobile-answer-controls/);
+  assert.match(css, /@media \(orientation: landscape\)\s*\{[\s\S]*?\.touch-capable \.mobile-answer-controls/);
   assert.match(css, /@media \(orientation: portrait\)/);
-  assert.match(css, /@media \(any-pointer: coarse\) and \(orientation: landscape\) and \(max-height: 500px\)/);
-  assert.doesNotMatch(css, /@media \(hover: none\) and \(pointer: coarse\)/);
+  assert.match(css, /@media \(orientation: landscape\) and \(max-height: 500px\)/);
+  assert.doesNotMatch(css, /@media \(any-pointer: coarse\)/);
 });
 
 test('觸控戰鬥遮罩與控制預留在一般和矮橫式都有可計算安全空間', async () => {
@@ -325,11 +325,11 @@ test('觸控戰鬥遮罩與控制預留在一般和矮橫式都有可計算安�
   assert.doesNotMatch(css, /@media \(any-pointer: coarse\) and \(orientation: portrait\)/);
   assert.match(css, /body:has\(\.orientation-blocker\)\s*\{[^}]*overflow:\s*hidden/);
   assert.match(css, /\.mode-local \.mobile-answer-pad\s*\{[^}]*width:\s*clamp\(52px,10vw,76px\)/);
-  assert.match(css, /body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-left:\s*max\(88px,\s*calc\(env\(safe-area-inset-left\) \+ 88px\)\)/);
-  assert.match(css, /body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-right:\s*max\(88px,\s*calc\(env\(safe-area-inset-right\) \+ 88px\)\)/);
+  assert.match(css, /\.touch-capable body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-left:\s*max\(88px,\s*calc\(env\(safe-area-inset-left\) \+ 88px\)\)/);
+  assert.match(css, /\.touch-capable body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-right:\s*max\(88px,\s*calc\(env\(safe-area-inset-right\) \+ 88px\)\)/);
   assert.ok(localGutter >= localPadMaximum + 12);
-  assert.match(css, /@media \(any-pointer: coarse\) and \(orientation: landscape\) and \(max-height: 800px\)/);
-  assert.match(css, /\.arena\s*\{[^}]*height:\s*clamp\(180px,36vh,320px\)/);
+  assert.match(css, /@media \(orientation: landscape\) and \(max-height: 800px\)/);
+  assert.match(css, /\.touch-capable \.arena\s*\{[^}]*height:\s*clamp\(180px,36vh,320px\)/);
   assert.match(css, /\.battle-console\s*\{[^}]*min-height:\s*0/);
 });
 

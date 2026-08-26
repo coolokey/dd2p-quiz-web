@@ -273,3 +273,68 @@ test('背景暫停與直向暫停分離，只在兩者都解除後恢復對戰',
   coordinator.reset();
   assert.equal(coordinator.isPaused(), false);
 });
+
+test('手動、直向與背景暫停原因可疊加並遵守生命週期規則', () => {
+  const events = [];
+  let live = true;
+  const coordinator = orientationModule.createBattlePauseCoordinator({
+    isLiveBattle: () => live,
+    disableInput: () => events.push('disable-input'),
+    pauseCpu: () => events.push('pause-cpu'),
+    clearTimer: () => events.push('clear-timer'),
+    renderBattle: () => events.push('render'),
+    resumeCpu: () => events.push('resume-cpu'),
+    enableInput: () => events.push('enable-input'),
+    startTimer: () => events.push('start-timer'),
+  });
+
+  assert.equal(coordinator.setManualPaused(true), true);
+  assert.equal(coordinator.isManualPaused(), true);
+  assert.deepEqual(events, ['disable-input', 'pause-cpu', 'clear-timer', 'render']);
+  assert.equal(coordinator.setManualPaused(true), false);
+  assert.deepEqual(events, ['disable-input', 'pause-cpu', 'clear-timer', 'render']);
+
+  coordinator.setOrientationPaused(true);
+  assert.equal(coordinator.setOrientationPaused(true), false);
+  coordinator.setManualPaused(false);
+  assert.equal(coordinator.isPaused(), true);
+  assert.deepEqual(events.slice(-1), ['render']);
+  coordinator.setOrientationPaused(false);
+  assert.equal(coordinator.isPaused(), false);
+  assert.deepEqual(events.slice(-4), ['render', 'resume-cpu', 'enable-input', 'start-timer']);
+
+  coordinator.setManualPaused(true);
+  coordinator.setOrientationPaused(true);
+  coordinator.setBackgroundPaused(true);
+  assert.equal(coordinator.setBackgroundPaused(true), false);
+  events.length = 0;
+  assert.equal(coordinator.setManualPaused(false), true);
+  assert.deepEqual(events, ['render']);
+  assert.equal(coordinator.isPaused(), true);
+  assert.equal(coordinator.setOrientationPaused(false), true);
+  assert.deepEqual(events, ['render', 'render']);
+  assert.equal(coordinator.isPaused(), true);
+  assert.equal(coordinator.setBackgroundPaused(false), true);
+  assert.deepEqual(events, ['render', 'render', 'render', 'resume-cpu', 'enable-input', 'start-timer']);
+  assert.equal(coordinator.isPaused(), false);
+
+  coordinator.setManualPaused(true);
+  coordinator.setOrientationPaused(true);
+  coordinator.setBackgroundPaused(true);
+  events.length = 0;
+  coordinator.reset();
+  assert.equal(coordinator.isManualPaused(), false);
+  assert.equal(coordinator.isOrientationPaused(), false);
+  assert.equal(coordinator.isBackgroundPaused(), false);
+  assert.equal(coordinator.isPaused(), false);
+  assert.deepEqual(events, []);
+
+  live = false;
+  assert.equal(coordinator.setManualPaused(true), false);
+  assert.equal(coordinator.setOrientationPaused(true), false);
+  assert.equal(coordinator.setBackgroundPaused(true), false);
+  assert.equal(coordinator.isManualPaused(), false);
+  assert.equal(coordinator.isOrientationPaused(), false);
+  assert.equal(coordinator.isBackgroundPaused(), false);
+  assert.deepEqual(events, []);
+});

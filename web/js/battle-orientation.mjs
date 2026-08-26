@@ -16,11 +16,12 @@ export function createBattlePauseCoordinator({
   enableInput = () => {},
   startTimer = () => {},
 } = {}) {
+  let manualPaused = false;
   let orientationPaused = false;
   let backgroundPaused = false;
 
   function isPaused() {
-    return orientationPaused || backgroundPaused;
+    return manualPaused || orientationPaused || backgroundPaused;
   }
 
   function pauseBattle() {
@@ -38,35 +39,43 @@ export function createBattlePauseCoordinator({
     startTimer();
   }
 
-  function setOrientationPaused(paused) {
-    const next = Boolean(paused);
-    if (next === orientationPaused || !isLiveBattle()) return false;
-    orientationPaused = next;
+  function setPauseReason(current, next, assign) {
+    if (next === current || !isLiveBattle()) return false;
+    assign(next);
     if (next) pauseBattle();
     else resumeBattle();
     return true;
+  }
+
+  function setManualPaused(paused) {
+    const next = Boolean(paused);
+    return setPauseReason(manualPaused, next, value => { manualPaused = value; });
+  }
+
+  function setOrientationPaused(paused) {
+    const next = Boolean(paused);
+    return setPauseReason(orientationPaused, next, value => { orientationPaused = value; });
   }
 
   function setBackgroundPaused(paused) {
     const next = Boolean(paused);
-    if (next === backgroundPaused || !isLiveBattle()) return false;
-    backgroundPaused = next;
-    if (next) pauseBattle();
-    else resumeBattle();
-    return true;
+    return setPauseReason(backgroundPaused, next, value => { backgroundPaused = value; });
   }
 
   function reset() {
+    manualPaused = false;
     orientationPaused = false;
     backgroundPaused = false;
   }
 
   return {
     isBackgroundPaused: () => backgroundPaused,
+    isManualPaused: () => manualPaused,
     isOrientationPaused: () => orientationPaused,
     isPaused,
     reset,
     setBackgroundPaused,
+    setManualPaused,
     setOrientationPaused,
   };
 }

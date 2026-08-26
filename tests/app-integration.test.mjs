@@ -217,3 +217,96 @@ test('visibility 恢復先重新核對方向，再由背景狀態決定是否恢
   assert.match(controllerSource, /function handleVisibilityChange\(\)[\s\S]*sync\(\);[\s\S]*syncVisibility\(\);/);
   assert.match(controllerSource, /addListener\(document, 'visibilitychange', handleVisibilityChange\)/);
 });
+
+test('應用程式匯入暫停對話框焦點圈並將完整暫停狀態交給 renderer', async () => {
+  const source = await readAppSource();
+  const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
+
+  assert.match(source, /import \{ trapDialogTab \} from '\.\/battle-pause-menu\.mjs';/);
+  assert.match(source, /let pauseRequested = false;/);
+  assert.match(source, /let pauseConfirmAction = null;/);
+  assert.match(source, /let pauseReturnFocus = null;/);
+  assert.match(render, /manualPaused: battlePause\.isManualPaused\(\)/);
+  assert.match(render, /pauseConfirmAction/);
+  assert.match(render, /pausePending: pauseRequested/);
+});
+
+test('暫停請求在動畫中只鎖定輸入並就地顯示等待，不重繪或取消 lifecycle', async () => {
+  const source = await readAppSource();
+  const request = functionSource(source, 'requestManualPause', 'openManualPause');
+  const animating = request.slice(request.indexOf('battleLifecycle.isAnimating()'));
+
+  assert.match(request, /!hasLiveBattle\(\)[\s\S]*battlePause\.isManualPaused\(\)[\s\S]*pauseRequested/);
+  assert.match(request, /pauseReturnFocus = document\.activeElement/);
+  assert.match(animating, /pauseRequested = true/);
+  assert.match(animating, /battleInputGate\.disable\(\)/);
+  assert.match(animating, /querySelector\('\[data-pause-battle\]'\)/);
+  assert.match(animating, /\.disabled = true/);
+  assert.match(animating, /\.textContent = '等待本次攻擊結束……'/);
+  assert.doesNotMatch(animating, /renderGame\(|battleLifecycle\.cancel\(|battlePause\.setManualPaused/);
+  assert.match(request, /return openManualPause\(\)/);
+});
+
+test('開啟與繼續暫停依序控制 coordinator、音樂及重繪後焦點', async () => {
+  const source = await readAppSource();
+  const open = functionSource(source, 'openManualPause', 'continueBattle');
+  const resume = functionSource(source, 'continueBattle', 'requestPauseAction');
+
+  assert.match(open, /if \(!hasLiveBattle\(\)/);
+  assert.match(open, /pauseRequested = false/);
+  assert.match(open, /pauseConfirmAction = null/);
+  assert.match(open, /audioManager\?\.pauseMusic\(\)[\s\S]*battlePause\.setManualPaused\(true\)[\s\S]*querySelector\('\[data-pause-continue\]'\)\?\.focus\(\)/);
+  assert.match(resume, /if \(!hasLiveBattle\(\)[\s\S]*!battlePause\.isManualPaused\(\)[\s\S]*pauseConfirmAction/);
+  assert.match(resume, /battlePause\.setManualPaused\(false\)[\s\S]*void audioManager\?\.resumeMusic\(\)[\s\S]*querySelector\('\[data-pause-battle\]'\)\?\.focus\(\)/);
+});
+
+test('settlement 優先保留結束結果，未結束才兌現一次 pending pause', async () => {
+  const source = await readAppSource();
+  const settle = functionSource(source, 'settleBattleAnswer', 'processAnswer');
+  const endedIndex = settle.indexOf('combatState?.ended');
+  const pendingIndex = settle.indexOf('pauseRequested', endedIndex + 1);
+
+  assert.notEqual(endedIndex, -1);
+  assert.notEqual(pendingIndex, -1);
+  assert.ok(endedIndex < pendingIndex, 'KO／結果狀態必須優先於 pending pause');
+  assert.match(settle, /if \(combatState\?\.ended\) \{[\s\S]*pauseRequested = false;[\s\S]*return;/);
+  assert.match(settle, /if \(pauseRequested\) \{[\s\S]*openManualPause\(\);[\s\S]*return;/);
+  assert.match(settle, /if \(settlement\?\.renderBattle\) renderGame\(\)/);
+});
+
+test('暫停選單動作只開啟或取消確認且取消後仍維持 manual pause', async () => {
+  const source = await readAppSource();
+  const requestAction = functionSource(source, 'requestPauseAction', 'cancelPauseConfirmation');
+  const cancel = functionSource(source, 'cancelPauseConfirmation', 'renderGame');
+
+  assert.match(requestAction, /if \(!hasLiveBattle\(\)[\s\S]*!battlePause\.isManualPaused\(\)[\s\S]*pauseConfirmAction/);
+  assert.match(requestAction, /pauseConfirmAction = action;[\s\S]*renderGame\(\)/);
+  assert.match(cancel, /if \(!hasLiveBattle\(\)[\s\S]*!battlePause\.isManualPaused\(\)[\s\S]*!pauseConfirmAction/);
+  assert.match(cancel, /pauseConfirmAction = null;[\s\S]*renderGame\(\)/);
+  assert.doesNotMatch(cancel, /setManualPaused\(false\)/);
+});
+
+test('每次 render 只接一組暫停 handlers、三個 action、取消與 dialog focus trap', async () => {
+  const source = await readAppSource();
+  const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
+
+  assert.match(render, /querySelector\('\[data-pause-battle\]'\)[\s\S]*\.onclick = requestManualPause/);
+  assert.match(render, /querySelector\('\[data-pause-continue\]'\)[\s\S]*\.onclick = continueBattle/);
+  assert.match(render, /querySelectorAll\('\[data-pause-action\]'\)[\s\S]*requestPauseAction\(button\.dataset\.pauseAction\)/);
+  assert.match(render, /querySelector\('\[data-pause-cancel\]'\)[\s\S]*\.onclick = cancelPauseConfirmation/);
+  assert.match(render, /querySelector\('\.battle-pause-overlay'\)[\s\S]*\.onkeydown = event => trapDialogTab\(dialog, event\)/);
+  assert.doesNotMatch(render, /data-pause-confirm/);
+});
+
+test('Escape 優先於遊戲鍵並依確認、暫停、live battle 順序處理', async () => {
+  const source = await readAppSource();
+  const keydown = source.slice(source.indexOf("document.addEventListener('keydown'"), source.indexOf('async function bootstrap'));
+  const escapeIndex = keydown.indexOf("event.code === 'Escape'");
+  const gameKeyIndex = keydown.indexOf('isGameKey(event.code)');
+
+  assert.notEqual(escapeIndex, -1);
+  assert.notEqual(gameKeyIndex, -1);
+  assert.ok(escapeIndex < gameKeyIndex, 'Escape 必須在一般遊戲按鍵判斷前處理');
+  assert.match(keydown, /event\.code === 'Escape'[\s\S]*hasLiveBattle\(\)[\s\S]*event\.preventDefault\(\)[\s\S]*event\.repeat/);
+  assert.match(keydown, /pauseConfirmAction[\s\S]*cancelPauseConfirmation\(\)[\s\S]*battlePause\.isManualPaused\(\)[\s\S]*continueBattle\(\)[\s\S]*requestManualPause\(\)/);
+});

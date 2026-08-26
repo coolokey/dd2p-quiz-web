@@ -159,18 +159,18 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 .orientation-blocker p { margin:0; font-size:18px; }
 .orientation-blocker button { min-width:160px; min-height:48px; border:3px solid #fff; border-radius:10px; background:#ffd64f; color:#101522; font:900 18px var(--body); }
 
-@media (any-pointer: coarse) and (orientation: landscape) {
-  .mobile-answer-controls {
+@media (orientation: landscape) {
+  .touch-capable .mobile-answer-controls {
     display:flex;
     position:fixed;
     z-index:40;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-  .mobile-answer-pad {
+  .touch-capable .mobile-answer-pad {
     display:grid;
     gap:8px;
   }
-  .mobile-answer {
+  .touch-capable .mobile-answer {
     min-width:48px;
     min-height:48px;
     border:3px solid #fff;
@@ -183,45 +183,45 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
     -webkit-user-select:none;
     box-shadow:0 4px 0 rgba(0,0,0,.45), inset 0 0 0 2px rgba(0,0,0,.25);
   }
-  .mobile-answer:disabled {
+  .touch-capable .mobile-answer:disabled {
     cursor:not-allowed;
     opacity:.42;
     filter:grayscale(.9);
     box-shadow:none;
   }
-  .mobile-answer:not(:disabled):active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.45); }
-  .mobile-answer-pad-left .mobile-answer { background:linear-gradient(145deg,#ff8577,#b91f2a); }
-  .mobile-answer-pad-right .mobile-answer { background:linear-gradient(145deg,#54cffa,#1457bb); }
+  .touch-capable .mobile-answer:not(:disabled):active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.45); }
+  .touch-capable .mobile-answer-pad-left .mobile-answer { background:linear-gradient(145deg,#ff8577,#b91f2a); }
+  .touch-capable .mobile-answer-pad-right .mobile-answer { background:linear-gradient(145deg,#54cffa,#1457bb); }
 
-  .mode-solo {
+  .touch-capable .mode-solo {
     right:0;
     bottom:0;
     left:0;
   }
-  .mode-solo .mobile-answer-pad-left {
+  .touch-capable .mode-solo .mobile-answer-pad-left {
     width:100%;
     grid-auto-flow:column;
     grid-auto-columns:minmax(48px,1fr);
   }
-  body:has(.mode-solo) .battle-shell {
+  .touch-capable body:has(.mode-solo) .battle-shell {
     padding-bottom:calc(env(safe-area-inset-bottom) + 64px);
   }
 
-  .mode-local {
+  .touch-capable .mode-local {
     inset:0;
     align-items:center;
     justify-content:space-between;
     pointer-events:none;
   }
-  .mode-local .mobile-answer-pad {
+  .touch-capable .mode-local .mobile-answer-pad {
     width:clamp(52px,10vw,76px);
     max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 18px);
     grid-auto-rows:minmax(48px,1fr);
     pointer-events:auto;
   }
-  .mode-local .mobile-answer-pad-left { margin-right:auto; }
-  .mode-local .mobile-answer-pad-right { margin-left:auto; }
-  body:has(.mode-local) .battle-shell {
+  .touch-capable .mode-local .mobile-answer-pad-left { margin-right:auto; }
+  .touch-capable .mode-local .mobile-answer-pad-right { margin-left:auto; }
+  .touch-capable body:has(.mode-local) .battle-shell {
     padding-left:max(88px, calc(env(safe-area-inset-left) + 88px));
     padding-right:max(88px, calc(env(safe-area-inset-right) + 88px));
   }
@@ -231,31 +231,31 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
   body:has(.orientation-blocker) { overflow:hidden; }
 }
 
-@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 800px) {
-  .battle-shell { min-height:100dvh; }
-  .arena { height:clamp(180px,36vh,320px); }
-  .battle-console { min-height:0; }
+@media (orientation: landscape) and (max-height: 800px) {
+  .touch-capable .battle-shell { min-height:100dvh; }
+  .touch-capable .arena { height:clamp(180px,36vh,320px); }
+  .touch-capable .battle-console { min-height:0; }
 }
 
-@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
-  .battle-shell { min-height:100dvh; }
-  .battle-topbar { min-height:32px; padding:3px 8px; }
-  .arena { height:clamp(104px,32vh,180px); }
-  .fighter-hud { margin-top:4px; padding:4px 6px; }
-  .fighter-stage { padding-bottom:0; }
-  .fighter-sprite { height:62%; }
-  .battle-console { min-height:0; margin-top:3px; padding:4px 8px; gap:6px; }
-  .battle-question-image { max-height:58px; }
-  .battle-question-copy h1 { margin-bottom:3px; font-size:clamp(15px,2.4vw,21px); }
-  .battle-choice { min-height:30px; padding:4px 7px; font-size:clamp(12px,1.8vw,16px); }
-  .battle-choice span { width:22px; height:22px; margin-right:5px; }
-  .battle-status { min-height:0; margin-top:2px; padding:2px 5px; font-size:12px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .touch-capable .battle-shell { min-height:100dvh; }
+  .touch-capable .battle-topbar { min-height:32px; padding:3px 8px; }
+  .touch-capable .arena { height:clamp(104px,32vh,180px); }
+  .touch-capable .fighter-hud { margin-top:4px; padding:4px 6px; }
+  .touch-capable .fighter-stage { padding-bottom:0; }
+  .touch-capable .fighter-sprite { height:62%; }
+  .touch-capable .battle-console { min-height:0; margin-top:3px; padding:4px 8px; gap:6px; }
+  .touch-capable .battle-question-image { max-height:58px; }
+  .touch-capable .battle-question-copy h1 { margin-bottom:3px; font-size:clamp(15px,2.4vw,21px); }
+  .touch-capable .battle-choice { min-height:30px; padding:4px 7px; font-size:clamp(12px,1.8vw,16px); }
+  .touch-capable .battle-choice span { width:22px; height:22px; margin-right:5px; }
+  .touch-capable .battle-status { min-height:0; margin-top:2px; padding:2px 5px; font-size:12px; }
 }
 
-@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
-  .battle-console { grid-template-columns:auto 1fr; }
-  .battle-question-image { width:min(18vw,120px); }
-  .battle-choices { grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px; }
-  .mode-local .mobile-answer-pad { width:48px; gap:4px; }
-  .mode-solo { padding-top:0; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .touch-capable .battle-console { grid-template-columns:auto 1fr; }
+  .touch-capable .battle-question-image { width:min(18vw,120px); }
+  .touch-capable .battle-choices { grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px; }
+  .touch-capable .mode-local .mobile-answer-pad { width:48px; gap:4px; }
+  .touch-capable .mode-solo { padding-top:0; }
 }

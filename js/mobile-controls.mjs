@@ -5,6 +5,20 @@ const esc = value => String(value).replace(/[&<>\"]/g, character => ({
   '"': '&quot;',
 })[character]);
 
+export function hasTouchCapability(navigatorRef = {}) {
+  const touchPoints = Math.max(
+    Number(navigatorRef.maxTouchPoints) || 0,
+    Number(navigatorRef.msMaxTouchPoints) || 0,
+  );
+  return touchPoints > 0;
+}
+
+export function syncTouchCapabilityClass(root, navigatorRef = {}) {
+  const touchCapable = hasTouchCapability(navigatorRef);
+  root?.classList?.toggle('touch-capable', touchCapable);
+  return touchCapable;
+}
+
 function playerMarkup(player, choiceCount, eligiblePlayers, locked) {
   const disabled = locked || !eligiblePlayers.includes(player);
   const buttons = Array.from({ length: choiceCount }, (_, answerIndex) =>

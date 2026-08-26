@@ -108,6 +108,54 @@ test('未直向暫停的戰鬥畫面不含旋轉提示遮罩', () => {
   assert.doesNotMatch(html, /orientation-blocker/);
 });
 
+test('一般對戰保留進度並提供可存取的暫停入口', () => {
+  const html = buildBattleMarkup({ ...viewModel, manualPaused: false, pausePending: false });
+  assert.match(html, /class="battle-progress"/);
+  assert.match(html, /type="button" class="battle-pause-button" data-pause-battle aria-label="暫停對戰">Ⅱ 暫停<\/button>/);
+  assert.doesNotMatch(html, /battle-pause-overlay/);
+});
+
+test('手動暫停會顯示選單或返回首頁確認畫面並鎖住觸控作答', () => {
+  const paused = buildBattleMarkup({
+    ...viewModel,
+    gameMode: 'local',
+    eligiblePlayers: ['left', 'right'],
+    mobileInputLocked: false,
+    manualPaused: true,
+    pauseConfirmAction: null,
+  });
+  const confirmingHome = buildBattleMarkup({
+    ...viewModel,
+    manualPaused: true,
+    pauseConfirmAction: 'home',
+  });
+  assert.match(paused, /battle-pause-overlay/);
+  assert.match(paused, /遊戲暫停/);
+  assert.equal((paused.match(/data-touch-answer=[^>]* disabled/g) ?? []).length, 8);
+  assert.match(confirmingHome, /返回首頁？/);
+  assert.match(confirmingHome, /確認返回首頁/);
+});
+
+test('任何暫停或攻擊等待狀態都鎖住觸控作答，等待時停用暫停按鈕', () => {
+  for (const pauseState of [
+    { mobileInputLocked: true },
+    { orientationPaused: true },
+    { manualPaused: true },
+    { pausePending: true },
+  ]) {
+    const html = buildBattleMarkup({
+      ...viewModel,
+      gameMode: 'local',
+      eligiblePlayers: ['left', 'right'],
+      mobileInputLocked: false,
+      ...pauseState,
+    });
+    assert.equal((html.match(/data-touch-answer=[^>]* disabled/g) ?? []).length, 8);
+  }
+  const pending = buildBattleMarkup({ ...viewModel, pausePending: true });
+  assert.match(pending, /data-pause-battle[^>]* disabled[^>]*>等待本次攻擊結束……<\/button>/);
+});
+
 test('矮橫式可用題圖 class 判斷題目區是否需要跨滿雙欄', async () => {
   const withImage = buildBattleMarkup({ ...viewModel, questionImage: './question.png' });
   const withoutImage = buildBattleMarkup({ ...viewModel, questionImage: null });
@@ -290,6 +338,25 @@ test('行動橫向觸控介面提供安全區、觸控尺寸、直向遮罩與�
   assert.match(css, /\.orientation-blocker/);
   assert.match(css, /@media\s*\(orientation:\s*portrait\)/);
   assert.match(css, /@media\s*\(orientation:\s*landscape\)\s*and\s*\(max-height:\s*500px\)/);
+});
+
+test('暫停介面保留觸控尺寸、安全區、低層級遮罩及矮橫式文字', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  assert.match(css, /\.battle-pause-button\s*\{[^}]*min-width:\s*48px/);
+  assert.match(css, /\.battle-pause-button\s*\{[^}]*min-height:\s*48px/);
+  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*position:\s*fixed/);
+  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*z-index:\s*(?:[1-9]\d?)/);
+  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*env\(safe-area-inset-top\)/);
+  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*env\(safe-area-inset-right\)/);
+  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*env\(safe-area-inset-bottom\)/);
+  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*env\(safe-area-inset-left\)/);
+  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*overflow-x:\s*hidden/);
+  assert.match(css, /\.battle-pause-dialog/);
+  assert.match(css, /\.battle-pause-actions/);
+  assert.match(css, /\.pause-danger/);
+  const shortLandscape = css.slice(css.indexOf('@media (orientation: landscape) and (max-height: 500px)'));
+  assert.match(shortLandscape, /\.battle-pause-button[^}]*font-size/);
+  assert.doesNotMatch(shortLandscape, /\.battle-pause-button[^}]*font-size:\s*0/);
 });
 
 test('觸控橫向版為雙人側鍵與單人底鍵保留核心戰區空間', async () => {

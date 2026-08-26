@@ -54,6 +54,29 @@ test('同一觸點不重複提交但兩位玩家可同時觸碰', () => {
   assert.equal(answers.length, 3);
 });
 
+test('觸點滑離按鈕後仍釋放 pointerId 並允許下一次作答', () => {
+  const button = {
+    disabled: false,
+    dataset: { touchAnswer: '0', player: 'left' },
+    captured: [],
+    setPointerCapture(pointerId) { this.captured.push(pointerId); },
+    releasePointerCapture(pointerId) { this.released = pointerId; },
+  };
+  const answers = [];
+  bindMobileAnswerControls({ querySelectorAll: () => [button] }, { onAnswer: input => answers.push(input) });
+  const event = { pointerId: 7, preventDefault() {} };
+  button.onpointerdown(event);
+  button.onpointerdown(event);
+  assert.deepEqual(answers, [{ player: 'left', answerIndex: 0 }]);
+  assert.deepEqual(button.captured, [7]);
+  button.onlostpointercapture(event);
+  button.onpointerdown(event);
+  assert.deepEqual(answers, [
+    { player: 'left', answerIndex: 0 },
+    { player: 'left', answerIndex: 0 },
+  ]);
+});
+
 test('鎖定 helper 同步停用全部觸控鍵', () => {
   const buttons = [{ disabled: false }, { disabled: false }];
   setMobileAnswerControlsLocked({ querySelectorAll: () => buttons }, true);

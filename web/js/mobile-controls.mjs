@@ -31,17 +31,34 @@ export function answerInputFromTouchTarget(target) {
 
 export function bindMobileAnswerControls(root, { onAnswer }) {
   const activePointers = new Set();
-  const release = event => activePointers.delete(event.pointerId);
   for (const button of root.querySelectorAll('[data-touch-answer]')) {
+    const release = event => {
+      activePointers.delete(event.pointerId);
+      if (typeof button.releasePointerCapture === 'function') {
+        try {
+          button.releasePointerCapture(event.pointerId);
+        } catch {
+          // The pointer may already have been released by the browser.
+        }
+      }
+    };
     button.onpointerdown = event => {
       event.preventDefault();
       if (button.disabled || activePointers.has(event.pointerId)) return;
       activePointers.add(event.pointerId);
+      if (typeof button.setPointerCapture === 'function') {
+        try {
+          button.setPointerCapture(event.pointerId);
+        } catch {
+          // Pointer capture is optional; pointerup/cancel still releases the id.
+        }
+      }
       const input = answerInputFromTouchTarget(button);
       if (input) onAnswer(input);
     };
     button.onpointerup = release;
     button.onpointercancel = release;
+    button.onlostpointercapture = release;
   }
 }
 

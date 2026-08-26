@@ -68,6 +68,8 @@ export function createAudioManager({
   let currentMusicVolume = clampVolume(musicVolume);
   let currentEffectsVolume = clampVolume(effectsVolume);
   let isMuted = Boolean(muted);
+  let musicPaused = false;
+  let musicResumePending = false;
 
   function effectiveVolume(kind) {
     return currentVolume * (kind === 'music' ? currentMusicVolume : currentEffectsVolume);
@@ -98,9 +100,28 @@ export function createAudioManager({
   }
 
   function stopBackgroundMusic() {
+    musicPaused = false;
+    musicResumePending = false;
     if (!backgroundMusic) return;
     stopAudio(backgroundMusic);
     backgroundMusic = null;
+  }
+
+  function pauseMusic() {
+    if (!backgroundMusic || musicPaused) return;
+    musicPaused = true;
+    backgroundMusic.pause?.();
+  }
+
+  async function resumeMusic() {
+    if (!backgroundMusic || !musicPaused) return;
+    if (isMuted) {
+      musicResumePending = true;
+      return;
+    }
+    musicPaused = false;
+    musicResumePending = false;
+    await safePlay(backgroundMusic);
   }
 
   function stopEffects() {
@@ -141,8 +162,16 @@ export function createAudioManager({
     setMuted(nextMuted) {
       isMuted = Boolean(nextMuted);
       for (const audio of activeAudios.keys()) audio.muted = isMuted;
+      if (!isMuted && musicResumePending && backgroundMusic) {
+        musicPaused = false;
+        musicResumePending = false;
+        void safePlay(backgroundMusic);
+      }
       return isMuted;
     },
+
+    pauseMusic,
+    resumeMusic,
 
     setVolume(nextVolume) {
       currentVolume = clampVolume(nextVolume);

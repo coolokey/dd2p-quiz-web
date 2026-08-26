@@ -185,3 +185,88 @@ test('背景音樂與事件音效可分別調整音量', async () => {
   assert.equal(audios[0].volume, 0.2);
   assert.ok(Math.abs(audios[1].volume - 0.6) < Number.EPSILON * 4);
 });
+
+test('暫停背景音樂會保留播放位置並從原物件恢復', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  await manager.setScene('palace');
+  await manager.unlock();
+
+  const audio = audios[0];
+  audio.currentTime = 37;
+  manager.pauseMusic();
+
+  assert.equal(audio.pauseCount, 1);
+  assert.equal(audio.currentTime, 37);
+  await manager.resumeMusic();
+  assert.equal(audio.playCount, 2);
+});
+
+test('重複暫停與恢復背景音樂具冪等性', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  await manager.setScene('palace');
+  await manager.unlock();
+
+  const audio = audios[0];
+  manager.pauseMusic();
+  manager.pauseMusic();
+  await manager.resumeMusic();
+  await manager.resumeMusic();
+
+  assert.equal(audio.pauseCount, 1);
+  assert.equal(audio.playCount, 2);
+});
+
+test('暫停後停止或切換場景會清除恢復狀態', async () => {
+  const stopHarness = createAudioHarness();
+  const stopManager = createAudioManager({ manifest, audioFactory: stopHarness.audioFactory });
+  await stopManager.setScene('palace');
+  await stopManager.unlock();
+  const stoppedAudio = stopHarness.audios[0];
+  stoppedAudio.currentTime = 37;
+  stopManager.pauseMusic();
+  stopManager.stop();
+  await stopManager.resumeMusic();
+  assert.equal(stoppedAudio.currentTime, 0);
+  assert.equal(stoppedAudio.playCount, 1);
+
+  const sceneHarness = createAudioHarness();
+  const sceneManager = createAudioManager({ manifest, audioFactory: sceneHarness.audioFactory });
+  await sceneManager.setScene('palace');
+  await sceneManager.unlock();
+  const oldAudio = sceneHarness.audios[0];
+  oldAudio.currentTime = 37;
+  sceneManager.pauseMusic();
+  await sceneManager.setScene('school');
+  await sceneManager.resumeMusic();
+  assert.equal(oldAudio.currentTime, 0);
+  assert.equal(oldAudio.playCount, 1);
+  assert.equal(sceneHarness.audios[1].playCount, 1);
+});
+
+test('靜音時恢復背景音樂會延後至解除靜音，單純解除靜音不會播放', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  await manager.setScene('palace');
+  await manager.unlock();
+
+  const audio = audios[0];
+  audio.currentTime = 37;
+  manager.pauseMusic();
+  manager.setMuted(true);
+  await manager.resumeMusic();
+  assert.equal(audio.playCount, 1);
+  assert.equal(audio.currentTime, 37);
+  manager.setMuted(false);
+  assert.equal(audio.playCount, 2);
+
+  const secondHarness = createAudioHarness();
+  const secondManager = createAudioManager({ manifest, audioFactory: secondHarness.audioFactory });
+  await secondManager.setScene('palace');
+  await secondManager.unlock();
+  secondManager.pauseMusic();
+  secondManager.setMuted(true);
+  secondManager.setMuted(false);
+  assert.equal(secondHarness.audios[0].playCount, 1);
+});

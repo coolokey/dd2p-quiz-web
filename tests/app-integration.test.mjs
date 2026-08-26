@@ -255,7 +255,8 @@ test('開啟與繼續暫停依序控制 coordinator、音樂及重繪後焦點',
   assert.match(open, /if \(!hasLiveBattle\(\)/);
   assert.match(open, /pauseRequested = false/);
   assert.match(open, /pauseConfirmAction = null/);
-  assert.match(open, /audioManager\?\.pauseMusic\(\)[\s\S]*battlePause\.setManualPaused\(true\)[\s\S]*querySelector\('\[data-pause-continue\]'\)\?\.focus\(\)/);
+  assert.match(open, /audioManager\?\.pauseMusic\(\)[\s\S]*battlePause\.setManualPaused\(true\)/);
+  assert.doesNotMatch(open, /querySelector\('\[data-pause-continue\]'\)\?\.focus\(\)/);
   assert.match(resume, /if \(!hasLiveBattle\(\)[\s\S]*!battlePause\.isManualPaused\(\)[\s\S]*pauseConfirmAction/);
   assert.match(resume, /battlePause\.setManualPaused\(false\)[\s\S]*void audioManager\?\.resumeMusic\(\)[\s\S]*querySelector\('\[data-pause-battle\]'\)\?\.focus\(\)/);
 });
@@ -294,7 +295,7 @@ test('每次 render 只接一組暫停 handlers、三個 action、取消與 dial
   assert.match(render, /querySelector\('\[data-pause-continue\]'\)[\s\S]*\.onclick = continueBattle/);
   assert.match(render, /querySelectorAll\('\[data-pause-action\]'\)[\s\S]*requestPauseAction\(button\.dataset\.pauseAction\)/);
   assert.match(render, /querySelector\('\[data-pause-cancel\]'\)[\s\S]*\.onclick = cancelPauseConfirmation/);
-  assert.match(render, /querySelector\('\.battle-pause-overlay'\)[\s\S]*\.onkeydown = event => trapDialogTab\(dialog, event\)/);
+  assert.match(render, /syncTopBattleDialog\(\)/);
   assert.doesNotMatch(render, /data-pause-confirm/);
 });
 
@@ -309,4 +310,42 @@ test('Escape 優先於遊戲鍵並依確認、暫停、live battle 順序處理'
   assert.ok(escapeIndex < gameKeyIndex, 'Escape 必須在一般遊戲按鍵判斷前處理');
   assert.match(keydown, /event\.code === 'Escape'[\s\S]*hasLiveBattle\(\)[\s\S]*event\.preventDefault\(\)[\s\S]*event\.repeat/);
   assert.match(keydown, /pauseConfirmAction[\s\S]*cancelPauseConfirmation\(\)[\s\S]*battlePause\.isManualPaused\(\)[\s\S]*continueBattle\(\)[\s\S]*requestManualPause\(\)/);
+});
+
+test('pending pause 在離場與新局初始化都會清除，不會跨局污染', async () => {
+  const source = await readAppSource();
+  const reset = functionSource(source, 'resetManualPauseState', 'requestManualPause');
+  const exit = functionSource(source, 'exitBattleOrientation', 'stopBattleActivity');
+  const stop = functionSource(source, 'stopBattleActivity', 'cancelPendingStart');
+  const prepare = functionSource(source, 'prepareBattleStart', 'renderQuizError');
+
+  assert.match(reset, /pauseRequested = false/);
+  assert.match(reset, /pauseConfirmAction = null/);
+  assert.match(reset, /pauseReturnFocus = null/);
+  assert.match(exit, /resetManualPauseState\(\)[\s\S]*orientationController\.exitBattle\(\)[\s\S]*battlePause\.reset\(\)/);
+  assert.match(stop, /exitBattleOrientation\(\)/);
+  assert.match(prepare, /resetManualPauseState\(\)[\s\S]*battleLifecycle\.reset\(\)[\s\S]*battleSession\.reset\(\)/);
+});
+
+test('交錯 pause reason 重繪後只同步最上層 dialog 的焦點與 Tab trap', async () => {
+  const source = await readAppSource();
+  const sync = functionSource(source, 'syncTopBattleDialog', 'renderGame');
+  const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
+  const requestAction = functionSource(source, 'requestPauseAction', 'cancelPauseConfirmation');
+  const cancel = functionSource(source, 'cancelPauseConfirmation', 'handleBattleOrientationChange');
+  const orientationIndex = sync.indexOf("querySelector('.orientation-blocker')");
+  const pauseIndex = sync.indexOf("querySelector('.battle-pause-overlay')");
+
+  assert.notEqual(orientationIndex, -1);
+  assert.notEqual(pauseIndex, -1);
+  assert.ok(orientationIndex < pauseIndex, 'orientation blocker 必須先於 manual pause dialog');
+  assert.match(sync, /const dialog = orientationDialog \?\? pauseDialog/);
+  assert.match(sync, /dialog\.onkeydown = event => trapDialogTab\(dialog, event\)/);
+  assert.match(sync, /orientationDialog[\s\S]*\[data-return-main-menu\][\s\S]*pauseConfirmAction[\s\S]*\[data-pause-cancel\][\s\S]*\[data-pause-continue\]/);
+  assert.match(sync, /focusTarget\?\.focus\(\)/);
+  assert.match(render, /orientationPaused: battlePause\.isOrientationPaused\(\)[\s\S]*manualPaused: battlePause\.isManualPaused\(\)[\s\S]*pauseConfirmAction[\s\S]*syncTopBattleDialog\(\)/);
+  assert.match(source, /renderBattle: \(\) => renderGame\(\)/);
+  assert.match(source, /onVisibilityChange: battlePause\.setBackgroundPaused/);
+  assert.doesNotMatch(requestAction, /querySelector\('\[data-pause-cancel\]'\)\?\.focus\(\)/);
+  assert.doesNotMatch(cancel, /querySelector\(`\[data-pause-action=/);
 });

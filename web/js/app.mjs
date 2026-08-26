@@ -111,6 +111,12 @@ function hasLiveBattle() {
   );
 }
 
+function resetManualPauseState() {
+  pauseRequested = false;
+  pauseConfirmAction = null;
+  pauseReturnFocus = null;
+}
+
 function requestManualPause() {
   if (!hasLiveBattle() || battlePause.isManualPaused() || pauseRequested) return false;
   pauseReturnFocus = document.activeElement;
@@ -133,7 +139,6 @@ function openManualPause() {
   pauseConfirmAction = null;
   audioManager?.pauseMusic();
   if (!battlePause.setManualPaused(true)) return false;
-  app.querySelector('[data-pause-continue]')?.focus();
   return true;
 }
 
@@ -151,16 +156,13 @@ function requestPauseAction(action) {
   if (!hasLiveBattle() || !battlePause.isManualPaused() || pauseConfirmAction) return false;
   pauseConfirmAction = action;
   renderGame();
-  app.querySelector('[data-pause-cancel]')?.focus();
   return true;
 }
 
 function cancelPauseConfirmation() {
   if (!hasLiveBattle() || !battlePause.isManualPaused() || !pauseConfirmAction) return false;
-  const action = pauseConfirmAction;
   pauseConfirmAction = null;
   renderGame();
-  app.querySelector(`[data-pause-action="${action}"]`)?.focus();
   return true;
 }
 
@@ -180,6 +182,7 @@ function startBattleTimer() {
 }
 
 function exitBattleOrientation() {
+  resetManualPauseState();
   orientationController.exitBattle();
   battlePause.reset();
 }
@@ -436,6 +439,7 @@ async function startGame(settings) {
 }
 
 function prepareBattleStart(settings) {
+  resetManualPauseState();
   battleLifecycle.reset();
   battleSession.reset();
   battleSettings = settings;
@@ -502,6 +506,22 @@ function bindAudioToggle() {
     };
   }
 }
+
+function syncTopBattleDialog() {
+  const orientationDialog = app.querySelector('.orientation-blocker');
+  const pauseDialog = app.querySelector('.battle-pause-overlay');
+  const dialog = orientationDialog ?? pauseDialog;
+  if (!dialog) return false;
+  dialog.onkeydown = event => trapDialogTab(dialog, event);
+  const focusTarget = orientationDialog
+    ? orientationDialog.querySelector('[data-return-main-menu]')
+    : pauseConfirmAction
+      ? pauseDialog.querySelector('[data-pause-cancel]')
+      : pauseDialog.querySelector('[data-pause-continue]');
+  focusTarget?.focus();
+  return true;
+}
+
 function renderGame({
   allowEnded = false,
   questionOverride = null,
@@ -546,8 +566,7 @@ function renderGame({
   }
   const cancelButton = app.querySelector('[data-pause-cancel]');
   if (cancelButton) cancelButton.onclick = cancelPauseConfirmation;
-  const dialog = app.querySelector('.battle-pause-overlay');
-  if (dialog) dialog.onkeydown = event => trapDialogTab(dialog, event);
+  syncTopBattleDialog();
   if (!questionOverride) scheduleCpuForCurrentQuestion(question);
 }
 

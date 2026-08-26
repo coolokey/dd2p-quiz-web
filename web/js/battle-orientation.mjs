@@ -119,6 +119,11 @@ export function createBattleOrientationController({
     syncVisibility({ force: true });
   }
 
+  function handleVisibilityChange() {
+    if (document?.visibilityState !== 'hidden') sync();
+    syncVisibility();
+  }
+
   function addListener(target, type, listener = sync) {
     if (!target?.addEventListener) return;
     target.addEventListener(type, listener);
@@ -134,7 +139,7 @@ export function createBattleOrientationController({
     addListener(viewport, 'resize');
     addListener(orientation, 'change');
     addListener(document, 'fullscreenchange');
-    addListener(document, 'visibilitychange', syncVisibility);
+    addListener(document, 'visibilitychange', handleVisibilityChange);
 
     try {
       await document?.documentElement?.requestFullscreen?.();

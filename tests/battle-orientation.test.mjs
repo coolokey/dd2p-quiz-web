@@ -135,6 +135,84 @@ test('visibility 與 viewport 分開通知，重複狀態不重複發布', async
   assert.deepEqual(hiddenStates, [false, true, false]);
 });
 
+test('背景中旋轉後回到前景會先同步方向，只有橫向才恢復對戰一次', async () => {
+  const browser = fakeBrowser({ width: 844, height: 390 });
+  const events = [];
+  const coordinator = orientationModule.createBattlePauseCoordinator({
+    isLiveBattle: () => true,
+    disableInput: () => events.push('disable-input'),
+    pauseCpu: () => events.push('pause-cpu'),
+    clearTimer: () => events.push('clear-timer'),
+    renderBattle: () => events.push('render'),
+    resumeCpu: () => events.push('resume-cpu'),
+    enableInput: () => events.push('enable-input'),
+    startTimer: () => events.push('start-timer'),
+  });
+  const controller = createBattleOrientationController({
+    ...browser,
+    onPortraitChange: state => {
+      events.push(`portrait:${state}`);
+      coordinator.setOrientationPaused(state);
+    },
+    onVisibilityChange: state => {
+      events.push(`hidden:${state}`);
+      coordinator.setBackgroundPaused(state);
+    },
+  });
+
+  await controller.enterBattle();
+  browser.documentRef.visibilityState = 'hidden';
+  browser.documentRef.dispatch('visibilitychange');
+  browser.windowRef.innerWidth = 390;
+  browser.windowRef.innerHeight = 844;
+  events.length = 0;
+  browser.documentRef.visibilityState = 'visible';
+  browser.documentRef.dispatch('visibilitychange');
+
+  assert.deepEqual(events, [
+    'portrait:true',
+    'disable-input',
+    'pause-cpu',
+    'clear-timer',
+    'render',
+    'hidden:false',
+    'render',
+  ]);
+  assert.equal(coordinator.isOrientationPaused(), true);
+  assert.equal(coordinator.isBackgroundPaused(), false);
+  assert.equal(coordinator.isPaused(), true);
+
+  events.length = 0;
+  browser.documentRef.dispatch('visibilitychange');
+  assert.deepEqual(events, []);
+
+  browser.documentRef.visibilityState = 'hidden';
+  browser.documentRef.dispatch('visibilitychange');
+  browser.windowRef.innerWidth = 844;
+  browser.windowRef.innerHeight = 390;
+  events.length = 0;
+  browser.documentRef.visibilityState = 'visible';
+  browser.documentRef.dispatch('visibilitychange');
+
+  assert.deepEqual(events, [
+    'portrait:false',
+    'render',
+    'hidden:false',
+    'render',
+    'resume-cpu',
+    'enable-input',
+    'start-timer',
+  ]);
+  assert.equal(coordinator.isPaused(), false);
+
+  controller.exitBattle();
+  events.length = 0;
+  browser.documentRef.visibilityState = 'hidden';
+  browser.documentRef.dispatch('visibilitychange');
+  assert.deepEqual(events, []);
+  assert.equal(browser.documentRef.count('visibilitychange'), 0);
+});
+
 test('refresh 會強制重新發布目前方向與背景狀態', async () => {
   const browser = fakeBrowser({ width: 844, height: 390 });
   const states = [];

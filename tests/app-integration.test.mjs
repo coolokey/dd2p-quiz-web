@@ -206,3 +206,13 @@ test('背景暫停與直向遮罩分離，並同時防止 timer、CPU 與錯誤�
   assert.match(cleanup, /battlePause\.reset\(\)/);
   assert.match(source, /orientationPaused: battlePause\.isOrientationPaused\(\)/);
 });
+
+test('visibility 恢復先重新核對方向，再由背景狀態決定是否恢復', async () => {
+  const source = await readAppSource();
+  const controllerSource = await readFile(new URL('../web/js/battle-orientation.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /onPortraitChange: handleBattleOrientationChange/);
+  assert.match(source, /onVisibilityChange: battlePause\.setBackgroundPaused/);
+  assert.match(controllerSource, /function handleVisibilityChange\(\)[\s\S]*sync\(\);[\s\S]*syncVisibility\(\);/);
+  assert.match(controllerSource, /addListener\(document, 'visibilitychange', handleVisibilityChange\)/);
+});

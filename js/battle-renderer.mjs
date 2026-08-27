@@ -1,4 +1,5 @@
 import { buildMobileAnswerControls } from './mobile-controls.mjs';
+import { buildBattlePauseMenu } from './battle-pause-menu.mjs';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
@@ -36,21 +37,30 @@ export function buildBattleMarkup(viewModel) {
     gameMode: viewModel.gameMode,
     choiceCount: viewModel.choices.length,
     eligiblePlayers: viewModel.eligiblePlayers,
-    locked: viewModel.mobileInputLocked || viewModel.orientationPaused,
+    locked: viewModel.mobileInputLocked || viewModel.orientationPaused || viewModel.manualPaused || viewModel.pausePending,
   });
   const orientationBlocker = viewModel.orientationPaused
     ? `<aside class="orientation-blocker" role="dialog" aria-modal="true">
       <span class="orientation-blocker-icon" aria-hidden="true">↻</span>
       <h2>請將裝置轉成橫向</h2>
       <p>轉為橫向後會繼續目前對戰。</p>
-      <button type="button" data-return-main-menu>返回主選單</button>
+      <button type="button" data-return-main-menu>返回首頁</button>
     </aside>`
     : '';
+  const pauseMenu = viewModel.manualPaused
+    ? buildBattlePauseMenu({ confirmAction: viewModel.pauseConfirmAction ?? null })
+    : '';
+  const pauseButton = viewModel.pausePending
+    ? '<button type="button" class="battle-pause-button" data-pause-battle aria-label="暫停對戰" disabled>等待本次攻擊結束……</button>'
+    : '<button type="button" class="battle-pause-button" data-pause-battle aria-label="暫停對戰">Ⅱ 暫停</button>';
 
   return `<div class="battle-shell" style="--scene:url('${escapeHtml(sceneImage)}')">
     <header class="battle-topbar">
       <span class="arena-name">${escapeHtml(viewModel.scene.label)}</span>
-      <strong class="battle-progress">${escapeHtml(viewModel.progress)}</strong>
+      <div class="battle-center-controls">
+        <strong class="battle-progress">${escapeHtml(viewModel.progress)}</strong>
+        ${pauseButton}
+      </div>
       <div class="audio-controls">
         <label title="主音量">主<input type="range" min="0" max="1" step="0.05" value="${escapeHtml(viewModel.audio?.master ?? 0.8)}" data-master-volume></label>
         <label title="背景音樂音量">樂<input type="range" min="0" max="1" step="0.05" value="${escapeHtml(viewModel.audio?.music ?? 0.65)}" data-music-volume></label>
@@ -80,6 +90,7 @@ export function buildBattleMarkup(viewModel) {
     ${mobileControls}
     ${orientationBlocker}
     <p class="battle-status" aria-live="polite">${escapeHtml(viewModel.status)}</p>
+    ${pauseMenu}
   </div>`;
 }
 

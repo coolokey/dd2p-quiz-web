@@ -41,11 +41,12 @@ function buildSfx(manifest, audioManifest) {
   };
 }
 
-async function safePlay(audio) {
+async function safePlay(audio, warning) {
   try {
     await audio?.play?.();
-  } catch {
+  } catch (error) {
     // Browsers can reject play() before or during an interaction unlock.
+    if (warning) console.warn(warning, error);
   }
 }
 
@@ -68,6 +69,8 @@ export function createAudioManager({
   let currentMusicVolume = clampVolume(musicVolume);
   let currentEffectsVolume = clampVolume(effectsVolume);
   let isMuted = Boolean(muted);
+  let musicPaused = false;
+  let musicResumePending = false;
 
   function effectiveVolume(kind) {
     return currentVolume * (kind === 'music' ? currentMusicVolume : currentEffectsVolume);
@@ -98,9 +101,34 @@ export function createAudioManager({
   }
 
   function stopBackgroundMusic() {
+    musicPaused = false;
+    musicResumePending = false;
     if (!backgroundMusic) return;
     stopAudio(backgroundMusic);
     backgroundMusic = null;
+  }
+
+  function pauseMusic() {
+    musicResumePending = false;
+    if (musicPaused) return;
+    musicPaused = true;
+    backgroundMusic?.pause?.();
+  }
+
+  async function resumeMusic() {
+    if (!musicPaused) return;
+    if (!backgroundMusic) {
+      musicPaused = false;
+      musicResumePending = false;
+      return;
+    }
+    if (isMuted) {
+      musicResumePending = true;
+      return;
+    }
+    musicPaused = false;
+    musicResumePending = false;
+    await safePlay(backgroundMusic, '無法恢復背景音樂。');
   }
 
   function stopEffects() {
@@ -110,11 +138,14 @@ export function createAudioManager({
   }
 
   async function startBackgroundMusic() {
+    // Orientation/background can pause a new battle before its track exists.
+    const pauseBeforeTrack = !backgroundMusic && musicPaused;
     stopBackgroundMusic();
+    musicPaused = pauseBeforeTrack;
     const src = sceneMusic.get(selectedScene);
     if (!unlocked || !src) return;
     backgroundMusic = configure(audioFactory(src), { loop: true, kind: 'music' });
-    await safePlay(backgroundMusic);
+    if (!musicPaused) await safePlay(backgroundMusic);
   }
 
   return {
@@ -141,8 +172,16 @@ export function createAudioManager({
     setMuted(nextMuted) {
       isMuted = Boolean(nextMuted);
       for (const audio of activeAudios.keys()) audio.muted = isMuted;
+      if (!isMuted && musicResumePending && backgroundMusic) {
+        musicPaused = false;
+        musicResumePending = false;
+        void safePlay(backgroundMusic, '無法恢復背景音樂。');
+      }
       return isMuted;
     },
+
+    pauseMusic,
+    resumeMusic,
 
     setVolume(nextVolume) {
       currentVolume = clampVolume(nextVolume);

@@ -1,11 +1,15 @@
 const DEFAULT_REVEAL_DELAY = 900;
 
-function cpuCanAnswer(snapshot, questionKey) {
+function cpuIsEligible(snapshot, questionKey) {
   return snapshot?.gameMode === 'solo'
     && snapshot.questionKey === questionKey
     && snapshot.phase === 'open'
     && snapshot.eligiblePlayers?.includes('right')
     && !snapshot.ended;
+}
+
+function cpuCanAnswer(snapshot, questionKey) {
+  return cpuIsEligible(snapshot, questionKey) && !snapshot.paused;
 }
 
 export function createBattleLifecycle({
@@ -42,7 +46,7 @@ export function createBattleLifecycle({
 
   function scheduleCpu({ questionKey, question, difficulty }) {
     const snapshot = getSnapshot();
-    if (activeSubmission || !cpuCanAnswer(snapshot, questionKey)) return false;
+    if (activeSubmission || pendingCpuAnswer || !cpuCanAnswer(snapshot, questionKey)) return false;
     if (scheduledQuestionKey === questionKey) return false;
 
     scheduledQuestionKey = questionKey;
@@ -77,8 +81,27 @@ export function createBattleLifecycle({
     return true;
   }
 
+  async function submitPendingCpu() {
+    const pending = pendingCpuAnswer;
+    if (!pending || !cpuCanAnswer(getSnapshot(), pending.questionKey)) return false;
+    const pendingEpoch = sessionEpoch;
+    pendingCpuAnswer = null;
+    const accepted = await submitCpuAnswer(pending.input);
+    if (accepted === false && pendingEpoch === sessionEpoch && cpuIsEligible(getSnapshot(), pending.questionKey)) {
+      pendingCpuAnswer ??= pending;
+    }
+    return accepted !== false;
+  }
+
+  function resumeCpu() {
+    const snapshot = getSnapshot();
+    if (snapshot?.paused || snapshot?.ended) return false;
+    cpuController.resume?.();
+    return activeSubmission ? false : submitPendingCpu();
+  }
+
   async function submit(input) {
-    if (activeSubmission || getSnapshot()?.ended) return false;
+    if (activeSubmission || getSnapshot()?.ended || getSnapshot()?.paused) return false;
     const outcome = resolveAnswer(input);
     if (!outcome) return false;
 
@@ -90,7 +113,7 @@ export function createBattleLifecycle({
         if (outcome.questionAdvanced && onQuestionAdvanced) onQuestionAdvanced();
         else cancel();
       }
-      await animateAnswer(outcome);
+      await animateAnswer(outcome, isCurrentSubmission);
       if (!isCurrentSubmission()) return false;
 
       if (!outcome.correct && outcome.questionAdvanced) {
@@ -100,18 +123,18 @@ export function createBattleLifecycle({
 
       const snapshot = getSnapshot();
       const pending = pendingCpuAnswer;
+      if (pending && !cpuIsEligible(snapshot, pending.questionKey)) pendingCpuAnswer = null;
       if (pending && cpuCanAnswer(snapshot, pending.questionKey)) {
-        pendingCpuAnswer = null;
         activeSubmission = null;
-        await submitCpuAnswer(pending.input);
-        return true;
+        if (await submitPendingCpu()) return true;
+        if (token.sessionEpoch !== sessionEpoch || activeSubmission) return false;
+        activeSubmission = token;
       }
 
       const settlement = await afterAnswer(outcome);
       if (!isCurrentSubmission()) return false;
 
       activeSubmission = null;
-      pendingCpuAnswer = null;
       await onSettled(outcome, settlement);
       if (token.sessionEpoch !== sessionEpoch) return false;
       return true;
@@ -134,6 +157,7 @@ export function createBattleLifecycle({
     cancel,
     isAnimating: () => activeSubmission !== null,
     reset,
+    resumeCpu,
     scheduleCpu,
     submit,
   };

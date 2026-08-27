@@ -21,12 +21,25 @@ export function mapGamepadButtonToEvent(player, buttonIndex) {
   const keys = PLAYER_KEYS[player];
   if (!keys) return null;
 
-  if (buttonIndex >= 0 && buttonIndex <= 3) {
+  // 依標準 Gamepad 佈局映射至手把正面印刷的 1 (頂)、2 (右)、3 (底)、4 (左)
+  // Button 3 (Top / 上) -> 印刷 1 -> 選項 1 (answerIndex: 0)
+  // Button 1 (Right / 右) -> 印刷 2 -> 選項 2 (answerIndex: 1)
+  // Button 0 (Bottom / 下) -> 印刷 3 -> 選項 3 (answerIndex: 2)
+  // Button 2 (Left / 左) -> 印刷 4 -> 選項 4 (answerIndex: 3)
+  const FACE_BUTTON_MAP = {
+    3: 0,
+    1: 1,
+    0: 2,
+    2: 3,
+  };
+
+  if (buttonIndex in FACE_BUTTON_MAP) {
+    const answerIndex = FACE_BUTTON_MAP[buttonIndex];
     return {
       player,
       type: 'answer',
-      answerIndex: buttonIndex,
-      code: keys.answers[buttonIndex],
+      answerIndex,
+      code: keys.answers[answerIndex],
     };
   }
 

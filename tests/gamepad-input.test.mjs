@@ -19,19 +19,35 @@ test('getConnectedGamepads 過濾無效項與 null', () => {
   assert.equal(connected[1].id, 'USB Gamepad 2');
 });
 
-test('mapGamepadButtonToEvent 正確解析左右玩家的按鈕對應', () => {
+test('mapGamepadButtonToEvent 正確解析左右玩家的物理印刷按鈕對應', () => {
   // 左方紅隊 (Player 1)
-  assert.deepEqual(mapGamepadButtonToEvent('left', 0), {
+  // Button 3 (Top / 上) -> 印刷 1 -> 選項 1 (answerIndex 0, Digit1)
+  assert.deepEqual(mapGamepadButtonToEvent('left', 3), {
     player: 'left',
     type: 'answer',
     answerIndex: 0,
     code: 'Digit1',
   });
+  // Button 1 (Right / 右) -> 印刷 2 -> 選項 2 (answerIndex 1, Digit2)
   assert.deepEqual(mapGamepadButtonToEvent('left', 1), {
     player: 'left',
     type: 'answer',
     answerIndex: 1,
     code: 'Digit2',
+  });
+  // Button 0 (Bottom / 下) -> 印刷 3 -> 選項 3 (answerIndex 2, Digit3)
+  assert.deepEqual(mapGamepadButtonToEvent('left', 0), {
+    player: 'left',
+    type: 'answer',
+    answerIndex: 2,
+    code: 'Digit3',
+  });
+  // Button 2 (Left / 左) -> 印刷 4 -> 選項 4 (answerIndex 3, Digit4)
+  assert.deepEqual(mapGamepadButtonToEvent('left', 2), {
+    player: 'left',
+    type: 'answer',
+    answerIndex: 3,
+    code: 'Digit4',
   });
   assert.deepEqual(mapGamepadButtonToEvent('left', 9), {
     player: 'left',
@@ -45,13 +61,15 @@ test('mapGamepadButtonToEvent 正確解析左右玩家的按鈕對應', () => {
   });
 
   // 右方藍隊 (Player 2)
-  assert.deepEqual(mapGamepadButtonToEvent('right', 0), {
+  // Button 3 (Top / 上) -> 印刷 1 -> 選項 1 (answerIndex 0, Digit0)
+  assert.deepEqual(mapGamepadButtonToEvent('right', 3), {
     player: 'right',
     type: 'answer',
     answerIndex: 0,
     code: 'Digit0',
   });
-  assert.deepEqual(mapGamepadButtonToEvent('right', 3), {
+  // Button 2 (Left / 左) -> 印刷 4 -> 選項 4 (answerIndex 3, Backslash)
+  assert.deepEqual(mapGamepadButtonToEvent('right', 2), {
     player: 'right',
     type: 'answer',
     answerIndex: 3,
@@ -71,12 +89,17 @@ test('pollGamepadEvents 具備按鍵邊緣觸發（Edge Trigger），防止連�
   const mockPadPressed = [
     {
       index: 0,
-      buttons: [{ pressed: true, value: 1.0 }], // Button 0 pressed
+      buttons: [
+        { pressed: false, value: 0 },
+        { pressed: false, value: 0 },
+        { pressed: false, value: 0 },
+        { pressed: true, value: 1.0 }, // Button 3 (Top / 印刷 1) pressed
+      ],
       axes: [0, 0],
     },
   ];
 
-  // 第一次輪詢：應偵測到按下事件
+  // 第一次輪詢：應偵測到按下事件 (按鍵 1 -> answerIndex 0)
   const events1 = pollGamepadEvents(state, () => mockPadPressed);
   assert.equal(events1.length, 1);
   assert.equal(events1[0].player, 'left');
@@ -90,7 +113,12 @@ test('pollGamepadEvents 具備按鍵邊緣觸發（Edge Trigger），防止連�
   const mockPadReleased = [
     {
       index: 0,
-      buttons: [{ pressed: false, value: 0 }],
+      buttons: [
+        { pressed: false, value: 0 },
+        { pressed: false, value: 0 },
+        { pressed: false, value: 0 },
+        { pressed: false, value: 0 },
+      ],
       axes: [0, 0],
     },
   ];
@@ -108,14 +136,19 @@ test('pollGamepadEvents 支援 1P 與 2P 雙搖桿獨立輪詢', () => {
   const mockTwoPads = [
     {
       index: 0,
-      buttons: [{ pressed: true, value: 1.0 }], // 1P Button 0 -> Digit1
+      buttons: [
+        { pressed: false, value: 0 },
+        { pressed: false, value: 0 },
+        { pressed: false, value: 0 },
+        { pressed: true, value: 1.0 }, // 1P Button 3 (Top / 印刷 1) -> Digit1
+      ],
       axes: [0, 0],
     },
     {
       index: 1,
       buttons: [
         { pressed: false, value: 0 },
-        { pressed: true, value: 1.0 }, // 2P Button 1 -> Minus
+        { pressed: true, value: 1.0 }, // 2P Button 1 (Right / 印刷 2) -> Minus
       ],
       axes: [0, 0],
     },

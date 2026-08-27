@@ -758,7 +758,8 @@ async function processAnswer(input) {
     battleLifecycle.cancel();
     cpuController.cancel();
     if (!combatState?.ended && quizState && battleSettings) {
-      renderGame();
+      if (battlePause.isPausePending()) openManualPause();
+      else renderGame();
       if (!battlePause.isPaused()) battleInputGate.enable();
     }
     return false;

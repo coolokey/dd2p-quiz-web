@@ -6,6 +6,82 @@ import { createBattleAppHarness, flushMicrotasks } from './helpers/battle-app-ha
 const readAppSource = () => readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
 const readReadme = () => readFile(new URL('../README.md', import.meta.url), 'utf8');
 
+test('動畫失敗仍將 pending pause 轉為可繼續及安全離場的手動暫停', async t => {
+  const diagnostic = t.mock.method(console, 'error', () => {});
+  const h = await createBattleAppHarness({ gameMode: 'local' });
+  t.after(() => h.api.stopBattleActivity());
+  const answer = h.api.processAnswer({ player: 'left', answerIndex: 1 - h.api.question.answerIndex });
+  const quizAfterAnswer = structuredClone(h.api.quizState);
+  const combatAfterAnswer = structuredClone(h.api.combatState);
+  assert.equal(h.api.requestManualPause(), true);
+  const failure = new Error('animation failed');
+  h.animations[0].resolve(Promise.reject(failure));
+  assert.equal(await answer, false, '保留既有作答錯誤回傳');
+  assert.equal(diagnostic.mock.calls.length, 1);
+  assert.equal(diagnostic.mock.calls[0].arguments[1].error, failure);
+  assert.equal(h.api.pausePending, false);
+  assert.equal(h.api.manualPaused, true);
+  assert.equal(h.api.animating, false);
+  assert.equal(h.api.inputEnabled, false);
+  assert.ok(h.app.querySelector('[data-pause-continue]'));
+  assert.equal(h.clock.timers.filter(timer => timer.active).length, 0);
+  assert.deepEqual(h.api.quizState, quizAfterAnswer);
+  assert.deepEqual(h.api.combatState, combatAfterAnswer);
+
+  assert.equal(h.api.continueBattle(), true);
+  assert.equal(h.api.continueBattle(), false);
+  assert.equal(h.api.inputEnabled, true);
+  assert.equal(h.clock.timers.filter(timer => timer.active && timer.interval).length, 1);
+  const nextAnswer = h.api.processAnswer({ player: 'right', answerIndex: h.api.question.answerIndex });
+  await h.clock.tick(1000);
+  h.animations[1].resolve();
+  assert.equal(await nextAnswer, true);
+  assert.equal(h.api.combatState.scores.right, 1);
+  assert.equal(h.api.quizState.questionIndex, quizAfterAnswer.questionIndex + 1);
+  h.api.requestManualPause();
+  assert.equal(h.api.requestPauseAction('home'), true);
+  assert.equal(h.api.confirmPauseAction(), true);
+  assert.equal(h.api.combatState, null);
+  assert.equal(h.clock.timers.filter(timer => timer.active).length, 0);
+});
+
+test('動畫失敗後繼續仍保留直向與背景暫停，全部解除才恢復單一 CPU 與 timer', async t => {
+  t.mock.method(console, 'error', () => {});
+  const h = await createBattleAppHarness();
+  t.after(() => h.api.stopBattleActivity());
+  const answer = h.api.processAnswer({ player: 'left', answerIndex: 1 - h.api.question.answerIndex });
+  await h.clock.tick(2500); // The CPU answer is queued behind this animation.
+  h.api.requestManualPause();
+  h.api.orientation(true);
+  h.api.background(true);
+  h.animations[0].resolve(Promise.reject(new Error('animation failed')));
+  assert.equal(await answer, false);
+  assert.equal(h.api.pausePending, false);
+  assert.equal(h.api.manualPaused, true);
+  assert.equal(h.api.continueBattle(), true);
+  h.api.orientation(false);
+  assert.equal(h.api.paused, true);
+  assert.equal(h.api.inputEnabled, false);
+  assert.equal(h.audios[0].paused, true);
+  assert.equal(h.clock.timers.filter(timer => timer.active).length, 0);
+  await h.clock.tick(5000);
+  assert.equal(h.api.combatState.scores.right, 0);
+
+  h.api.background(false);
+  assert.equal(h.api.inputEnabled, true);
+  assert.equal(h.clock.timers.filter(timer => timer.active && timer.interval).length, 1);
+  assert.equal(h.clock.timers.filter(timer => timer.active && !timer.interval).length, 1);
+  await h.clock.tick(2500);
+  assert.equal(h.api.combatState.scores.right, 1, '錯誤復原取消舊 CPU，僅接受新排程一次');
+  assert.equal(h.animations.length, 2);
+  await h.clock.tick(1000);
+  h.animations[1].resolve();
+  await flushMicrotasks();
+  assert.equal(h.api.quizState.questionIndex, 1);
+  assert.equal(h.api.combatState.scores.right, 1);
+  assert.deepEqual(h.settlements, ['after', 'settled']);
+});
+
 test('pending pause 會在已排隊 CPU 被輸入閘門阻擋後完成一次結算', async () => {
   const h = await createBattleAppHarness();
   const answer = h.api.processAnswer({ player: 'left', answerIndex: 1 - h.api.question.answerIndex });

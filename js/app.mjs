@@ -18,9 +18,11 @@ import { createBattleInputGate, createLatestSessionGate, markQuizRequestLoading,
 import { createBattleOrientationController, createBattlePauseCoordinator } from './battle-orientation.mjs';
 import { bindMobileAnswerControls, setMobileAnswerControlsLocked, syncTouchCapabilityClass } from './mobile-controls.mjs';
 import { PAUSE_ACTIONS, trapDialogTab } from './battle-pause-menu.mjs';
+import { createGamepadState, pollGamepadEvents } from './gamepad-input.mjs';
 
 const app = document.querySelector('#app');
 syncTouchCapabilityClass(document.documentElement, navigator);
+const gamepadState = createGamepadState();
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;
 let quizState = null, combatState = null, audioManager = null, timerId = null;
 let timeLeft = 0, regulationLimit = 0, battleSettings = null;
@@ -462,7 +464,7 @@ function renderKeyTest(settings) {
   cancelPendingStart();
   keyHits = new Set();
   keyTestPlayers = playersForKeyTest(settings.gameMode);
-  const instruction = keyTestPlayers.length === 1 ? '請按一次自己的全部按鍵。亮起黃色即表示已偵測。' : '請兩位玩家各按一次自己的全部按鍵。亮起黃色即表示已偵測。';
+  const instruction = keyTestPlayers.length === 1 ? '請按一次自己的全部按鍵（支援鍵盤與 USB 搖桿）。亮起黃色即表示已偵測。' : '請兩位玩家各按一次自己的全部按鍵（支援鍵盤與 USB 搖桿）。亮起黃色即表示已偵測。';
   app.innerHTML = shell(`<p class="lead">${instruction}</p><div class="keytest">${keyTestPlayers.map(player => `<div class="player ${player}"><b>${playerName(player)}</b><div class="keys">${keysFor(player).map(code => `<span class="key" data-key="${code}">${esc(code.replace('Key','').replace('Digit',''))}</span>`).join('')}</div></div>`).join('')}</div><p id="key-hint" class="hint">請開始測試按鍵。</p><div class="actions"><button class="secondary" id="back">返回選角</button><button class="primary" id="start" disabled>開始對戰</button></div>`);
   app.querySelector('#back').onclick = () => renderCharacterSelect(settings);
   app.querySelector('#start').onclick = () => startGameOnce(settings);
@@ -781,6 +783,40 @@ function renderResult() {
   app.querySelector('#again').onclick = () => { audioManager?.stop(); characterSelection = createCharacterSelection(); renderRules(); };
 }
 
+function handleGameCodeInput(code) {
+  if (app.querySelector('#key-hint')) {
+    const needed = keyTestPlayers.flatMap(keysFor);
+    keyHits = recordKeyTestKey(keyHits, needed, code);
+    if (needed.includes(code)) app.querySelector(`[data-key="${code}"]`)?.classList.add('hit');
+    app.querySelector('#key-hint').textContent = `已偵測 ${keyHits.size}／${needed.length} 個按鍵。`;
+    if (isKeyTestComplete(keyHits, needed)) app.querySelector('#start').disabled = false;
+    return;
+  }
+  const input = getAnswerInput(code);
+  if (input && battleInputGate.isEnabled() && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) void processAnswer(input);
+}
+
+function startGamepadLoop() {
+  if (typeof window === 'undefined') return;
+  const tick = () => {
+    const events = pollGamepadEvents(gamepadState);
+    for (const evt of events) {
+      audioManager?.unlock();
+      if (evt.type === 'start') {
+        if (hasLiveBattle()) {
+          if (pauseConfirmAction) cancelPauseConfirmation();
+          else if (battlePause.isManualPaused()) continueBattle();
+          else requestManualPause();
+        }
+      } else if (evt.code) {
+        handleGameCodeInput(evt.code);
+      }
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 document.addEventListener('pointerdown', () => audioManager?.unlock(), { once: true });
 document.addEventListener('keydown', event => {
   audioManager?.unlock();
@@ -796,17 +832,10 @@ document.addEventListener('keydown', event => {
   if (!isGameKey(event.code)) return;
   event.preventDefault();
   if (event.repeat) return;
-  if (app.querySelector('#key-hint')) {
-    const needed = keyTestPlayers.flatMap(keysFor);
-    keyHits = recordKeyTestKey(keyHits, needed, event.code);
-    if (needed.includes(event.code)) app.querySelector(`[data-key="${event.code}"]`)?.classList.add('hit');
-    app.querySelector('#key-hint').textContent = `已偵測 ${keyHits.size}／${needed.length} 個按鍵。`;
-    if (isKeyTestComplete(keyHits, needed)) app.querySelector('#start').disabled = false;
-    return;
-  }
-  const input = getAnswerInput(event.code);
-  if (input && battleInputGate.isEnabled() && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) void processAnswer(input);
+  handleGameCodeInput(event.code);
 });
+
+startGamepadLoop();
 
 async function bootstrap() {
   return runLatestRequest({

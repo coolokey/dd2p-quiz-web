@@ -222,7 +222,7 @@ test('應用程式匯入暫停對話框焦點圈並將完整暫停狀態交給 r
   const source = await readAppSource();
   const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
 
-  assert.match(source, /import \{ trapDialogTab \} from '\.\/battle-pause-menu\.mjs';/);
+  assert.match(source, /import \{ PAUSE_ACTIONS, trapDialogTab \} from '\.\/battle-pause-menu\.mjs';/);
   assert.match(source, /let pauseRequested = false;/);
   assert.match(source, /let pauseConfirmAction = null;/);
   assert.match(source, /let pauseReturnFocus = null;/);
@@ -287,7 +287,7 @@ test('暫停選單動作只開啟或取消確認且取消後仍維持 manual pau
   assert.doesNotMatch(cancel, /setManualPaused\(false\)/);
 });
 
-test('每次 render 只接一組暫停 handlers、三個 action、取消與 dialog focus trap', async () => {
+test('每次 render 只接一組暫停 handlers、三個 action、取消、確認與 dialog focus trap', async () => {
   const source = await readAppSource();
   const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
 
@@ -295,8 +295,103 @@ test('每次 render 只接一組暫停 handlers、三個 action、取消與 dial
   assert.match(render, /querySelector\('\[data-pause-continue\]'\)[\s\S]*\.onclick = continueBattle/);
   assert.match(render, /querySelectorAll\('\[data-pause-action\]'\)[\s\S]*requestPauseAction\(button\.dataset\.pauseAction\)/);
   assert.match(render, /querySelector\('\[data-pause-cancel\]'\)[\s\S]*\.onclick = cancelPauseConfirmation/);
+  assert.match(render, /querySelector\('\[data-pause-confirm\]'\)[\s\S]*\.onclick = confirmPauseAction/);
+  assert.equal((render.match(/\[data-pause-confirm\]/g) ?? []).length, 1);
   assert.match(render, /syncTopBattleDialog\(\)/);
-  assert.doesNotMatch(render, /data-pause-confirm/);
+});
+
+test('暫停離場只接受固定 action，未知或缺少 action 不得執行', async () => {
+  const source = await readAppSource();
+  const requestAction = functionSource(source, 'requestPauseAction', 'cancelPauseConfirmation');
+  const confirm = functionSource(source, 'confirmPauseAction', 'handleBattleOrientationChange');
+
+  assert.match(requestAction, /Object\.values\(PAUSE_ACTIONS\)\.includes\(action\)/);
+  assert.match(confirm, /Object\.values\(PAUSE_ACTIONS\)\.includes\(pauseConfirmAction\)/);
+  assert.match(confirm, /const action = pauseConfirmAction;/);
+  assert.match(confirm, /pauseConfirmAction = null;/);
+  assert.ok(confirm.indexOf('pauseConfirmAction = null;') < confirm.indexOf('stopBattleActivity()'));
+  assert.doesNotMatch(confirm, /location\.reload/);
+});
+
+test('clearBattleState 集中停止舊局並依需求保留 gameMode', async () => {
+  const source = await readAppSource();
+  const clear = functionSource(source, 'clearBattleState', 'cancelPendingStart');
+
+  assert.match(clear, /\{ keepGameMode = false \} = \{\}/);
+  assert.match(clear, /stopBattleActivity\(\)/);
+  for (const assignment of [
+    /currentQuiz = null/,
+    /quizState = null/,
+    /combatState = null/,
+    /battleSettings = null/,
+    /characterSelection = createCharacterSelection\(\)/,
+    /activeQuestionIndex = null/,
+    /attackState = createAttackState\(\)/,
+    /answerPositionState = createAnswerPositionState\(\)/,
+    /keyHits = new Set\(\)/,
+    /keyTestPlayers = \[\]/,
+    /timeLeft = 0/,
+    /regulationLimit = 0/,
+  ]) assert.match(clear, assignment);
+  assert.match(clear, /if \(!keepGameMode\) gameMode = null/);
+  assert.doesNotMatch(clear, /catalog =|battleManifest =|activeSubject =|muted =|audioVolumes/);
+});
+
+test('確認重新開始保留原題庫與完整設定，並透過既有 preparation 建立全新局', async () => {
+  const source = await readAppSource();
+  const confirm = functionSource(source, 'confirmPauseAction', 'handleBattleOrientationChange');
+  const prepare = functionSource(source, 'prepareBattleStart', 'renderQuizError');
+  const restart = confirm.slice(confirm.indexOf('case PAUSE_ACTIONS.restart'), confirm.indexOf('case PAUSE_ACTIONS.catalog'));
+
+  assert.match(confirm, /const savedSettings = battleSettings;/);
+  assert.match(restart, /stopBattleActivity\(\);[\s\S]*startGameOnce\(savedSettings\)/);
+  assert.doesNotMatch(restart, /clearBattleState|currentQuiz = null|characterSelection = createCharacterSelection/);
+  assert.match(prepare, /battleSettings = settings/);
+  assert.match(prepare, /answerPositionState = createAnswerPositionState\(\)/);
+  assert.match(prepare, /currentQuiz = \{ \.\.\.currentQuiz, activeQuestions: prepareQuestionRound\(currentQuiz\.questions, Math\.random, answerPositionState\) \}/);
+  assert.match(prepare, /quizState = createGameState/);
+  assert.match(prepare, /combatState = createBattleState\(\)/);
+  assert.match(prepare, /activeQuestionIndex = null/);
+  assert.match(prepare, /attackState = createAttackState\(\)/);
+});
+
+test('確認更換題庫保留模式但清空對戰，確認首頁則完整清空', async () => {
+  const source = await readAppSource();
+  const confirm = functionSource(source, 'confirmPauseAction', 'handleBattleOrientationChange');
+  const catalog = confirm.slice(confirm.indexOf('case PAUSE_ACTIONS.catalog'), confirm.indexOf('case PAUSE_ACTIONS.home'));
+  const home = confirm.slice(confirm.indexOf('case PAUSE_ACTIONS.home'));
+
+  assert.match(confirm, /const savedGameMode = gameMode;/);
+  assert.match(catalog, /clearBattleState\(\{ keepGameMode: true \}\);[\s\S]*gameMode = savedGameMode;[\s\S]*renderCatalog\(\)/);
+  assert.match(home, /clearBattleState\(\);[\s\S]*renderStartScreen\(\)/);
+  assert.match(source, /function returnToMainMenu\(\)[\s\S]*clearBattleState\(\);[\s\S]*renderStartScreen\(\)/);
+});
+
+test('直向返回按鈕先進入首頁確認，確認期間隱藏 blocker，取消後恢復直向暫停', async () => {
+  const source = await readAppSource();
+  const requestHome = functionSource(source, 'requestBattleHomeExit', 'handleBattleOrientationChange');
+  const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
+  const cancel = functionSource(source, 'cancelPauseConfirmation', 'requestBattleHomeExit');
+
+  assert.match(requestHome, /if \(!hasLiveBattle\(\)\)[\s\S]*returnToMainMenu\(\)/);
+  assert.match(requestHome, /audioManager\?\.pauseMusic\(\)/);
+  assert.match(requestHome, /pauseConfirmAction = PAUSE_ACTIONS\.home/);
+  assert.match(requestHome, /battlePause\.setManualPaused\(true\)/);
+  assert.ok(requestHome.indexOf('pauseConfirmAction = PAUSE_ACTIONS.home') < requestHome.indexOf('battlePause.setManualPaused(true)'));
+  assert.doesNotMatch(requestHome, /stopBattleActivity|clearBattleState/);
+  assert.match(render, /orientationPaused: battlePause\.isOrientationPaused\(\) && !pauseConfirmAction/);
+  assert.match(render, /\[data-return-main-menu\][\s\S]*\.onclick = requestBattleHomeExit/);
+  assert.match(cancel, /pauseConfirmAction = null;[\s\S]*renderGame\(\)/);
+  assert.doesNotMatch(cancel, /setManualPaused\(false\)/);
+});
+
+test('結果頁的題庫與首頁離場也會使用完整清理且不增加確認', async () => {
+  const source = await readAppSource();
+  const result = functionSource(source, 'renderResult');
+
+  assert.match(result, /#catalog'[\s\S]*clearBattleState\(\{ keepGameMode: true \}\)[\s\S]*renderCatalog\(\)/);
+  assert.match(result, /#main-menu'[\s\S]*returnToMainMenu/);
+  assert.doesNotMatch(result, /requestPauseAction|confirmPauseAction/);
 });
 
 test('Escape 優先於遊戲鍵並依確認、暫停、live battle 順序處理', async () => {

@@ -43,11 +43,14 @@ test('單人模式在每題排程 CPU 並於換題及結束時取消', async () 
   assert.match(timerHandler, /timeLeft <= 0[\s\S]*?battleSession\.timerExpired\(\)/);
 });
 
-test('開局題庫驗證失敗會停止對戰活動並顯示返回題庫入口', async () => {
+test('開局題庫驗證失敗會保留模式、清空部分初始化狀態並顯示返回題庫入口', async () => {
   const source = await readAppSource();
+  const startError = functionSource(source, 'renderQuizError', 'handleTimer');
   assert.match(source, /function stopBattleActivity\(\)[\s\S]*battleSession\.stopBattleActivity\(\)/);
   assert.match(source, /runStartSession\(\{[\s\S]*onCancel: stopBattleActivity[\s\S]*onError: renderQuizError/);
-  assert.match(source, /function renderQuizError\([\s\S]*題庫錯誤[\s\S]*返回題庫/);
+  assert.match(startError, /clearBattleState\(\{ keepGameMode: true \}\)/);
+  assert.ok(startError.indexOf('clearBattleState') < startError.indexOf('app.innerHTML'));
+  assert.match(startError, /題庫錯誤[\s\S]*返回題庫[\s\S]*#back-catalog'[\s\S]*renderCatalog/);
 });
 
 test('初始資料與個別題庫均使用可降級、會檢查 HTTP 的載入器', async () => {
@@ -140,7 +143,7 @@ test('對戰結果、題庫、主選單、開局失敗與停止活動都會清�
   for (const block of [stop, mainMenu, catalog, result]) {
     assert.match(block, /exitBattleOrientation\(\)/);
   }
-  assert.match(startError, /stopBattleActivity\(\)/);
+  assert.match(startError, /clearBattleState\(\{ keepGameMode: true \}\)/);
   assert.match(stop, /battleInputGate\.disable\(\);[\s\S]*battleSession\.stopBattleActivity\(\)/);
   assert.match(source, /onCancel: stopBattleActivity/);
 });

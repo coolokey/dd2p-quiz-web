@@ -512,7 +512,7 @@ function prepareBattleStart(settings) {
 }
 
 function renderQuizError(error) {
-  stopBattleActivity();
+  clearBattleState({ keepGameMode: true });
   app.innerHTML = shell(`<h2 class="selection-title">題庫錯誤</h2><p class="error">無法開始此題庫：${esc(error.message)}</p><p class="hint">請更換題庫，或檢查每題是否有 2 至 4 個選項與有效正確答案。</p><div class="actions"><button class="primary" id="back-catalog">返回題庫</button></div>`);
   app.querySelector('#back-catalog').onclick = renderCatalog;
 }

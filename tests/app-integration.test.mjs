@@ -371,16 +371,18 @@ test('應用程式匯入並建立螢幕方向與觸控作答整合', async () =>
   assert.match(source, /orientationController\.enterBattle\(\)\.catch\(/);
 });
 
-test('原有鍵盤映射、按鍵測試與單人右方防護仍保留', async () => {
+test('原有鍵盤與新增手把映射、按鍵測試與單人右方防護仍保留', async () => {
   const source = await readAppSource();
-  const keydown = source.slice(source.indexOf("document.addEventListener('keydown'"), source.indexOf('async function bootstrap'));
+  const inputHandler = source.slice(source.indexOf('function handleGameCodeInput'), source.indexOf('async function bootstrap'));
 
+  assert.match(source, /import \{ createGamepadState, pollGamepadEvents \} from '\.\/gamepad-input\.mjs';/);
   assert.match(source, /document\.addEventListener\('keydown', event => \{/);
-  assert.match(keydown, /recordKeyTestKey\(/);
-  assert.match(keydown, /isKeyTestComplete\(/);
-  assert.match(keydown, /const input = getAnswerInput\(event\.code\);/);
-  assert.match(keydown, /battleSettings\?\.gameMode !== GAME_MODES\.solo \|\| input\.player !== 'right'/);
-  assert.match(keydown, /void processAnswer\(input\)/);
+  assert.match(inputHandler, /recordKeyTestKey\(/);
+  assert.match(inputHandler, /isKeyTestComplete\(/);
+  assert.match(inputHandler, /const input = getAnswerInput\(code\);/);
+  assert.match(inputHandler, /battleSettings\?\.gameMode !== GAME_MODES\.solo \|\| input\.player !== 'right'/);
+  assert.match(inputHandler, /void processAnswer\(input\)/);
+  assert.match(source, /startGamepadLoop\(\)/);
 });
 
 test('對戰 timer 只會在橫向、計時且未結束時建立一次', async () => {

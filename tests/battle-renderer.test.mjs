@@ -99,7 +99,7 @@ test('直向暫停時顯示無障礙旋轉提示並停用全部觸控按鈕', ()
   assert.match(html, /請將裝置轉成橫向/);
   assert.match(html, /轉為橫向後會繼續目前對戰。/);
   assert.match(html, /aria-hidden="true"/);
-  assert.match(html, /type="button" data-return-main-menu[^>]*>返回主選單/);
+  assert.match(html, /type="button" data-return-main-menu[^>]*>返回首頁/);
   assert.equal((html.match(/data-touch-answer=[^>]* disabled/g) ?? []).length, 8);
 });
 
@@ -345,7 +345,13 @@ test('暫停介面保留觸控尺寸、安全區、低層級遮罩及矮橫式�
   assert.match(css, /\.battle-pause-button\s*\{[^}]*min-width:\s*48px/);
   assert.match(css, /\.battle-pause-button\s*\{[^}]*min-height:\s*48px/);
   assert.match(css, /\.battle-pause-overlay\s*\{[^}]*position:\s*fixed/);
-  assert.match(css, /\.battle-pause-overlay\s*\{[^}]*z-index:\s*(?:[1-9]\d?)/);
+  const zIndex = selector => {
+    const declarations = css.match(new RegExp(`\\.${selector}\\s*\\{([^}]+)\\}`))?.[1] ?? '';
+    const value = declarations.match(/(?:^|;)\s*z-index:\s*([^;]+)(?:;|$)/)?.[1].trim();
+    assert.match(value ?? '', /^-?\d+$/, `${selector} 必須提供完整的整數 z-index`);
+    return Number(value);
+  };
+  assert.ok(zIndex('battle-pause-overlay') < zIndex('orientation-blocker'));
   assert.match(css, /\.battle-pause-overlay\s*\{[^}]*env\(safe-area-inset-top\)/);
   assert.match(css, /\.battle-pause-overlay\s*\{[^}]*env\(safe-area-inset-right\)/);
   assert.match(css, /\.battle-pause-overlay\s*\{[^}]*env\(safe-area-inset-bottom\)/);

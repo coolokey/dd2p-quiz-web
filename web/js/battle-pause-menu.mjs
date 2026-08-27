@@ -54,7 +54,7 @@ function menuMarkup() {
         <button type="button" data-pause-continue>繼續遊戲</button>
         <button type="button" data-pause-action="${escapeHtml(PAUSE_ACTIONS.restart)}">重新開始本局</button>
         <button type="button" data-pause-action="${escapeHtml(PAUSE_ACTIONS.catalog)}">更換題庫</button>
-        <button type="button" data-pause-action="${escapeHtml(PAUSE_ACTIONS.home)}">返回首頁</button>
+        <button type="button" class="pause-danger" data-pause-action="${escapeHtml(PAUSE_ACTIONS.home)}">返回首頁</button>
       </div>
     </div>
   </div>`;

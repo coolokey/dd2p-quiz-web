@@ -32,9 +32,9 @@ let gameMode = null;
 let answerPositionState = createAnswerPositionState();
 let keyTestPlayers = [];
 let muted = localStorage.getItem('dd2p-muted') === 'true';
-let pauseRequested = false;
 let pauseConfirmAction = null;
 let pauseReturnFocus = null;
+const battleSoundTimers = new Set();
 const cpuController = createCpuController();
 const battlePause = createBattlePauseCoordinator({
   isLiveBattle: hasLiveBattle,
@@ -42,9 +42,11 @@ const battlePause = createBattlePauseCoordinator({
   pauseCpu: pauseBattleCpu,
   clearTimer: clearBattleTimer,
   renderBattle: () => renderGame(),
-  resumeCpu: () => cpuController.resume(),
+  resumeCpu: () => battleLifecycle.resumeCpu(),
   enableInput: () => battleInputGate.enable(),
   startTimer: startBattleTimer,
+  pauseMusic: () => audioManager?.pauseMusic(),
+  resumeMusic: () => { void audioManager?.resumeMusic(); },
 });
 const orientationController = createBattleOrientationController({
   onPortraitChange: handleBattleOrientationChange,
@@ -112,17 +114,15 @@ function hasLiveBattle() {
 }
 
 function resetManualPauseState() {
-  pauseRequested = false;
   pauseConfirmAction = null;
   pauseReturnFocus = null;
 }
 
 function requestManualPause() {
-  if (!hasLiveBattle() || battlePause.isManualPaused() || pauseRequested) return false;
+  if (!hasLiveBattle() || battlePause.isManualPaused() || battlePause.isPausePending()) return false;
   pauseReturnFocus = document.activeElement;
   if (battleLifecycle.isAnimating()) {
-    pauseRequested = true;
-    battleInputGate.disable();
+    battlePause.setPausePending(true);
     const pauseButton = app.querySelector('[data-pause-battle]');
     if (pauseButton) {
       pauseButton.disabled = true;
@@ -135,9 +135,7 @@ function requestManualPause() {
 
 function openManualPause() {
   if (!hasLiveBattle() || battlePause.isManualPaused()) return false;
-  pauseRequested = false;
   pauseConfirmAction = null;
-  audioManager?.pauseMusic();
   if (!battlePause.setManualPaused(true)) return false;
   return true;
 }
@@ -146,8 +144,7 @@ function continueBattle() {
   if (!hasLiveBattle() || !battlePause.isManualPaused() || pauseConfirmAction) return false;
   pauseConfirmAction = null;
   if (!battlePause.setManualPaused(false)) return false;
-  void audioManager?.resumeMusic();
-  app.querySelector('[data-pause-battle]')?.focus();
+  if (!syncTopBattleDialog()) app.querySelector('[data-pause-battle]')?.focus();
   pauseReturnFocus = null;
   return true;
 }
@@ -196,8 +193,6 @@ function requestBattleHomeExit() {
     returnToMainMenu();
     return true;
   }
-  audioManager?.pauseMusic();
-  pauseRequested = false;
   pauseConfirmAction = PAUSE_ACTIONS.home;
   if (battlePause.isManualPaused()) renderGame();
   else if (!battlePause.setManualPaused(true)) {
@@ -213,7 +208,6 @@ function handleBattleOrientationChange(portrait) {
 
 function pauseBattleCpu() {
   cpuController.pause();
-  if (battleLifecycle.isAnimating() && cpuController.remainingMs() === null) battleLifecycle.cancel();
 }
 
 function startBattleTimer() {
@@ -230,6 +224,7 @@ function exitBattleOrientation() {
 
 function stopBattleActivity() {
   battleInputGate.disable();
+  cancelScheduledBattleSounds();
   exitBattleOrientation();
   battleSession.stopBattleActivity();
   audioManager?.stopEffects?.();
@@ -497,6 +492,8 @@ async function startGame(settings) {
 
 function prepareBattleStart(settings) {
   resetManualPauseState();
+  battlePause.reset();
+  cancelScheduledBattleSounds();
   battleLifecycle.reset();
   battleSession.reset();
   battleSettings = settings;
@@ -517,7 +514,7 @@ function renderQuizError(error) {
   app.querySelector('#back-catalog').onclick = renderCatalog;
 }
 function handleTimer() {
-  if (combatState?.ended || combatState?.phase === 'sudden-death') return;
+  if (battlePause.isPaused() || !hasLiveBattle() || combatState?.phase === 'sudden-death') return;
   timeLeft = Math.max(0, timeLeft - 1);
   if (timeLeft <= 0) {
     battleSession.timerExpired();
@@ -601,7 +598,7 @@ function renderGame({
     orientationPaused: battlePause.isOrientationPaused() && !pauseConfirmAction,
     manualPaused: battlePause.isManualPaused(),
     pauseConfirmAction,
-    pausePending: pauseRequested,
+    pausePending: battlePause.isPausePending(),
     players: {
       left: { name: left.name || `角色 ${left.id}`, health: combatState.health.left, score: combatState.scores.left, image: characterImage(left) },
       right: { name: right.name || `角色 ${right.id}`, health: combatState.health.right, score: combatState.scores.right, image: characterImage(right) },
@@ -649,6 +646,7 @@ function battleLifecycleSnapshot() {
     phase: quizState?.phase,
     eligiblePlayers: quizState?.eligiblePlayers ?? [],
     ended: !quizState || !combatState || combatState.ended,
+    paused: battlePause.isPaused(),
   };
 }
 
@@ -678,7 +676,15 @@ function resolveBattleAnswer(input) {
   return { questionKey, question, answerIndex: question.answerIndex, progress: answerProgress, correct, questionAdvanced, actor };
 }
 
-async function animateBattleAnswer(outcome) {
+function cancelScheduledBattleSounds() {
+  for (const timer of battleSoundTimers) {
+    if (typeof clearTimeout === 'function') clearTimeout(timer);
+  }
+  battleSoundTimers.clear();
+}
+
+async function animateBattleAnswer(outcome, isCurrent) {
+  const playSound = name => { if (isCurrent()) audioManager?.playSfx(name); };
   setMobileAnswerControlsLocked(app, true);
   if (outcome.correct) {
     const animation = playBattleAnimation(app, combatState.animation, {
@@ -688,10 +694,16 @@ async function animateBattleAnswer(outcome) {
       duration: 650,
       impactDelay: outcome.timing.impactDelay,
     });
-    if (outcome.timing.swingDelay === 0) audioManager?.playSfx('weapon');
-    else setTimeout(() => audioManager?.playSfx('weapon'), outcome.timing.swingDelay);
+    if (outcome.timing.swingDelay === 0) playSound('weapon');
+    else if (typeof setTimeout === 'function') {
+      const timer = setTimeout(() => {
+        battleSoundTimers.delete(timer);
+        playSound('weapon');
+      }, outcome.timing.swingDelay);
+      battleSoundTimers.add(timer);
+    }
     await new Promise(resolve => setTimeout(resolve, outcome.timing.impactDelay));
-    audioManager?.playSfx('hit'); audioManager?.playSfx('hurt');
+    playSound('hit'); playSound('hurt');
     await animation;
     return;
   }
@@ -723,10 +735,10 @@ function afterBattleAnswer() {
 
 function settleBattleAnswer(_outcome, settlement) {
   if (combatState?.ended) {
-    pauseRequested = false;
+    battlePause.reset();
     return;
   }
-  if (pauseRequested) {
+  if (battlePause.isPausePending()) {
     openManualPause();
     return;
   }

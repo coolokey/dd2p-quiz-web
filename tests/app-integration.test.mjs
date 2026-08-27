@@ -1,9 +1,203 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { createBattleAppHarness, flushMicrotasks } from './helpers/battle-app-harness.mjs';
 
 const readAppSource = () => readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
 const readReadme = () => readFile(new URL('../README.md', import.meta.url), 'utf8');
+
+test('pending pause 會在已排隊 CPU 被輸入閘門阻擋後完成一次結算', async () => {
+  const h = await createBattleAppHarness();
+  const answer = h.api.processAnswer({ player: 'left', answerIndex: 1 - h.api.question.answerIndex });
+  await h.clock.tick(2500); // CPU has already reached the lifecycle queue.
+  const rolls = h.cpuRandomCalls.length;
+  assert.equal(h.animations.length, 1);
+  h.api.requestManualPause();
+  assert.equal(h.api.manualPaused, false);
+  assert.equal(h.api.animating, true);
+  h.animations[0].resolve();
+  await answer;
+  assert.equal(h.api.manualPaused, true);
+  assert.equal(h.api.pausePending, false);
+  assert.deepEqual(h.settlements, ['after', 'settled']);
+  assert.equal(h.api.combatState.scores.right, 0);
+  h.api.continueBattle();
+  await flushMicrotasks();
+  assert.equal(h.api.combatState.scores.right, 1);
+  assert.equal(h.cpuRandomCalls.length, rolls, '已到期答案須以原答案、零剩餘等待恢復');
+  assert.equal(h.animations.length, 2);
+  h.api.continueBattle();
+  assert.equal(h.api.combatState.scores.right, 1);
+  h.api.stopBattleActivity();
+  await h.clock.tick(1000);
+  h.animations[1].resolve();
+  await flushMicrotasks();
+});
+
+test('pending pause 立即封鎖所有恢復路徑且保留 CPU 原剩餘等待', async () => {
+  const h = await createBattleAppHarness();
+  const answer = h.api.processAnswer({ player: 'left', answerIndex: 1 - h.api.question.answerIndex });
+  await h.clock.tick(400);
+  const originalMarkup = h.app.innerHTML;
+  const staleCpuTimer = h.clock.timers.find(timer => timer.active && !timer.interval);
+  h.api.requestManualPause();
+  staleCpuTimer.callback();
+  assert.equal(h.api.paused, true);
+  assert.equal(h.api.remainingCpu, 2100);
+  assert.equal(h.app.innerHTML, originalMarkup, 'pending 不重繪或取消目前動畫');
+  assert.equal(h.api.manualPaused, false);
+  h.api.orientation(true);
+  h.api.background(true);
+  h.api.orientation(false);
+  h.api.background(false);
+  assert.equal(h.api.inputEnabled, false);
+  assert.equal(h.api.startBattleTimer(), false);
+  assert.equal(h.clock.timers.filter(timer => timer.active).length, 0);
+  const time = h.api.timeLeft;
+  h.api.handleTimer(); // An interval task already queued by the browser.
+  assert.equal(h.api.timeLeft, time);
+  h.animations[0].resolve();
+  await answer;
+  assert.equal(h.api.manualPaused, true);
+  h.api.orientation(true);
+  h.api.continueBattle();
+  await h.clock.tick(5000);
+  assert.equal(h.api.combatState.scores.right, 0);
+  h.api.orientation(false);
+  const cpuTimer = h.clock.timers.filter(timer => timer.active && !timer.interval);
+  assert.equal(cpuTimer.length, 1);
+  assert.equal(h.clock.timers.filter(timer => timer.active && timer.interval).length, 1);
+  assert.equal(cpuTimer[0].delay, 2100);
+  await h.clock.tick(2099);
+  assert.equal(h.api.combatState.scores.right, 0);
+  await h.clock.tick(1);
+  assert.equal(h.api.combatState.scores.right, 1);
+  h.api.stopBattleActivity();
+  await h.clock.tick(1000);
+  h.animations[1].resolve();
+  await flushMicrotasks();
+});
+
+test('手動繼續不會越過直向暫停恢復 BGM，背景切換也共用音樂狀態', async () => {
+  const h = await createBattleAppHarness({ gameMode: 'local' });
+  const music = h.audios[0];
+  h.api.requestManualPause();
+  h.api.orientation(true);
+  h.api.continueBattle();
+  assert.equal(music.paused, true);
+  assert.equal(music.playCount, 1);
+  assert.equal(music.currentTime, 37);
+  h.api.background(true);
+  h.api.orientation(false);
+  assert.equal(music.playCount, 1);
+  h.api.background(false);
+  assert.equal(music.playCount, 2);
+  h.api.background(true);
+  assert.equal(music.paused, true);
+  h.api.setMuted(true);
+  h.api.background(false);
+  assert.equal(music.playCount, 2);
+  h.api.orientation(true);
+  h.api.setMuted(false);
+  assert.equal(music.playCount, 2, '解除靜音不得越過新暫停');
+  h.api.orientation(false);
+  assert.equal(music.playCount, 3);
+  h.api.stopBattleActivity();
+});
+
+test('開局音樂在已存在直向暫停時仍受 aggregate pause 控制', async () => {
+  const h = await createBattleAppHarness({ gameMode: 'local' });
+  h.api.stopBattleActivity();
+  h.viewport.innerWidth = 390;
+  h.viewport.innerHeight = 844;
+  await h.api.startGameOnce(h.api.settings);
+  const music = h.audios.filter(audio => audio.src === 'music.mp3').at(-1);
+  assert.equal(h.api.paused, true);
+  assert.equal(music.paused, true);
+  assert.equal(music.playCount, 0, '暫停已成立時，新 BGM 不應先播放再暫停');
+  h.api.orientation(false);
+  assert.equal(music.playCount, 1);
+  h.api.stopBattleActivity();
+});
+
+test('Esc 繼續後若直向遮罩仍在，焦點與 Tab 圈留在可見最上層', async () => {
+  const h = await createBattleAppHarness({ gameMode: 'local' });
+  h.api.requestManualPause();
+  h.api.orientation(true);
+  h.document.dispatch('keydown', { code: 'Escape', preventDefault() {} });
+  const dialog = h.app.querySelector('.orientation-blocker');
+  const home = dialog.querySelector('[data-return-main-menu]');
+  assert.equal(h.document.activeElement, home);
+  let prevented = 0;
+  for (const shiftKey of [false, true]) {
+    dialog.onkeydown({ key: 'Tab', shiftKey, preventDefault() { prevented += 1; } });
+    assert.equal(h.document.activeElement, home);
+  }
+  assert.equal(prevented, 2);
+  h.api.orientation(false);
+  h.api.requestManualPause();
+  h.api.continueBattle();
+  assert.equal(h.document.activeElement, h.app.querySelector('[data-pause-battle]'));
+  h.api.stopBattleActivity();
+});
+
+for (const exit of ['stop', 'restart', 'catalog', 'home']) {
+  test(`${exit} 離場後取消延遲 weapon 並封鎖 post-await hit／hurt`, async () => {
+    const h = await createBattleAppHarness({ gameMode: 'local' });
+    const answer = h.api.processAnswer({ player: 'left', answerIndex: h.api.question.answerIndex });
+    const delayed = h.clock.timers.filter(timer => timer.active && !timer.interval);
+    assert.equal(delayed.length, 2, 'weapon 與 impact 各有一個排程');
+    if (exit !== 'stop') {
+      h.api.orientation(true);
+      h.api.requestBattleHomeExit();
+      if (exit !== 'home') {
+        h.api.cancelPauseConfirmation();
+        h.api.requestPauseAction(exit);
+      }
+      h.api.confirmPauseAction();
+    } else {
+      h.api.stopBattleActivity();
+    }
+    const combatSounds = () => h.audios.filter(audio => ['weapon.mp3', 'hit.mp3', 'hurt.mp3'].includes(audio.src));
+    const soundsAfterExit = combatSounds().length;
+    for (const timer of delayed) timer.callback(); // Also simulate an already queued stale browser callback.
+    await h.clock.tick(1000);
+    h.animations[0].resolve();
+    await answer;
+    assert.equal(combatSounds().length, soundsAfterExit);
+    assert.ok(delayed.some(timer => !timer.active), '離場必須實際取消待播音效 timer');
+    assert.deepEqual(h.settlements, []);
+    h.api.stopBattleActivity();
+  });
+}
+
+test('仍在本局的完整攻擊於 swing／impact 時各播放一次音效', async () => {
+  const h = await createBattleAppHarness({ gameMode: 'local' });
+  const answer = h.api.processAnswer({ player: 'left', answerIndex: h.api.question.answerIndex });
+  const timers = h.clock.timers.filter(timer => timer.active && !timer.interval).sort((a, b) => a.delay - b.delay);
+  await h.clock.tick(timers[0].delay - 1);
+  assert.equal(h.audios.filter(audio => audio.src === 'weapon.mp3').length, 0);
+  await h.clock.tick(1);
+  assert.equal(h.audios.filter(audio => audio.src === 'weapon.mp3').length, 1);
+  await h.clock.tick(timers[1].delay - timers[0].delay);
+  assert.equal(h.audios.filter(audio => audio.src === 'hit.mp3').length, 1);
+  assert.equal(h.audios.filter(audio => audio.src === 'hurt.mp3').length, 1);
+  h.animations[0].resolve();
+  await answer;
+  assert.deepEqual(h.settlements, ['after', 'settled']);
+  h.api.stopBattleActivity();
+});
+
+test('清理待播音效時即使 Audio 或瀏覽器 timer API 不再可用也不拋錯', async () => {
+  const h = await createBattleAppHarness({ gameMode: 'local' });
+  const answer = h.api.processAnswer({ player: 'left', answerIndex: h.api.question.answerIndex });
+  h.api.disposeAudio();
+  h.api.removeTimerApis();
+  assert.doesNotThrow(() => h.api.stopBattleActivity());
+  await h.clock.tick(1000);
+  h.animations[0].resolve();
+  assert.equal(await answer, false);
+});
 
 function functionSource(source, name, nextName) {
   const start = source.indexOf(`function ${name}`);
@@ -129,7 +323,7 @@ test('直向暫停與橫向恢復依序管理輸入、CPU、timer 與畫面', as
   const orientation = functionSource(source, 'handleBattleOrientationChange', 'startBattleTimer');
 
   assert.match(orientation, /return battlePause\.setOrientationPaused\(portrait\)/);
-  assert.match(source, /disableInput: \(\) => battleInputGate\.disable\(\)[\s\S]*pauseCpu: pauseBattleCpu[\s\S]*clearTimer: clearBattleTimer[\s\S]*renderBattle: \(\) => renderGame\(\)[\s\S]*resumeCpu: \(\) => cpuController\.resume\(\)[\s\S]*enableInput: \(\) => battleInputGate\.enable\(\)[\s\S]*startTimer: startBattleTimer/);
+  assert.match(source, /disableInput: \(\) => battleInputGate\.disable\(\)[\s\S]*pauseCpu: pauseBattleCpu[\s\S]*clearTimer: clearBattleTimer[\s\S]*renderBattle: \(\) => renderGame\(\)[\s\S]*resumeCpu: \(\) => battleLifecycle\.resumeCpu\(\)[\s\S]*enableInput: \(\) => battleInputGate\.enable\(\)[\s\S]*startTimer: startBattleTimer/);
 });
 
 test('直向時不排程 CPU 作答', async () => {
@@ -236,23 +430,22 @@ test('應用程式匯入暫停對話框焦點圈並將完整暫停狀態交給 r
   const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
 
   assert.match(source, /import \{ PAUSE_ACTIONS, trapDialogTab \} from '\.\/battle-pause-menu\.mjs';/);
-  assert.match(source, /let pauseRequested = false;/);
+  assert.doesNotMatch(source, /let pauseRequested/);
   assert.match(source, /let pauseConfirmAction = null;/);
   assert.match(source, /let pauseReturnFocus = null;/);
   assert.match(render, /manualPaused: battlePause\.isManualPaused\(\)/);
   assert.match(render, /pauseConfirmAction/);
-  assert.match(render, /pausePending: pauseRequested/);
+  assert.match(render, /pausePending: battlePause\.isPausePending\(\)/);
 });
 
-test('暫停請求在動畫中只鎖定輸入並就地顯示等待，不重繪或取消 lifecycle', async () => {
+test('動畫中暫停交給協調器並就地顯示等待，不重繪或取消 lifecycle', async () => {
   const source = await readAppSource();
   const request = functionSource(source, 'requestManualPause', 'openManualPause');
   const animating = request.slice(request.indexOf('battleLifecycle.isAnimating()'));
 
-  assert.match(request, /!hasLiveBattle\(\)[\s\S]*battlePause\.isManualPaused\(\)[\s\S]*pauseRequested/);
+  assert.match(request, /!hasLiveBattle\(\)[\s\S]*battlePause\.isManualPaused\(\)[\s\S]*battlePause\.isPausePending\(\)/);
   assert.match(request, /pauseReturnFocus = document\.activeElement/);
-  assert.match(animating, /pauseRequested = true/);
-  assert.match(animating, /battleInputGate\.disable\(\)/);
+  assert.match(animating, /battlePause\.setPausePending\(true\)/);
   assert.match(animating, /querySelector\('\[data-pause-battle\]'\)/);
   assert.match(animating, /\.disabled = true/);
   assert.match(animating, /\.textContent = '等待本次攻擊結束……'/);
@@ -260,31 +453,33 @@ test('暫停請求在動畫中只鎖定輸入並就地顯示等待，不重繪�
   assert.match(request, /return openManualPause\(\)/);
 });
 
-test('開啟與繼續暫停依序控制 coordinator、音樂及重繪後焦點', async () => {
+test('開啟與繼續由 coordinator 控制 aggregate 音樂，焦點只返回無遮罩畫面', async () => {
   const source = await readAppSource();
   const open = functionSource(source, 'openManualPause', 'continueBattle');
   const resume = functionSource(source, 'continueBattle', 'requestPauseAction');
 
   assert.match(open, /if \(!hasLiveBattle\(\)/);
-  assert.match(open, /pauseRequested = false/);
   assert.match(open, /pauseConfirmAction = null/);
-  assert.match(open, /audioManager\?\.pauseMusic\(\)[\s\S]*battlePause\.setManualPaused\(true\)/);
+  assert.match(open, /battlePause\.setManualPaused\(true\)/);
+  assert.match(source, /pauseMusic: \(\) => audioManager\?\.pauseMusic\(\)/);
+  assert.match(source, /resumeMusic: \(\) => \{ void audioManager\?\.resumeMusic\(\); \}/);
   assert.doesNotMatch(open, /querySelector\('\[data-pause-continue\]'\)\?\.focus\(\)/);
   assert.match(resume, /if \(!hasLiveBattle\(\)[\s\S]*!battlePause\.isManualPaused\(\)[\s\S]*pauseConfirmAction/);
-  assert.match(resume, /battlePause\.setManualPaused\(false\)[\s\S]*void audioManager\?\.resumeMusic\(\)[\s\S]*querySelector\('\[data-pause-battle\]'\)\?\.focus\(\)/);
+  assert.match(resume, /battlePause\.setManualPaused\(false\)[\s\S]*if \(!syncTopBattleDialog\(\)\) app\.querySelector\('\[data-pause-battle\]'\)\?\.focus\(\)/);
+  assert.doesNotMatch(open + resume, /audioManager/);
 });
 
 test('settlement 優先保留結束結果，未結束才兌現一次 pending pause', async () => {
   const source = await readAppSource();
   const settle = functionSource(source, 'settleBattleAnswer', 'processAnswer');
   const endedIndex = settle.indexOf('combatState?.ended');
-  const pendingIndex = settle.indexOf('pauseRequested', endedIndex + 1);
+  const pendingIndex = settle.indexOf('battlePause.isPausePending()', endedIndex + 1);
 
   assert.notEqual(endedIndex, -1);
   assert.notEqual(pendingIndex, -1);
   assert.ok(endedIndex < pendingIndex, 'KO／結果狀態必須優先於 pending pause');
-  assert.match(settle, /if \(combatState\?\.ended\) \{[\s\S]*pauseRequested = false;[\s\S]*return;/);
-  assert.match(settle, /if \(pauseRequested\) \{[\s\S]*openManualPause\(\);[\s\S]*return;/);
+  assert.match(settle, /if \(combatState\?\.ended\) \{[\s\S]*battlePause\.reset\(\);[\s\S]*return;/);
+  assert.match(settle, /if \(battlePause\.isPausePending\(\)\) \{[\s\S]*openManualPause\(\);[\s\S]*return;/);
   assert.match(settle, /if \(settlement\?\.renderBattle\) renderGame\(\)/);
 });
 
@@ -387,7 +582,7 @@ test('直向返回按鈕先進入首頁確認，確認期間隱藏 blocker，取
   const cancel = functionSource(source, 'cancelPauseConfirmation', 'requestBattleHomeExit');
 
   assert.match(requestHome, /if \(!hasLiveBattle\(\)\)[\s\S]*returnToMainMenu\(\)/);
-  assert.match(requestHome, /audioManager\?\.pauseMusic\(\)/);
+  assert.doesNotMatch(requestHome, /audioManager/);
   assert.match(requestHome, /pauseConfirmAction = PAUSE_ACTIONS\.home/);
   assert.match(requestHome, /battlePause\.setManualPaused\(true\)/);
   assert.ok(requestHome.indexOf('pauseConfirmAction = PAUSE_ACTIONS.home') < requestHome.indexOf('battlePause.setManualPaused(true)'));
@@ -427,12 +622,11 @@ test('pending pause 在離場與新局初始化都會清除，不會跨局污染
   const stop = functionSource(source, 'stopBattleActivity', 'cancelPendingStart');
   const prepare = functionSource(source, 'prepareBattleStart', 'renderQuizError');
 
-  assert.match(reset, /pauseRequested = false/);
   assert.match(reset, /pauseConfirmAction = null/);
   assert.match(reset, /pauseReturnFocus = null/);
   assert.match(exit, /resetManualPauseState\(\)[\s\S]*orientationController\.exitBattle\(\)[\s\S]*battlePause\.reset\(\)/);
   assert.match(stop, /exitBattleOrientation\(\)/);
-  assert.match(prepare, /resetManualPauseState\(\)[\s\S]*battleLifecycle\.reset\(\)[\s\S]*battleSession\.reset\(\)/);
+  assert.match(prepare, /resetManualPauseState\(\)[\s\S]*battlePause\.reset\(\)[\s\S]*battleLifecycle\.reset\(\)[\s\S]*battleSession\.reset\(\)/);
 });
 
 test('交錯 pause reason 重繪後只同步最上層 dialog 的焦點與 Tab trap', async () => {

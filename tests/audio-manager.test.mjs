@@ -270,3 +270,66 @@ test('靜音時恢復背景音樂會延後至解除靜音，單純解除靜音�
   secondManager.setMuted(false);
   assert.equal(secondHarness.audios[0].playCount, 1);
 });
+
+test('靜音恢復後再次暫停會撤銷待恢復音樂，解除靜音仍保留位置', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  await manager.setScene('palace');
+  await manager.unlock();
+  const audio = audios[0];
+  audio.currentTime = 37;
+  manager.pauseMusic();
+  manager.setMuted(true);
+  await manager.resumeMusic();
+  manager.pauseMusic();
+  manager.setMuted(false);
+  assert.equal(audio.playCount, 1);
+  assert.equal(audio.currentTime, 37);
+  await manager.resumeMusic();
+  assert.equal(audio.playCount, 2);
+});
+
+test('恢復時 play 拒絕會留下背景音樂情境警告且不破壞之後的暫停恢復', async t => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  await manager.setScene('palace');
+  await manager.unlock();
+  const audio = audios[0];
+  const originalPlay = audio.play;
+  const rejection = new Error('resume blocked');
+  audio.play = function () { this.playCount += 1; return Promise.reject(rejection); };
+  const warnings = [];
+  t.mock.method(console, 'warn', (...args) => warnings.push(args));
+  audio.currentTime = 37;
+  manager.pauseMusic();
+  await assert.doesNotReject(() => manager.resumeMusic());
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0][0], /恢復.*背景音樂/);
+  assert.equal(warnings[0][1], rejection);
+  assert.equal(audio.currentTime, 37);
+  audio.play = originalPlay;
+  manager.pauseMusic();
+  await manager.resumeMusic();
+  assert.equal(audio.playCount, 3);
+});
+
+test('音軌建立前收到暫停，setScene 與 unlock 不會先播放音樂', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  manager.pauseMusic();
+  await manager.setScene('palace');
+  await manager.unlock();
+  assert.equal(audios[0].playCount, 0);
+  await manager.resumeMusic();
+  assert.equal(audios[0].playCount, 1);
+});
+
+test('音軌建立前暫停又恢復不會留下新音樂的暫停狀態', async () => {
+  const { audios, audioFactory } = createAudioHarness();
+  const manager = createAudioManager({ manifest, audioFactory });
+  manager.pauseMusic();
+  await manager.resumeMusic();
+  await manager.setScene('palace');
+  await manager.unlock();
+  assert.equal(audios[0].playCount, 1);
+});

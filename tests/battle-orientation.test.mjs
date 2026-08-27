@@ -199,8 +199,8 @@ test('背景中旋轉後回到前景會先同步方向，只有橫向才恢復�
     'render',
     'hidden:false',
     'render',
-    'resume-cpu',
     'enable-input',
+    'resume-cpu',
     'start-timer',
   ]);
   assert.equal(coordinator.isPaused(), false);
@@ -262,7 +262,7 @@ test('背景暫停與直向暫停分離，只在兩者都解除後恢復對戰',
   assert.equal(coordinator.isPaused(), true);
 
   assert.equal(coordinator.setOrientationPaused(false), true);
-  assert.deepEqual(events, ['render', 'render', 'resume-cpu', 'enable-input', 'start-timer']);
+  assert.deepEqual(events, ['render', 'render', 'enable-input', 'resume-cpu', 'start-timer']);
   assert.equal(coordinator.isPaused(), false);
 
   coordinator.setBackgroundPaused(true);
@@ -301,7 +301,7 @@ test('手動、直向與背景暫停原因可疊加並遵守生命週期規則',
   assert.deepEqual(events.slice(-1), ['render']);
   coordinator.setOrientationPaused(false);
   assert.equal(coordinator.isPaused(), false);
-  assert.deepEqual(events.slice(-4), ['render', 'resume-cpu', 'enable-input', 'start-timer']);
+  assert.deepEqual(events.slice(-4), ['render', 'enable-input', 'resume-cpu', 'start-timer']);
 
   coordinator.setManualPaused(true);
   coordinator.setOrientationPaused(true);
@@ -315,7 +315,7 @@ test('手動、直向與背景暫停原因可疊加並遵守生命週期規則',
   assert.deepEqual(events, ['render', 'render']);
   assert.equal(coordinator.isPaused(), true);
   assert.equal(coordinator.setBackgroundPaused(false), true);
-  assert.deepEqual(events, ['render', 'render', 'render', 'resume-cpu', 'enable-input', 'start-timer']);
+  assert.deepEqual(events, ['render', 'render', 'render', 'enable-input', 'resume-cpu', 'start-timer']);
   assert.equal(coordinator.isPaused(), false);
 
   coordinator.setManualPaused(true);

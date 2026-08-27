@@ -29,6 +29,7 @@ function createHarness({ gameMode = 'solo', quizMode = 'time', limit = Number.MA
   let cancelCount = 0;
   let afterAction = null;
   let settledAction = null;
+  let cpuSubmitAllowed = true;
   let lifecycle;
 
   const questionKey = (phase = combatState.phase, index = quizState.questionIndex) => `${phase}:${index}`;
@@ -94,7 +95,7 @@ function createHarness({ gameMode = 'solo', quizMode = 'time', limit = Number.MA
       events.push({ type: 'settled', prompt: outcome.question.prompt });
       settledAction?.(outcome);
     },
-    submitCpuAnswer: input => lifecycle.submit(input),
+    submitCpuAnswer: input => cpuSubmitAllowed ? lifecycle.submit(input) : false,
   });
 
   return {
@@ -116,6 +117,7 @@ function createHarness({ gameMode = 'solo', quizMode = 'time', limit = Number.MA
     setRevealWait(value) { revealWait = value; },
     setAfterAction(value) { afterAction = value; },
     setSettledAction(value) { settledAction = value; },
+    setCpuSubmitAllowed(value) { cpuSubmitAllowed = value; },
     advanceQuestion() {
       quizState = { ...quizState, questionIndex: quizState.questionIndex + 1 };
     },
@@ -282,6 +284,27 @@ test('CPU callback 落在玩家動畫期間只暫存一次，整條連續答題�
   assert.equal(harness.events.filter(event => event.type === 'after').length, 1);
 });
 
+test('CPU 轉交被閘門拒絕時原答案仍結算，恢復後待答只提交一次', async () => {
+  const harness = createHarness();
+  const animation = deferred();
+  harness.setAnimationWait(animation);
+  harness.schedule();
+  const answer = harness.lifecycle.submit({ player: 'left', answerIndex: 1 });
+  await harness.schedules[0].onAnswer(0);
+  harness.setCpuSubmitAllowed(false);
+  harness.setAnimationWait(null);
+  animation.resolve();
+  assert.equal(await answer, true);
+  assert.equal(harness.events.filter(event => event.type === 'after').length, 1);
+  assert.equal(harness.events.filter(event => event.type === 'settled').length, 1);
+  assert.equal(harness.combatState.scores.right, 0);
+  harness.setCpuSubmitAllowed(true);
+  await harness.lifecycle.resumeCpu();
+  await harness.lifecycle.resumeCpu();
+  assert.equal(harness.combatState.scores.right, 1);
+  assert.equal(harness.events.filter(event => event.type === 'after').length, 2);
+});
+
 test('動畫拋錯後會釋放作答鎖並允許合法玩家再作答', async () => {
   const harness = createHarness();
   const animationGate = deferred();
@@ -401,6 +424,7 @@ test('CPU callback 在玩家動畫後若已換題或結算就丟棄', async t =>
       await playerAnswer;
       await Promise.resolve();
       assert.deepEqual(harness.events.filter(event => event.type === 'answer').map(event => event.player), ['left']);
+      if (route === 'question-change') assert.equal(harness.schedule(), true, '過期的 pending 答案不可封鎖新題排程');
     });
   }
 });

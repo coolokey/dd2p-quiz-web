@@ -41,11 +41,12 @@ function buildSfx(manifest, audioManifest) {
   };
 }
 
-async function safePlay(audio) {
+async function safePlay(audio, warning) {
   try {
     await audio?.play?.();
-  } catch {
+  } catch (error) {
     // Browsers can reject play() before or during an interaction unlock.
+    if (warning) console.warn(warning, error);
   }
 }
 
@@ -108,20 +109,26 @@ export function createAudioManager({
   }
 
   function pauseMusic() {
-    if (!backgroundMusic || musicPaused) return;
+    musicResumePending = false;
+    if (musicPaused) return;
     musicPaused = true;
-    backgroundMusic.pause?.();
+    backgroundMusic?.pause?.();
   }
 
   async function resumeMusic() {
-    if (!backgroundMusic || !musicPaused) return;
+    if (!musicPaused) return;
+    if (!backgroundMusic) {
+      musicPaused = false;
+      musicResumePending = false;
+      return;
+    }
     if (isMuted) {
       musicResumePending = true;
       return;
     }
     musicPaused = false;
     musicResumePending = false;
-    await safePlay(backgroundMusic);
+    await safePlay(backgroundMusic, '無法恢復背景音樂。');
   }
 
   function stopEffects() {
@@ -131,11 +138,14 @@ export function createAudioManager({
   }
 
   async function startBackgroundMusic() {
+    // Orientation/background can pause a new battle before its track exists.
+    const pauseBeforeTrack = !backgroundMusic && musicPaused;
     stopBackgroundMusic();
+    musicPaused = pauseBeforeTrack;
     const src = sceneMusic.get(selectedScene);
     if (!unlocked || !src) return;
     backgroundMusic = configure(audioFactory(src), { loop: true, kind: 'music' });
-    await safePlay(backgroundMusic);
+    if (!musicPaused) await safePlay(backgroundMusic);
   }
 
   return {
@@ -165,7 +175,7 @@ export function createAudioManager({
       if (!isMuted && musicResumePending && backgroundMusic) {
         musicPaused = false;
         musicResumePending = false;
-        void safePlay(backgroundMusic);
+        void safePlay(backgroundMusic, '無法恢復背景音樂。');
       }
       return isMuted;
     },

@@ -44,7 +44,7 @@ export function buildBattleMarkup(viewModel) {
       <span class="orientation-blocker-icon" aria-hidden="true">↻</span>
       <h2>請將裝置轉成橫向</h2>
       <p>轉為橫向後會繼續目前對戰。</p>
-      <button type="button" data-return-main-menu>返回主選單</button>
+      <button type="button" data-return-main-menu>返回首頁</button>
     </aside>`
     : '';
   const pauseMenu = viewModel.manualPaused

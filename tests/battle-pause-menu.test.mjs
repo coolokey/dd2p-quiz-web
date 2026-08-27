@@ -18,6 +18,7 @@ test('沒有確認 action 時依序顯示四個暫停按鈕', () => {
   assert.deepEqual(labels, ['繼續遊戲', '重新開始本局', '更換題庫', '返回首頁']);
   assert.match(html, /data-pause-continue/);
   assert.equal((html.match(/data-pause-action=/g) ?? []).length, 3);
+  assert.match(html, /class="[^"]*pause-danger[^"]*"[^>]*data-pause-action="home"/);
 });
 
 test('暫停遮罩具備 dialog 語意並以 aria-labelledby 指向標題', () => {

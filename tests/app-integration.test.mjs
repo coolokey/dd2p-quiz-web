@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const readAppSource = () => readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
+const readReadme = () => readFile(new URL('../README.md', import.meta.url), 'utf8');
 
 function functionSource(source, name, nextName) {
   const start = source.indexOf(`function ${name}`);
@@ -11,6 +12,15 @@ function functionSource(source, name, nextName) {
   assert.notEqual(end, -1, `${nextName} should exist after ${name}`);
   return source.slice(start, end);
 }
+
+test('README 說明完整暫停操作、確認需求與直向返回流程', async () => {
+  const readme = await readReadme();
+  assert.match(readme, /頂端「Ⅱ 暫停」[\s\S]*鍵盤 `Esc`/);
+  assert.match(readme, /繼續[\s\S]*重新開始本局[\s\S]*更換題庫[\s\S]*返回首頁/);
+  assert.match(readme, /重新開始本局、更換題庫與返回首頁[\s\S]*需要確認/);
+  assert.match(readme, /直向[\s\S]*返回首頁[\s\S]*確認/);
+  assert.doesNotMatch(readme, /轉回橫向以繼續，或按「返回主選單」離開本局/);
+});
 
 test('應用程式依模式決定選角、按鍵測試與 CPU 角色', async () => {
   const source = await readAppSource();

@@ -1,52 +1,141 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { CAMPUS_HEROES } from '../web/js/campus-heroes.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { inflateSync } from 'node:zlib';
+import { CAMPUS_HEROES, HERO_CANVAS } from '../web/js/campus-heroes.mjs';
 
-const details = {
-  'basketball-ace': { hair: '#2a1c18', accent: '#ffcf35', prop: '●', badge: '23' },
-  'track-sprinter': { hair: '#26344a', accent: '#42e8ff', prop: '≋', badge: 'GO' },
-  'street-dancer': { hair: '#3c174b', accent: '#ff67c7', prop: '♪', badge: 'B' },
-  'kendo-captain': { hair: '#18243c', accent: '#c8dcff', prop: '╱', badge: '剣' },
-  'science-maker': { hair: '#26344a', accent: '#d9ff68', prop: '⚗', badge: 'LAB' },
-  'code-maker': { hair: '#241548', accent: '#94eaff', prop: '</>', badge: '01' },
-  'math-strategist': { hair: '#5b3c14', accent: '#fff07a', prop: '△', badge: 'π' },
-  'chess-tactician': { hair: '#2b3543', accent: '#dcecff', prop: '♜', badge: '♟' },
-  'astronomy-observer': { hair: '#202655', accent: '#b5c5ff', prop: '★', badge: '∞' },
-  'puzzle-detective': { hair: '#49301d', accent: '#ffd178', prop: '?', badge: '!' },
-  'language-magician': { hair: '#4a1743', accent: '#ffd0f4', prop: 'A', badge: '字' },
-  'nature-researcher': { hair: '#243a1d', accent: '#c9ef74', prop: '⌁', badge: '葉' },
-};
+const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
+const SPRITE_ROOT = path.join(REPO_ROOT, 'web', 'assets', 'battle', 'campus-heroes');
+const SAFETY_MARGIN = 70;
 
-function sprite(hero, pose) {
-  const d = details[hero.id];
-  const attack = pose === 'attack';
-  const frontArm = attack ? 'M615 510 Q760 490 860 398' : 'M615 510 Q680 560 690 660';
-  const backArm = attack ? 'M407 510 Q330 590 300 650' : 'M407 510 Q350 550 340 655';
-  const frontLeg = attack ? 'M580 745 Q720 765 830 690' : 'M580 745 Q620 820 610 890';
-  const backLeg = attack ? 'M465 745 Q400 810 360 870' : 'M465 745 Q420 820 430 890';
-  const propX = attack ? 864 : 714;
-  const propY = attack ? 360 : 645;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="${hero.name} ${attack ? '攻擊' : '待機'}">
-  <defs><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="16" stdDeviation="10" flood-opacity=".28"/></filter></defs>
-  <g filter="url(#s)" stroke="#1e2635" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
-    <path d="${backLeg}" fill="none" stroke="${hero.color}" stroke-width="92"/><path d="${frontLeg}" fill="none" stroke="${hero.color}" stroke-width="96"/>
-    <path d="${backArm}" fill="none" stroke="${hero.color}" stroke-width="86"/><path d="${frontArm}" fill="none" stroke="${hero.color}" stroke-width="90"/>
-    <path d="M420 455 Q510 410 610 455 L650 735 Q520 790 385 730Z" fill="${hero.color}"/>
-    <path d="M446 472 Q510 444 575 470 L575 700 Q510 728 440 698Z" fill="#fff" opacity=".22" stroke="none"/>
-    <circle cx="510" cy="345" r="135" fill="#ffd5b2"/>
-    <path d="M384 337 Q390 170 514 185 Q650 192 640 350 L590 292 Q520 332 442 285Z" fill="${d.hair}"/>
-    <path d="M395 258 Q445 155 535 190 Q615 207 635 280" fill="none" stroke="${d.accent}" stroke-width="26"/>
-    <path d="M460 355 l24 0 M540 355 l24 0"/><path d="M486 412 Q512 435 540 412" fill="none" stroke-width="16"/>
-    <path d="M438 534 Q510 560 585 534" fill="none" stroke="${d.accent}" stroke-width="18"/>
-    <rect x="465" y="570" width="94" height="72" rx="18" fill="${d.accent}"/><text x="512" y="625" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="34" fill="#1e2635" stroke="none">${d.badge}</text>
-    <circle cx="${propX}" cy="${propY}" r="62" fill="${d.accent}"/><text x="${propX}" y="${propY + 20}" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="54" fill="#1e2635" stroke="none">${d.prop}</text>
-  </g>
-  ${attack ? `<path d="M760 350 l130 -80 M785 410 l165 -10 M760 470 l130 80" stroke="${d.accent}" stroke-width="26" stroke-linecap="round" opacity=".9"/>` : ''}
-</svg>`;
+function readPngMetadata(data) {
+  if (!data.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
+    throw new Error('not a PNG file');
+  }
+  return {
+    width: data.readUInt32BE(16),
+    height: data.readUInt32BE(20),
+    bitDepth: data[24],
+    colorType: data[25],
+    interlace: data[28],
+  };
 }
 
-for (const hero of CAMPUS_HEROES) {
-  const directory = path.join('web', 'assets', 'battle', 'campus-heroes', hero.id);
-  await mkdir(directory, { recursive: true });
-  await Promise.all(['idle', 'attack'].map(pose => writeFile(path.join(directory, `${pose}.svg`), sprite(hero, pose), 'utf8')));
+function decodeRgba(data) {
+  const metadata = readPngMetadata(data);
+  const { width, height, bitDepth, colorType, interlace } = metadata;
+  if (bitDepth !== 8 || colorType !== 6 || interlace !== 0) {
+    throw new Error(`expected non-interlaced 8-bit RGBA PNG, got bitDepth=${bitDepth}, colorType=${colorType}, interlace=${interlace}`);
+  }
+
+  const idat = [];
+  for (let offset = 8; offset < data.length;) {
+    const length = data.readUInt32BE(offset);
+    const type = data.subarray(offset + 4, offset + 8).toString('ascii');
+    if (type === 'IDAT') idat.push(data.subarray(offset + 8, offset + 8 + length));
+    offset += length + 12;
+    if (type === 'IEND') break;
+  }
+  if (idat.length === 0) throw new Error('PNG has no IDAT chunks');
+
+  const bytesPerPixel = 4;
+  const stride = width * bytesPerPixel;
+  const encoded = inflateSync(Buffer.concat(idat));
+  if (encoded.length !== height * (stride + 1)) throw new Error('unexpected decoded PNG byte length');
+  const scanlines = Buffer.alloc(stride * height);
+
+  for (let y = 0; y < height; y += 1) {
+    const filter = encoded[y * (stride + 1)];
+    const sourceOffset = y * (stride + 1) + 1;
+    const targetOffset = y * stride;
+    for (let x = 0; x < stride; x += 1) {
+      const raw = encoded[sourceOffset + x];
+      const left = x >= bytesPerPixel ? scanlines[targetOffset + x - bytesPerPixel] : 0;
+      const above = y > 0 ? scanlines[targetOffset + x - stride] : 0;
+      const upperLeft = y > 0 && x >= bytesPerPixel ? scanlines[targetOffset + x - stride - bytesPerPixel] : 0;
+      let value;
+      if (filter === 0) value = raw;
+      else if (filter === 1) value = raw + left;
+      else if (filter === 2) value = raw + above;
+      else if (filter === 3) value = raw + Math.floor((left + above) / 2);
+      else if (filter === 4) {
+        const estimate = left + above - upperLeft;
+        const distances = [Math.abs(estimate - left), Math.abs(estimate - above), Math.abs(estimate - upperLeft)];
+        value = raw + (distances[0] <= distances[1] && distances[0] <= distances[2]
+          ? left
+          : distances[1] <= distances[2] ? above : upperLeft);
+      } else {
+        throw new Error(`unsupported PNG filter ${filter}`);
+      }
+      scanlines[targetOffset + x] = value & 0xff;
+    }
+  }
+  return { ...metadata, stride, scanlines };
+}
+
+function inspectAlpha(decoded) {
+  const alphaAt = (x, y) => decoded.scanlines[y * decoded.stride + x * 4 + 3];
+  let left = decoded.width;
+  let top = decoded.height;
+  let right = 0;
+  let bottom = 0;
+  let alphaMin = 255;
+  let alphaMax = 0;
+
+  for (let y = 0; y < decoded.height; y += 1) {
+    for (let x = 0; x < decoded.width; x += 1) {
+      const alpha = alphaAt(x, y);
+      alphaMin = Math.min(alphaMin, alpha);
+      alphaMax = Math.max(alphaMax, alpha);
+      if (alpha === 0) continue;
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x + 1);
+      bottom = Math.max(bottom, y + 1);
+    }
+  }
+
+  const transparentBorder = Array.from({ length: decoded.width }, (_, x) =>
+    alphaAt(x, 0) === 0 && alphaAt(x, decoded.height - 1) === 0,
+  ).every(Boolean) && Array.from({ length: decoded.height }, (_, y) =>
+    alphaAt(0, y) === 0 && alphaAt(decoded.width - 1, y) === 0,
+  ).every(Boolean);
+
+  return { alphaMin, alphaMax, transparentBorder, bounds: { left, top, right, bottom } };
+}
+
+async function validateSprite(hero, pose) {
+  const filePath = path.join(SPRITE_ROOT, hero.id, `${pose}.png`);
+  const data = await readFile(filePath);
+  const decoded = decodeRgba(data);
+  const alpha = inspectAlpha(decoded);
+  const label = `${hero.id}/${pose}`;
+
+  if (decoded.width !== HERO_CANVAS.width || decoded.height !== HERO_CANVAS.height) {
+    throw new Error(`${label}: expected ${HERO_CANVAS.width}x${HERO_CANVAS.height}, got ${decoded.width}x${decoded.height}`);
+  }
+  if (alpha.alphaMin !== 0 || alpha.alphaMax !== 255 || !alpha.transparentBorder) {
+    throw new Error(`${label}: must contain opaque pixels and a fully transparent border`);
+  }
+  if (alpha.bounds.bottom !== HERO_CANVAS.baseline) {
+    throw new Error(`${label}: expected visible baseline ${HERO_CANVAS.baseline}, got ${alpha.bounds.bottom}`);
+  }
+  if (alpha.bounds.left < SAFETY_MARGIN || alpha.bounds.right > HERO_CANVAS.width - SAFETY_MARGIN || alpha.bounds.top < SAFETY_MARGIN) {
+    throw new Error(`${label}: visible artwork violates the ${SAFETY_MARGIN}px safety margin`);
+  }
+
+  return { heroId: hero.id, pose, filePath, bounds: alpha.bounds };
+}
+
+export async function validateCampusHeroSprites() {
+  const results = [];
+  for (const hero of CAMPUS_HEROES) {
+    for (const pose of ['idle', 'attack']) results.push(await validateSprite(hero, pose));
+  }
+  return results;
+}
+
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  const results = await validateCampusHeroSprites();
+  console.log(`Validated ${results.length} checked-in campus hero PNG sprites; no artwork was regenerated.`);
 }

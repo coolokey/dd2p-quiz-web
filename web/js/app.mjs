@@ -692,6 +692,7 @@ async function animateBattleAnswer(outcome, isCurrent) {
     const animation = playBattleAnimation(app, combatState.animation, {
       attackType: outcome.attack.attackType,
       weapon: outcome.actor?.weapon,
+      profile: outcome.actor?.attacks?.[outcome.attack.attackType],
       attackFrames: outcome.actor?.states?.attack,
       duration: 650,
       impactDelay: outcome.timing.impactDelay,

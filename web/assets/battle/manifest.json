@@ -1,607 +1,559 @@
 {
-  "version": 1,
+  "version": 2,
   "scenes": [
     {
-      "id": "palace",
-      "label": "神殿決鬥",
-      "image": "./assets/battle/scenes/palace.png",
-      "music": "./assets/battle/music/palace.mp3"
-    },
-    {
-      "id": "school",
-      "label": "校園真人擂台",
-      "image": "./assets/battle/scenes/school.png",
+      "id": "daxi-gate",
+      "label": "大溪校門對決",
+      "image": "./assets/battle/scenes/daxi-gate.png",
       "music": "./assets/battle/music/school.mp3"
     },
     {
-      "id": "ship",
-      "label": "冒險船艦戰",
-      "image": "./assets/battle/scenes/ship.png",
+      "id": "track",
+      "label": "紅色跑道衝刺",
+      "image": "./assets/battle/scenes/track.png",
+      "music": "./assets/battle/music/school.mp3"
+    },
+    {
+      "id": "basketball-court",
+      "label": "籃球場決勝",
+      "image": "./assets/battle/scenes/basketball-court.png",
+      "music": "./assets/battle/music/palace.mp3"
+    },
+    {
+      "id": "classroom",
+      "label": "教室知識擂台",
+      "image": "./assets/battle/scenes/classroom.png",
       "music": "./assets/battle/music/ship.mp3"
     }
   ],
   "characters": [
     {
-      "id": "1",
-      "label": "角色 1",
-      "playable": true,
-      "missing": [
-        "weapon"
-      ],
-      "states": {
-        "idle": [
-          "./assets/battle/characters/1/idle/01.png",
-          "./assets/battle/characters/1/idle/02.png",
-          "./assets/battle/characters/1/idle/03.png",
-          "./assets/battle/characters/1/idle/04.png"
-        ],
-        "attack": [
-          "./assets/battle/characters/1/attack/01.png",
-          "./assets/battle/characters/1/attack/02.png",
-          "./assets/battle/characters/1/attack/03.png",
-          "./assets/battle/characters/1/attack/04.png",
-          "./assets/battle/characters/1/attack/05.png",
-          "./assets/battle/characters/1/attack/06.png"
-        ],
-        "hurt": [
-          "./assets/battle/characters/1/idle/01.png",
-          "./assets/battle/characters/1/idle/02.png",
-          "./assets/battle/characters/1/idle/03.png",
-          "./assets/battle/characters/1/idle/04.png"
-        ],
-        "miss": [
-          "./assets/battle/characters/1/attack/01.png",
-          "./assets/battle/characters/1/attack/02.png",
-          "./assets/battle/characters/1/attack/03.png",
-          "./assets/battle/characters/1/attack/04.png",
-          "./assets/battle/characters/1/attack/05.png",
-          "./assets/battle/characters/1/attack/06.png"
-        ],
-        "win": [
-          "./assets/battle/characters/1/idle/01.png",
-          "./assets/battle/characters/1/idle/02.png",
-          "./assets/battle/characters/1/idle/03.png",
-          "./assets/battle/characters/1/idle/04.png"
-        ],
-        "lose": [
-          "./assets/battle/characters/1/idle/01.png",
-          "./assets/battle/characters/1/idle/02.png",
-          "./assets/battle/characters/1/idle/03.png",
-          "./assets/battle/characters/1/idle/04.png"
-        ]
-      },
-      "weapon": null
-    },
-    {
-      "id": "2",
-      "label": "角色 2",
-      "playable": true,
-      "missing": [
-        "weapon"
-      ],
-      "states": {
-        "idle": [
-          "./assets/battle/characters/2/idle/01.png",
-          "./assets/battle/characters/2/idle/02.png",
-          "./assets/battle/characters/2/idle/03.png",
-          "./assets/battle/characters/2/idle/04.png"
-        ],
-        "attack": [
-          "./assets/battle/characters/2/attack/01.png",
-          "./assets/battle/characters/2/attack/02.png",
-          "./assets/battle/characters/2/attack/03.png",
-          "./assets/battle/characters/2/attack/04.png",
-          "./assets/battle/characters/2/attack/05.png",
-          "./assets/battle/characters/2/attack/06.png"
-        ],
-        "hurt": [
-          "./assets/battle/characters/2/idle/01.png",
-          "./assets/battle/characters/2/idle/02.png",
-          "./assets/battle/characters/2/idle/03.png",
-          "./assets/battle/characters/2/idle/04.png"
-        ],
-        "miss": [
-          "./assets/battle/characters/2/attack/01.png",
-          "./assets/battle/characters/2/attack/02.png",
-          "./assets/battle/characters/2/attack/03.png",
-          "./assets/battle/characters/2/attack/04.png",
-          "./assets/battle/characters/2/attack/05.png",
-          "./assets/battle/characters/2/attack/06.png"
-        ],
-        "win": [
-          "./assets/battle/characters/2/idle/01.png",
-          "./assets/battle/characters/2/idle/02.png",
-          "./assets/battle/characters/2/idle/03.png",
-          "./assets/battle/characters/2/idle/04.png"
-        ],
-        "lose": [
-          "./assets/battle/characters/2/idle/01.png",
-          "./assets/battle/characters/2/idle/02.png",
-          "./assets/battle/characters/2/idle/03.png",
-          "./assets/battle/characters/2/idle/04.png"
-        ]
-      },
-      "weapon": null
-    },
-    {
-      "id": "3",
-      "label": "角色 3",
-      "playable": true,
-      "missing": [
-        "weapon"
-      ],
-      "states": {
-        "idle": [
-          "./assets/battle/characters/3/idle/01.png",
-          "./assets/battle/characters/3/idle/02.png",
-          "./assets/battle/characters/3/idle/03.png",
-          "./assets/battle/characters/3/idle/04.png"
-        ],
-        "attack": [
-          "./assets/battle/characters/3/attack/01.png",
-          "./assets/battle/characters/3/attack/02.png",
-          "./assets/battle/characters/3/attack/03.png",
-          "./assets/battle/characters/3/attack/04.png",
-          "./assets/battle/characters/3/attack/05.png",
-          "./assets/battle/characters/3/attack/06.png"
-        ],
-        "hurt": [
-          "./assets/battle/characters/3/idle/01.png",
-          "./assets/battle/characters/3/idle/02.png",
-          "./assets/battle/characters/3/idle/03.png",
-          "./assets/battle/characters/3/idle/04.png"
-        ],
-        "miss": [
-          "./assets/battle/characters/3/attack/01.png",
-          "./assets/battle/characters/3/attack/02.png",
-          "./assets/battle/characters/3/attack/03.png",
-          "./assets/battle/characters/3/attack/04.png",
-          "./assets/battle/characters/3/attack/05.png",
-          "./assets/battle/characters/3/attack/06.png"
-        ],
-        "win": [
-          "./assets/battle/characters/3/idle/01.png",
-          "./assets/battle/characters/3/idle/02.png",
-          "./assets/battle/characters/3/idle/03.png",
-          "./assets/battle/characters/3/idle/04.png"
-        ],
-        "lose": [
-          "./assets/battle/characters/3/idle/01.png",
-          "./assets/battle/characters/3/idle/02.png",
-          "./assets/battle/characters/3/idle/03.png",
-          "./assets/battle/characters/3/idle/04.png"
-        ]
-      },
-      "weapon": null
-    },
-    {
-      "id": "4",
-      "label": "角色 4",
-      "playable": true,
-      "missing": [
-        "weapon"
-      ],
-      "states": {
-        "idle": [
-          "./assets/battle/characters/4/idle/01.png"
-        ],
-        "attack": [
-          "./assets/battle/characters/4/attack/01.png"
-        ],
-        "hurt": [
-          "./assets/battle/characters/4/idle/01.png"
-        ],
-        "miss": [
-          "./assets/battle/characters/4/attack/01.png"
-        ],
-        "win": [
-          "./assets/battle/characters/4/idle/01.png"
-        ],
-        "lose": [
-          "./assets/battle/characters/4/idle/01.png"
-        ]
-      },
-      "weapon": null
-    },
-    {
-      "id": "5",
-      "label": "角色 5",
+      "id": "basketball-ace",
+      "label": "籃球王牌",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/characters/5/idle/01.png",
-          "./assets/battle/characters/5/idle/02.png",
-          "./assets/battle/characters/5/idle/03.png",
-          "./assets/battle/characters/5/idle/04.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
         ],
         "attack": [
-          "./assets/battle/characters/5/attack/01.png",
-          "./assets/battle/characters/5/attack/02.png",
-          "./assets/battle/characters/5/attack/03.png",
-          "./assets/battle/characters/5/attack/04.png",
-          "./assets/battle/characters/5/attack/05.png",
-          "./assets/battle/characters/5/attack/06.png"
+          "./assets/battle/campus-heroes/basketball-ace/attack.svg"
         ],
         "hurt": [
-          "./assets/battle/characters/5/idle/01.png",
-          "./assets/battle/characters/5/idle/02.png",
-          "./assets/battle/characters/5/idle/03.png",
-          "./assets/battle/characters/5/idle/04.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
         ],
         "miss": [
-          "./assets/battle/characters/5/attack/01.png",
-          "./assets/battle/characters/5/attack/02.png",
-          "./assets/battle/characters/5/attack/03.png",
-          "./assets/battle/characters/5/attack/04.png",
-          "./assets/battle/characters/5/attack/05.png",
-          "./assets/battle/characters/5/attack/06.png"
+          "./assets/battle/campus-heroes/basketball-ace/attack.svg"
         ],
         "win": [
-          "./assets/battle/characters/5/idle/01.png",
-          "./assets/battle/characters/5/idle/02.png",
-          "./assets/battle/characters/5/idle/03.png",
-          "./assets/battle/characters/5/idle/04.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
         ],
         "lose": [
-          "./assets/battle/characters/5/idle/01.png",
-          "./assets/battle/characters/5/idle/02.png",
-          "./assets/battle/characters/5/idle/03.png",
-          "./assets/battle/characters/5/idle/04.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
         ]
       },
-      "weapon": "./assets/battle/characters/5/weapon.png"
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "灌籃光波",
+          "glyph": "球",
+          "color": "#ff9f1c"
+        },
+        "punch": {
+          "callout": "禁區重拳",
+          "glyph": "拳",
+          "color": "#ff6b35"
+        },
+        "kick": {
+          "callout": "滑步飛踢",
+          "glyph": "踢",
+          "color": "#f7d154"
+        }
+      }
     },
     {
-      "id": "6",
-      "label": "角色 6",
-      "playable": true,
-      "missing": [
-        "weapon"
-      ],
-      "states": {
-        "idle": [
-          "./assets/battle/characters/6/idle/01.png",
-          "./assets/battle/characters/6/idle/02.png",
-          "./assets/battle/characters/6/idle/03.png",
-          "./assets/battle/characters/6/idle/04.png"
-        ],
-        "attack": [
-          "./assets/battle/characters/6/attack/01.png",
-          "./assets/battle/characters/6/attack/02.png",
-          "./assets/battle/characters/6/attack/03.png",
-          "./assets/battle/characters/6/attack/04.png",
-          "./assets/battle/characters/6/attack/05.png",
-          "./assets/battle/characters/6/attack/06.png"
-        ],
-        "hurt": [
-          "./assets/battle/characters/6/idle/01.png",
-          "./assets/battle/characters/6/idle/02.png",
-          "./assets/battle/characters/6/idle/03.png",
-          "./assets/battle/characters/6/idle/04.png"
-        ],
-        "miss": [
-          "./assets/battle/characters/6/attack/01.png",
-          "./assets/battle/characters/6/attack/02.png",
-          "./assets/battle/characters/6/attack/03.png",
-          "./assets/battle/characters/6/attack/04.png",
-          "./assets/battle/characters/6/attack/05.png",
-          "./assets/battle/characters/6/attack/06.png"
-        ],
-        "win": [
-          "./assets/battle/characters/6/idle/01.png",
-          "./assets/battle/characters/6/idle/02.png",
-          "./assets/battle/characters/6/idle/03.png",
-          "./assets/battle/characters/6/idle/04.png"
-        ],
-        "lose": [
-          "./assets/battle/characters/6/idle/01.png",
-          "./assets/battle/characters/6/idle/02.png",
-          "./assets/battle/characters/6/idle/03.png",
-          "./assets/battle/characters/6/idle/04.png"
-        ]
-      },
-      "weapon": null
-    },
-    {
-      "id": "7",
-      "label": "角色 7",
-      "playable": true,
-      "missing": [
-        "weapon"
-      ],
-      "states": {
-        "idle": [
-          "./assets/battle/characters/7/idle/01.png",
-          "./assets/battle/characters/7/idle/02.png",
-          "./assets/battle/characters/7/idle/03.png",
-          "./assets/battle/characters/7/idle/04.png"
-        ],
-        "attack": [
-          "./assets/battle/characters/7/attack/01.png",
-          "./assets/battle/characters/7/attack/02.png",
-          "./assets/battle/characters/7/attack/03.png",
-          "./assets/battle/characters/7/attack/04.png",
-          "./assets/battle/characters/7/attack/05.png",
-          "./assets/battle/characters/7/attack/06.png"
-        ],
-        "hurt": [
-          "./assets/battle/characters/7/idle/01.png",
-          "./assets/battle/characters/7/idle/02.png",
-          "./assets/battle/characters/7/idle/03.png",
-          "./assets/battle/characters/7/idle/04.png"
-        ],
-        "miss": [
-          "./assets/battle/characters/7/attack/01.png",
-          "./assets/battle/characters/7/attack/02.png",
-          "./assets/battle/characters/7/attack/03.png",
-          "./assets/battle/characters/7/attack/04.png",
-          "./assets/battle/characters/7/attack/05.png",
-          "./assets/battle/characters/7/attack/06.png"
-        ],
-        "win": [
-          "./assets/battle/characters/7/idle/01.png",
-          "./assets/battle/characters/7/idle/02.png",
-          "./assets/battle/characters/7/idle/03.png",
-          "./assets/battle/characters/7/idle/04.png"
-        ],
-        "lose": [
-          "./assets/battle/characters/7/idle/01.png",
-          "./assets/battle/characters/7/idle/02.png",
-          "./assets/battle/characters/7/idle/03.png",
-          "./assets/battle/characters/7/idle/04.png"
-        ]
-      },
-      "weapon": null
-    },
-    {
-      "id": "8",
-      "label": "角色 8",
-      "playable": true,
-      "missing": [
-        "weapon"
-      ],
-      "states": {
-        "idle": [
-          "./assets/battle/characters/8/idle/01.png",
-          "./assets/battle/characters/8/idle/02.png",
-          "./assets/battle/characters/8/idle/03.png",
-          "./assets/battle/characters/8/idle/04.png"
-        ],
-        "attack": [
-          "./assets/battle/characters/8/attack/01.png",
-          "./assets/battle/characters/8/attack/02.png",
-          "./assets/battle/characters/8/attack/03.png",
-          "./assets/battle/characters/8/attack/04.png",
-          "./assets/battle/characters/8/attack/05.png",
-          "./assets/battle/characters/8/attack/06.png"
-        ],
-        "hurt": [
-          "./assets/battle/characters/8/idle/01.png",
-          "./assets/battle/characters/8/idle/02.png",
-          "./assets/battle/characters/8/idle/03.png",
-          "./assets/battle/characters/8/idle/04.png"
-        ],
-        "miss": [
-          "./assets/battle/characters/8/attack/01.png",
-          "./assets/battle/characters/8/attack/02.png",
-          "./assets/battle/characters/8/attack/03.png",
-          "./assets/battle/characters/8/attack/04.png",
-          "./assets/battle/characters/8/attack/05.png",
-          "./assets/battle/characters/8/attack/06.png"
-        ],
-        "win": [
-          "./assets/battle/characters/8/idle/01.png",
-          "./assets/battle/characters/8/idle/02.png",
-          "./assets/battle/characters/8/idle/03.png",
-          "./assets/battle/characters/8/idle/04.png"
-        ],
-        "lose": [
-          "./assets/battle/characters/8/idle/01.png",
-          "./assets/battle/characters/8/idle/02.png",
-          "./assets/battle/characters/8/idle/03.png",
-          "./assets/battle/characters/8/idle/04.png"
-        ]
-      },
-      "weapon": null
-    },
-    {
-      "id": "9",
-      "label": "角色 9",
+      "id": "track-sprinter",
+      "label": "田徑快手",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/characters/9/idle/01.png",
-          "./assets/battle/characters/9/idle/02.png",
-          "./assets/battle/characters/9/idle/03.png",
-          "./assets/battle/characters/9/idle/04.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
         ],
         "attack": [
-          "./assets/battle/characters/9/attack/01.png",
-          "./assets/battle/characters/9/attack/02.png",
-          "./assets/battle/characters/9/attack/03.png",
-          "./assets/battle/characters/9/attack/04.png",
-          "./assets/battle/characters/9/attack/05.png",
-          "./assets/battle/characters/9/attack/06.png"
+          "./assets/battle/campus-heroes/track-sprinter/attack.svg"
         ],
         "hurt": [
-          "./assets/battle/characters/9/idle/01.png",
-          "./assets/battle/characters/9/idle/02.png",
-          "./assets/battle/characters/9/idle/03.png",
-          "./assets/battle/characters/9/idle/04.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
         ],
         "miss": [
-          "./assets/battle/characters/9/attack/01.png",
-          "./assets/battle/characters/9/attack/02.png",
-          "./assets/battle/characters/9/attack/03.png",
-          "./assets/battle/characters/9/attack/04.png",
-          "./assets/battle/characters/9/attack/05.png",
-          "./assets/battle/characters/9/attack/06.png"
+          "./assets/battle/campus-heroes/track-sprinter/attack.svg"
         ],
         "win": [
-          "./assets/battle/characters/9/idle/01.png",
-          "./assets/battle/characters/9/idle/02.png",
-          "./assets/battle/characters/9/idle/03.png",
-          "./assets/battle/characters/9/idle/04.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
         ],
         "lose": [
-          "./assets/battle/characters/9/idle/01.png",
-          "./assets/battle/characters/9/idle/02.png",
-          "./assets/battle/characters/9/idle/03.png",
-          "./assets/battle/characters/9/idle/04.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
         ]
       },
-      "weapon": "./assets/battle/characters/9/weapon.png"
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "加速氣流",
+          "glyph": "風",
+          "color": "#62e5ff"
+        },
+        "punch": {
+          "callout": "衝刺直拳",
+          "glyph": "拳",
+          "color": "#1596ff"
+        },
+        "kick": {
+          "callout": "跨欄飛踢",
+          "glyph": "踢",
+          "color": "#b6f344"
+        }
+      }
     },
     {
-      "id": "10",
-      "label": "角色 10",
+      "id": "street-dancer",
+      "label": "街舞高手",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/characters/10/idle/01.png",
-          "./assets/battle/characters/10/idle/02.png",
-          "./assets/battle/characters/10/idle/03.png",
-          "./assets/battle/characters/10/idle/04.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.svg"
         ],
         "attack": [
-          "./assets/battle/characters/10/attack/01.png",
-          "./assets/battle/characters/10/attack/02.png",
-          "./assets/battle/characters/10/attack/03.png",
-          "./assets/battle/characters/10/attack/04.png",
-          "./assets/battle/characters/10/attack/05.png",
-          "./assets/battle/characters/10/attack/06.png"
+          "./assets/battle/campus-heroes/street-dancer/attack.svg"
         ],
         "hurt": [
-          "./assets/battle/characters/10/idle/01.png",
-          "./assets/battle/characters/10/idle/02.png",
-          "./assets/battle/characters/10/idle/03.png",
-          "./assets/battle/characters/10/idle/04.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.svg"
         ],
         "miss": [
-          "./assets/battle/characters/10/attack/01.png",
-          "./assets/battle/characters/10/attack/02.png",
-          "./assets/battle/characters/10/attack/03.png",
-          "./assets/battle/characters/10/attack/04.png",
-          "./assets/battle/characters/10/attack/05.png",
-          "./assets/battle/characters/10/attack/06.png"
+          "./assets/battle/campus-heroes/street-dancer/attack.svg"
         ],
         "win": [
-          "./assets/battle/characters/10/idle/01.png",
-          "./assets/battle/characters/10/idle/02.png",
-          "./assets/battle/characters/10/idle/03.png",
-          "./assets/battle/characters/10/idle/04.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.svg"
         ],
         "lose": [
-          "./assets/battle/characters/10/idle/01.png",
-          "./assets/battle/characters/10/idle/02.png",
-          "./assets/battle/characters/10/idle/03.png",
-          "./assets/battle/characters/10/idle/04.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.svg"
         ]
       },
-      "weapon": "./assets/battle/characters/10/weapon.png"
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "節拍光彈",
+          "glyph": "♪",
+          "color": "#ff64cb"
+        },
+        "punch": {
+          "callout": "旋轉勾拳",
+          "glyph": "拳",
+          "color": "#ff3d89"
+        },
+        "kick": {
+          "callout": "倒立踢擊",
+          "glyph": "踢",
+          "color": "#9657ff"
+        }
+      }
     },
     {
-      "id": "11",
-      "label": "角色 11",
+      "id": "kendo-captain",
+      "label": "劍道社長",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/characters/11/idle/01.png",
-          "./assets/battle/characters/11/idle/02.png",
-          "./assets/battle/characters/11/idle/03.png",
-          "./assets/battle/characters/11/idle/04.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
         ],
         "attack": [
-          "./assets/battle/characters/11/attack/01.png",
-          "./assets/battle/characters/11/attack/02.png",
-          "./assets/battle/characters/11/attack/03.png",
-          "./assets/battle/characters/11/attack/04.png",
-          "./assets/battle/characters/11/attack/05.png",
-          "./assets/battle/characters/11/attack/06.png"
+          "./assets/battle/campus-heroes/kendo-captain/attack.svg"
         ],
         "hurt": [
-          "./assets/battle/characters/11/idle/01.png",
-          "./assets/battle/characters/11/idle/02.png",
-          "./assets/battle/characters/11/idle/03.png",
-          "./assets/battle/characters/11/idle/04.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
         ],
         "miss": [
-          "./assets/battle/characters/11/attack/01.png",
-          "./assets/battle/characters/11/attack/02.png",
-          "./assets/battle/characters/11/attack/03.png",
-          "./assets/battle/characters/11/attack/04.png",
-          "./assets/battle/characters/11/attack/05.png",
-          "./assets/battle/characters/11/attack/06.png"
+          "./assets/battle/campus-heroes/kendo-captain/attack.svg"
         ],
         "win": [
-          "./assets/battle/characters/11/idle/01.png",
-          "./assets/battle/characters/11/idle/02.png",
-          "./assets/battle/characters/11/idle/03.png",
-          "./assets/battle/characters/11/idle/04.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
         ],
         "lose": [
-          "./assets/battle/characters/11/idle/01.png",
-          "./assets/battle/characters/11/idle/02.png",
-          "./assets/battle/characters/11/idle/03.png",
-          "./assets/battle/characters/11/idle/04.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
         ]
       },
-      "weapon": "./assets/battle/characters/11/weapon.png"
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "竹劍光波",
+          "glyph": "剣",
+          "color": "#8ab8ff"
+        },
+        "punch": {
+          "callout": "突進拳",
+          "glyph": "拳",
+          "color": "#4b72ef"
+        },
+        "kick": {
+          "callout": "踏步飛踢",
+          "glyph": "踢",
+          "color": "#d5e4ff"
+        }
+      }
     },
     {
-      "id": "12",
-      "label": "角色 12",
+      "id": "science-maker",
+      "label": "科學發明家",
       "playable": true,
-      "missing": [
-        "weapon"
-      ],
+      "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/characters/12/idle/01.png",
-          "./assets/battle/characters/12/idle/02.png",
-          "./assets/battle/characters/12/idle/03.png",
-          "./assets/battle/characters/12/idle/04.png"
+          "./assets/battle/campus-heroes/science-maker/idle.svg"
         ],
         "attack": [
-          "./assets/battle/characters/12/attack/01.png",
-          "./assets/battle/characters/12/attack/02.png",
-          "./assets/battle/characters/12/attack/03.png",
-          "./assets/battle/characters/12/attack/04.png",
-          "./assets/battle/characters/12/attack/05.png",
-          "./assets/battle/characters/12/attack/06.png"
+          "./assets/battle/campus-heroes/science-maker/attack.svg"
         ],
         "hurt": [
-          "./assets/battle/characters/12/idle/01.png",
-          "./assets/battle/characters/12/idle/02.png",
-          "./assets/battle/characters/12/idle/03.png",
-          "./assets/battle/characters/12/idle/04.png"
+          "./assets/battle/campus-heroes/science-maker/idle.svg"
         ],
         "miss": [
-          "./assets/battle/characters/12/attack/01.png",
-          "./assets/battle/characters/12/attack/02.png",
-          "./assets/battle/characters/12/attack/03.png",
-          "./assets/battle/characters/12/attack/04.png",
-          "./assets/battle/characters/12/attack/05.png",
-          "./assets/battle/characters/12/attack/06.png"
+          "./assets/battle/campus-heroes/science-maker/attack.svg"
         ],
         "win": [
-          "./assets/battle/characters/12/idle/01.png",
-          "./assets/battle/characters/12/idle/02.png",
-          "./assets/battle/characters/12/idle/03.png",
-          "./assets/battle/characters/12/idle/04.png"
+          "./assets/battle/campus-heroes/science-maker/idle.svg"
         ],
         "lose": [
-          "./assets/battle/characters/12/idle/01.png",
-          "./assets/battle/characters/12/idle/02.png",
-          "./assets/battle/characters/12/idle/03.png",
-          "./assets/battle/characters/12/idle/04.png"
+          "./assets/battle/campus-heroes/science-maker/idle.svg"
         ]
       },
-      "weapon": null
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "電路光束",
+          "glyph": "⚡",
+          "color": "#5df2bb"
+        },
+        "punch": {
+          "callout": "磁力拳",
+          "glyph": "拳",
+          "color": "#2dbf91"
+        },
+        "kick": {
+          "callout": "噴射鞋踢",
+          "glyph": "踢",
+          "color": "#d9ff68"
+        }
+      }
+    },
+    {
+      "id": "code-maker",
+      "label": "程式發明家",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/code-maker/idle.svg"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/code-maker/attack.svg"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/code-maker/idle.svg"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/code-maker/attack.svg"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/code-maker/idle.svg"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/code-maker/idle.svg"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "程式光彈",
+          "glyph": "⌘",
+          "color": "#b38cff"
+        },
+        "punch": {
+          "callout": "除錯重拳",
+          "glyph": "拳",
+          "color": "#8a54dd"
+        },
+        "kick": {
+          "callout": "快捷鍵踢",
+          "glyph": "踢",
+          "color": "#7de5ff"
+        }
+      }
+    },
+    {
+      "id": "math-strategist",
+      "label": "數學策略家",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/math-strategist/attack.svg"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/math-strategist/attack.svg"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "幾何方陣",
+          "glyph": "△",
+          "color": "#ffe56d"
+        },
+        "punch": {
+          "callout": "座標重拳",
+          "glyph": "拳",
+          "color": "#e7b83e"
+        },
+        "kick": {
+          "callout": "拋物線踢",
+          "glyph": "踢",
+          "color": "#ff8d36"
+        }
+      }
+    },
+    {
+      "id": "chess-tactician",
+      "label": "棋局軍師",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/chess-tactician/attack.svg"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/chess-tactician/attack.svg"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "棋盤衝擊",
+          "glyph": "棋",
+          "color": "#dae6f5"
+        },
+        "punch": {
+          "callout": "將軍拳",
+          "glyph": "拳",
+          "color": "#6f87a3"
+        },
+        "kick": {
+          "callout": "跳馬踢",
+          "glyph": "踢",
+          "color": "#b8d8fb"
+        }
+      }
+    },
+    {
+      "id": "astronomy-observer",
+      "label": "天文觀測員",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/astronomy-observer/attack.svg"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/astronomy-observer/attack.svg"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "星圖光彈",
+          "glyph": "★",
+          "color": "#718dff"
+        },
+        "punch": {
+          "callout": "流星拳",
+          "glyph": "拳",
+          "color": "#a9baff"
+        },
+        "kick": {
+          "callout": "行星環踢",
+          "glyph": "踢",
+          "color": "#d775ff"
+        }
+      }
+    },
+    {
+      "id": "puzzle-detective",
+      "label": "解謎偵探",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/puzzle-detective/attack.svg"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/puzzle-detective/attack.svg"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "線索光彈",
+          "glyph": "？",
+          "color": "#ffc15d"
+        },
+        "punch": {
+          "callout": "推理拳",
+          "glyph": "拳",
+          "color": "#bd6f3c"
+        },
+        "kick": {
+          "callout": "追蹤踢",
+          "glyph": "踢",
+          "color": "#ffdf7e"
+        }
+      }
+    },
+    {
+      "id": "language-magician",
+      "label": "語言魔術師",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/language-magician/idle.svg"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/language-magician/attack.svg"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/language-magician/idle.svg"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/language-magician/attack.svg"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/language-magician/idle.svg"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/language-magician/idle.svg"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "字母光波",
+          "glyph": "字",
+          "color": "#ff8ce3"
+        },
+        "punch": {
+          "callout": "書頁拳",
+          "glyph": "拳",
+          "color": "#df4bc0"
+        },
+        "kick": {
+          "callout": "詞語旋踢",
+          "glyph": "踢",
+          "color": "#ffd1f2"
+        }
+      }
+    },
+    {
+      "id": "nature-researcher",
+      "label": "自然研究員",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/nature-researcher/attack.svg"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/nature-researcher/attack.svg"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "葉片光彈",
+          "glyph": "葉",
+          "color": "#8de064"
+        },
+        "punch": {
+          "callout": "藤蔓拳",
+          "glyph": "拳",
+          "color": "#4aa650"
+        },
+        "kick": {
+          "callout": "樹根踢",
+          "glyph": "踢",
+          "color": "#b4d962"
+        }
+      }
     }
   ],
   "sfx": {

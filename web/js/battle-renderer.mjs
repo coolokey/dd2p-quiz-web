@@ -108,19 +108,20 @@ export function attackClassNames(attackType = 'energy') {
   return { actor: `attack-${attackType}`, target: `hit-${attackType}` };
 }
 
-export function buildAttackEffectMarkup({ attackType = 'energy', player, opponent, damage, weapon = null }) {
+export function buildAttackEffectMarkup({ attackType = 'energy', player, opponent, damage, weapon = null, profile = null }) {
+  const accent = profile?.color ? ` style="--attack-accent:${escapeHtml(profile.color)}"` : '';
   if (attackType === 'energy') {
     return {
       weapon: buildProjectileMarkup(weapon, player),
-      impact: `<span class="impact-burst impact-energy damage-${opponent}" aria-hidden="true"></span><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
+      impact: `<span class="impact-burst impact-energy damage-${opponent}"${accent} aria-hidden="true"></span><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
     };
   }
   const melee = attackType === 'kick'
     ? { glyph: '腳', callout: '飛踢', limbClass: 'strike-boot' }
     : { glyph: '拳', callout: '重拳', limbClass: 'strike-fist' };
   return {
-    weapon: `<span class="melee-strike strike-${attackType} from-${player}" aria-hidden="true"><span class="strike-trail"></span><span class="strike-limb ${melee.limbClass}"><span class="strike-glyph">${melee.glyph}</span></span></span>`,
-    impact: `<span class="melee-impact impact-${attackType} damage-${opponent} from-${player}" aria-hidden="true"><span class="melee-symbol melee-symbol-${attackType}">${melee.glyph}</span></span><b class="attack-callout attack-callout-${attackType} damage-${opponent} from-${player}" aria-hidden="true">${melee.callout}</b><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
+    weapon: `<span class="melee-strike strike-${attackType} from-${player}"${accent} aria-hidden="true"><span class="strike-trail"></span><span class="strike-limb ${melee.limbClass}"><span class="strike-glyph">${profile?.glyph ?? melee.glyph}</span></span></span>`,
+    impact: `<span class="melee-impact impact-${attackType} damage-${opponent} from-${player}"${accent} aria-hidden="true"><span class="melee-symbol melee-symbol-${attackType}">${profile?.glyph ?? melee.glyph}</span></span><b class="attack-callout attack-callout-${attackType} damage-${opponent} from-${player}" aria-hidden="true">${escapeHtml(profile?.callout ?? melee.callout)}</b><b class="damage-pop damage-${opponent}">−${escapeHtml(damage)}</b>`,
   };
 }
 
@@ -139,6 +140,7 @@ export async function playSpriteFrames(image, frames, duration) {
 export async function playBattleAnimation(root, animation, {
   duration = 650,
   weapon = null,
+  profile = null,
   attackFrames = [],
   attackType = 'energy',
   impactDelay = 0,
@@ -166,6 +168,7 @@ export async function playBattleAnimation(root, animation, {
       opponent: animation.opponent,
       damage: animation.damage,
       weapon,
+      profile,
     });
     if (weaponLayer) weaponLayer.innerHTML = effects.weapon;
     const showImpact = () => {

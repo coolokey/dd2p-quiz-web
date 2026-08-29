@@ -95,6 +95,17 @@ function visibleBounds(decoded) {
   return { left, top, right, bottom };
 }
 
+function syntheticOpaquePanel(width, height, inset) {
+  const stride = width * 4;
+  const scanlines = Buffer.alloc(stride * height);
+  for (let y = inset; y < height - inset; y += 1) {
+    for (let x = inset; x < width - inset; x += 1) {
+      scanlines[y * stride + x * 4 + 3] = 255;
+    }
+  }
+  return { width, height, stride, scanlines };
+}
+
 test('campus roster has twelve original human heroes', () => {
   assert.equal(CAMPUS_HEROES.length, 12);
   assert.equal(new Set(CAMPUS_HEROES.map(hero => hero.id)).size, 12);
@@ -161,4 +172,17 @@ test('sprite validation script reports all checked-in PNG pairs without regenera
   const results = await validateCampusHeroSprites();
   assert.equal(results.length, CAMPUS_HEROES.length * 2);
   assert.deepEqual(new Set(results.map(result => result.pose)), new Set(['idle', 'attack']));
+});
+
+test('sprite alpha validation rejects opaque panels hidden behind transparent borders', async () => {
+  const { validateAlphaTransparency } = await import('../scripts/generate-campus-hero-sprites.mjs');
+  assert.equal(typeof validateAlphaTransparency, 'function');
+  assert.throws(
+    () => validateAlphaTransparency(syntheticOpaquePanel(64, 64, 1), 'thin-border-fixture'),
+    /transparent background/i,
+  );
+  assert.throws(
+    () => validateAlphaTransparency(syntheticOpaquePanel(100, 100, 15), 'padded-panel-fixture'),
+    /opaque background panel/i,
+  );
 });

@@ -7,6 +7,8 @@ import { CAMPUS_HEROES, HERO_CANVAS } from '../web/js/campus-heroes.mjs';
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SPRITE_ROOT = path.join(REPO_ROOT, 'web', 'assets', 'battle', 'campus-heroes');
 const SAFETY_MARGIN = 70;
+const MIN_TRANSPARENT_RATIO = 0.4;
+const MAX_BOUNDING_BOX_FILL_RATIO = 0.75;
 
 function readPngMetadata(data) {
   if (!data.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
@@ -81,13 +83,19 @@ function inspectAlpha(decoded) {
   let bottom = 0;
   let alphaMin = 255;
   let alphaMax = 0;
+  let transparentPixels = 0;
+  let visiblePixels = 0;
 
   for (let y = 0; y < decoded.height; y += 1) {
     for (let x = 0; x < decoded.width; x += 1) {
       const alpha = alphaAt(x, y);
       alphaMin = Math.min(alphaMin, alpha);
       alphaMax = Math.max(alphaMax, alpha);
-      if (alpha === 0) continue;
+      if (alpha === 0) {
+        transparentPixels += 1;
+        continue;
+      }
+      visiblePixels += 1;
       left = Math.min(left, x);
       top = Math.min(top, y);
       right = Math.max(right, x + 1);
@@ -101,15 +109,39 @@ function inspectAlpha(decoded) {
     alphaAt(0, y) === 0 && alphaAt(decoded.width - 1, y) === 0,
   ).every(Boolean);
 
-  return { alphaMin, alphaMax, transparentBorder, bounds: { left, top, right, bottom } };
+  const bounds = { left, top, right, bottom };
+  const boundsArea = Math.max(0, right - left) * Math.max(0, bottom - top);
+  return {
+    alphaMin,
+    alphaMax,
+    transparentBorder,
+    bounds,
+    transparentRatio: transparentPixels / (decoded.width * decoded.height),
+    boundingBoxFillRatio: boundsArea === 0 ? 0 : visiblePixels / boundsArea,
+  };
+}
+
+export function validateAlphaTransparency(decoded, label = 'sprite') {
+  const alpha = inspectAlpha(decoded);
+  if (alpha.transparentRatio < MIN_TRANSPARENT_RATIO) {
+    throw new Error(
+      `${label}: transparent background covers ${(alpha.transparentRatio * 100).toFixed(1)}% of the canvas; expected at least ${MIN_TRANSPARENT_RATIO * 100}%`,
+    );
+  }
+  if (alpha.boundingBoxFillRatio > MAX_BOUNDING_BOX_FILL_RATIO) {
+    throw new Error(
+      `${label}: possible opaque background panel fills ${(alpha.boundingBoxFillRatio * 100).toFixed(1)}% of the visible bounds; expected at most ${MAX_BOUNDING_BOX_FILL_RATIO * 100}%`,
+    );
+  }
+  return alpha;
 }
 
 async function validateSprite(hero, pose) {
   const filePath = path.join(SPRITE_ROOT, hero.id, `${pose}.png`);
   const data = await readFile(filePath);
   const decoded = decodeRgba(data);
-  const alpha = inspectAlpha(decoded);
   const label = `${hero.id}/${pose}`;
+  const alpha = validateAlphaTransparency(decoded, label);
 
   if (decoded.width !== HERO_CANVAS.width || decoded.height !== HERO_CANVAS.height) {
     throw new Error(`${label}: expected ${HERO_CANVAS.width}x${HERO_CANVAS.height}, got ${decoded.width}x${decoded.height}`);
@@ -124,7 +156,14 @@ async function validateSprite(hero, pose) {
     throw new Error(`${label}: visible artwork violates the ${SAFETY_MARGIN}px safety margin`);
   }
 
-  return { heroId: hero.id, pose, filePath, bounds: alpha.bounds };
+  return {
+    heroId: hero.id,
+    pose,
+    filePath,
+    bounds: alpha.bounds,
+    transparentRatio: alpha.transparentRatio,
+    boundingBoxFillRatio: alpha.boundingBoxFillRatio,
+  };
 }
 
 export async function validateCampusHeroSprites() {

@@ -124,3 +124,41 @@ Validated 24 checked-in campus hero PNG sprites; no artwork was regenerated.
 - 基底提交：`8a30e44399c79b1a0035653742f08219a34af125`（Task 1）
 
 未 push、未發布、未切換 manifest；Task 3 才會把角色狀態引用改為 PNG。
+
+## 2026-08-30 審查修正：拒絕透明細框包住的不透明背景
+
+### 問題與修正
+
+- 審查發現原驗證只要求 Alpha 同時包含 0／255 且四條 1 px 外框透明；若圖片只有外框透明、中央仍是一整片不透明底色，仍可能誤判合格。
+- 新增不依賴外部套件的逐像素統計，並同時使用兩個互補條件：畫布透明像素比例至少 40%；角色可見 bbox 內的非透明像素填滿率不得超過 75%。
+- 第一項會拒絕「僅 1 px 透明框」；第二項會拒絕「四周留有大量透明空間，但中央仍是完整矩形不透明面板」。這不是檔案壓縮率或位元組大小推測，而是解壓 PNG、反濾鏡後直接計算每個 Alpha 像素。
+- 現有 24 張素材的透明比例為 72.18%～84.54%，bbox 填滿率為 25.00%～40.73%，全數通過且與門檻保有明顯餘裕。
+
+### TDD RED：合成不透明面板
+
+命令：
+
+```powershell
+node --test tests/campus-heroes.test.mjs
+```
+
+結果：6 passed、1 failed。新增測試先建立兩個純記憶體 RGBA fixture：64×64、僅 1 px 透明框；以及 100×100、外圍 15 px 透明但中央 70×70 完全不透明。失敗原因符合預期：`validateAlphaTransparency` 尚未匯出，實際型別為 `undefined`。
+
+### GREEN 與回歸驗證
+
+命令：
+
+```powershell
+node --test tests/campus-heroes.test.mjs
+node scripts/generate-campus-hero-sprites.mjs
+git diff --check
+```
+
+結果：
+
+- focused tests：7 passed、0 failed；兩個惡意 fixture 均被正確拒絕，24 張正式素材均通過。
+- 唯讀驗證器：`Validated 24 checked-in campus hero PNG sprites; no artwork was regenerated.`
+- `git diff --check`：通過。
+- 未重新生成任何圖片；未修改 app、battle renderer、manifest、輸入、音效、暫停或題庫。
+
+修正提交：`2bfe58dd01bf0e24e68e64d491b034972b88fa2e`（`fix: reject opaque PNG sprite backgrounds`）。

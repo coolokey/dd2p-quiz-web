@@ -25,6 +25,14 @@ test('campus roster has twelve original human heroes', () => {
   }
 });
 
+test('campus roster balances genders and has a distinct art brief per hero', () => {
+  assert.deepEqual(
+    CAMPUS_HEROES.map(hero => hero.gender).sort(),
+    ['female', 'female', 'female', 'female', 'female', 'female', 'male', 'male', 'male', 'male', 'male', 'male'],
+  );
+  assert.equal(new Set(CAMPUS_HEROES.map(hero => hero.artBrief)).size, 12);
+});
+
 test('campus arenas define gate, track, basketball court and classroom', () => {
   assert.deepEqual(
     CAMPUS_SCENES.map(scene => scene.id),

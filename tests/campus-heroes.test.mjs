@@ -42,3 +42,15 @@ test('campus arena artwork exists as wide PNG files', async () => {
     assert.equal(width * 9, height * 16, `${scene.id} should be 16:9`);
   }
 });
+
+test('every campus hero has a same-canvas idle and attack sprite', async () => {
+  for (const hero of CAMPUS_HEROES) {
+    for (const pose of ['idle', 'attack']) {
+      const filePath = path.resolve('web', 'assets', 'battle', 'campus-heroes', hero.id, `${pose}.svg`);
+      await access(filePath);
+      const svg = await readFile(filePath, 'utf8');
+      assert.match(svg, new RegExp(`viewBox=\\"0 0 ${HERO_CANVAS.width} ${HERO_CANVAS.height}\\"`));
+      assert.match(svg, /stroke-linecap="round"/);
+    }
+  }
+});

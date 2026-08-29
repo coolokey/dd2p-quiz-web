@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="解謎偵探 攻擊">
+  <defs><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="16" stdDeviation="10" flood-opacity=".28"/></filter></defs>
+  <g filter="url(#s)" stroke="#1e2635" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M465 745 Q400 810 360 870" fill="none" stroke="#b76a36" stroke-width="92"/><path d="M580 745 Q720 765 830 690" fill="none" stroke="#b76a36" stroke-width="96"/>
+    <path d="M407 510 Q330 590 300 650" fill="none" stroke="#b76a36" stroke-width="86"/><path d="M615 510 Q760 490 860 398" fill="none" stroke="#b76a36" stroke-width="90"/>
+    <path d="M420 455 Q510 410 610 455 L650 735 Q520 790 385 730Z" fill="#b76a36"/>
+    <path d="M446 472 Q510 444 575 470 L575 700 Q510 728 440 698Z" fill="#fff" opacity=".22" stroke="none"/>
+    <circle cx="510" cy="345" r="135" fill="#ffd5b2"/>
+    <path d="M384 337 Q390 170 514 185 Q650 192 640 350 L590 292 Q520 332 442 285Z" fill="#49301d"/>
+    <path d="M395 258 Q445 155 535 190 Q615 207 635 280" fill="none" stroke="#ffd178" stroke-width="26"/>
+    <path d="M460 355 l24 0 M540 355 l24 0"/><path d="M486 412 Q512 435 540 412" fill="none" stroke-width="16"/>
+    <path d="M438 534 Q510 560 585 534" fill="none" stroke="#ffd178" stroke-width="18"/>
+    <rect x="465" y="570" width="94" height="72" rx="18" fill="#ffd178"/><text x="512" y="625" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="34" fill="#1e2635" stroke="none">!</text>
+    <circle cx="864" cy="360" r="62" fill="#ffd178"/><text x="864" y="380" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="54" fill="#1e2635" stroke="none">?</text>
+  </g>
+  <path d="M760 350 l130 -80 M785 410 l165 -10 M760 470 l130 80" stroke="#ffd178" stroke-width="26" stroke-linecap="round" opacity=".9"/>
+</svg>

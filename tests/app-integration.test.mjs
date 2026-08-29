@@ -302,6 +302,14 @@ test('應用程式依模式決定選角、按鍵測試與 CPU 角色', async () 
   assert.match(source, /prepareQuestionRound\(currentQuiz\.questions, Math\.random, answerPositionState\)/);
 });
 
+test('戰場選擇文案正確說明四個校園場景', async () => {
+  const source = await readAppSource();
+  const arenaSelect = functionSource(source, 'renderArenaSelect', 'characterCards');
+
+  assert.match(arenaSelect, /四個校園場景都能使用/);
+  assert.doesNotMatch(arenaSelect, /三個原版場景/);
+});
+
 test('單人模式在每題排程 CPU 並於換題及結束時取消', async () => {
   const source = await readAppSource();
   assert.match(source, /createCpuController\(/);

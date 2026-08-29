@@ -34,22 +34,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/basketball-ace/attack.svg"
+          "./assets/battle/campus-heroes/basketball-ace/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/basketball-ace/attack.svg"
+          "./assets/battle/campus-heroes/basketball-ace/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.svg"
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
         ]
       },
       "weapon": null,
@@ -78,22 +78,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/track-sprinter/attack.svg"
+          "./assets/battle/campus-heroes/track-sprinter/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/track-sprinter/attack.svg"
+          "./assets/battle/campus-heroes/track-sprinter/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.svg"
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
         ]
       },
       "weapon": null,
@@ -122,22 +122,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/street-dancer/idle.svg"
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/street-dancer/attack.svg"
+          "./assets/battle/campus-heroes/street-dancer/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/street-dancer/idle.svg"
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/street-dancer/attack.svg"
+          "./assets/battle/campus-heroes/street-dancer/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/street-dancer/idle.svg"
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/street-dancer/idle.svg"
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
         ]
       },
       "weapon": null,
@@ -166,22 +166,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/kendo-captain/attack.svg"
+          "./assets/battle/campus-heroes/kendo-captain/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/kendo-captain/attack.svg"
+          "./assets/battle/campus-heroes/kendo-captain/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.svg"
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
         ]
       },
       "weapon": null,
@@ -210,22 +210,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/science-maker/idle.svg"
+          "./assets/battle/campus-heroes/science-maker/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/science-maker/attack.svg"
+          "./assets/battle/campus-heroes/science-maker/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/science-maker/idle.svg"
+          "./assets/battle/campus-heroes/science-maker/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/science-maker/attack.svg"
+          "./assets/battle/campus-heroes/science-maker/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/science-maker/idle.svg"
+          "./assets/battle/campus-heroes/science-maker/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/science-maker/idle.svg"
+          "./assets/battle/campus-heroes/science-maker/idle.png"
         ]
       },
       "weapon": null,
@@ -254,22 +254,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/code-maker/idle.svg"
+          "./assets/battle/campus-heroes/code-maker/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/code-maker/attack.svg"
+          "./assets/battle/campus-heroes/code-maker/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/code-maker/idle.svg"
+          "./assets/battle/campus-heroes/code-maker/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/code-maker/attack.svg"
+          "./assets/battle/campus-heroes/code-maker/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/code-maker/idle.svg"
+          "./assets/battle/campus-heroes/code-maker/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/code-maker/idle.svg"
+          "./assets/battle/campus-heroes/code-maker/idle.png"
         ]
       },
       "weapon": null,
@@ -298,22 +298,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/math-strategist/attack.svg"
+          "./assets/battle/campus-heroes/math-strategist/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/math-strategist/attack.svg"
+          "./assets/battle/campus-heroes/math-strategist/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/math-strategist/idle.svg"
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
         ]
       },
       "weapon": null,
@@ -342,22 +342,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/chess-tactician/attack.svg"
+          "./assets/battle/campus-heroes/chess-tactician/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/chess-tactician/attack.svg"
+          "./assets/battle/campus-heroes/chess-tactician/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.svg"
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
         ]
       },
       "weapon": null,
@@ -386,22 +386,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/astronomy-observer/attack.svg"
+          "./assets/battle/campus-heroes/astronomy-observer/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/astronomy-observer/attack.svg"
+          "./assets/battle/campus-heroes/astronomy-observer/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.svg"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
         ]
       },
       "weapon": null,
@@ -430,22 +430,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/puzzle-detective/attack.svg"
+          "./assets/battle/campus-heroes/puzzle-detective/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/puzzle-detective/attack.svg"
+          "./assets/battle/campus-heroes/puzzle-detective/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.svg"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
         ]
       },
       "weapon": null,
@@ -474,22 +474,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/language-magician/idle.svg"
+          "./assets/battle/campus-heroes/language-magician/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/language-magician/attack.svg"
+          "./assets/battle/campus-heroes/language-magician/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/language-magician/idle.svg"
+          "./assets/battle/campus-heroes/language-magician/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/language-magician/attack.svg"
+          "./assets/battle/campus-heroes/language-magician/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/language-magician/idle.svg"
+          "./assets/battle/campus-heroes/language-magician/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/language-magician/idle.svg"
+          "./assets/battle/campus-heroes/language-magician/idle.png"
         ]
       },
       "weapon": null,
@@ -518,22 +518,22 @@
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/nature-researcher/attack.svg"
+          "./assets/battle/campus-heroes/nature-researcher/attack.png"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/nature-researcher/attack.svg"
+          "./assets/battle/campus-heroes/nature-researcher/attack.png"
         ],
         "win": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.svg"
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
         ]
       },
       "weapon": null,

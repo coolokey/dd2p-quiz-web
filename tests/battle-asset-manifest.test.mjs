@@ -11,6 +11,23 @@ import {
 } from '../scripts/lib/battle-asset-manifest.mjs';
 import { chooseCharacterSpriteGroup } from '../scripts/lib/character-sprite-selector.mjs';
 import { prepareBattleAssets } from '../scripts/prepare-battle-assets.mjs';
+import { CAMPUS_HEROES, CAMPUS_SCENES } from '../web/js/campus-heroes.mjs';
+
+const CAMPUS_SFX = Object.freeze({
+  menu: './assets/battle/sfx/menu.wav',
+  confirm: './assets/battle/sfx/confirm.wav',
+  start: './assets/battle/sfx/start.mp3',
+  buzz: './assets/battle/sfx/buzz.mp3',
+  correct: './assets/battle/sfx/correct.wav',
+  wrong: './assets/battle/sfx/wrong.mp3',
+  attack: './assets/battle/sfx/attack.wav',
+  weapon: './assets/battle/sfx/weapon.wav',
+  hit: './assets/battle/sfx/hit.mp3',
+  hurt: './assets/battle/sfx/hurt.mp3',
+  ko: './assets/battle/sfx/ko.wav',
+  win: './assets/battle/sfx/win.mp3',
+  lose: './assets/battle/sfx/lose.wav',
+});
 
 test('maps all three arenas to original scenes and music', () => {
   const manifest = createBaseBattleManifest();
@@ -151,6 +168,31 @@ test('generated manifest publishes twelve unique characters and existing files',
   ];
   for (const reference of new Set(references)) {
     await access(path.join(webRoot, reference.replace(/^\.\/assets\//, 'assets/')));
+  }
+});
+
+test('generated campus manifest publishes PNG states and preserves battle contract', async () => {
+  const manifest = JSON.parse(
+    await readFile(path.resolve('web/assets/battle/manifest.json'), 'utf8'),
+  );
+
+  assert.deepEqual(manifest.scenes, CAMPUS_SCENES);
+  assert.deepEqual(manifest.sfx, CAMPUS_SFX);
+  assert.equal(manifest.characters.length, CAMPUS_HEROES.length);
+
+  for (const hero of CAMPUS_HEROES) {
+    const character = manifest.characters.find(({ id }) => id === hero.id);
+    assert.ok(character, `${hero.id} must be published`);
+    assert.equal(character.playable, true);
+    assert.deepEqual(character.missing, []);
+    assert.equal(character.weapon, null);
+    assert.deepEqual(character.attacks, hero.attacks);
+    assert.match(character.states.idle[0], /\/idle\.png$/);
+    assert.match(character.states.attack[0], /\/attack\.png$/);
+    assert.deepEqual(character.states.hurt, character.states.idle);
+    assert.deepEqual(character.states.miss, character.states.attack);
+    assert.deepEqual(character.states.win, character.states.idle);
+    assert.deepEqual(character.states.lose, character.states.idle);
   }
 });
 

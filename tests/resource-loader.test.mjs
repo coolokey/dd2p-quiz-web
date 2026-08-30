@@ -1,6 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchJson, normalizeBootstrapResults } from '../web/js/resource-loader.mjs';
+import { fetchJson, loadBootstrapResources, normalizeBootstrapResults, versionedAssetUrl } from '../web/js/resource-loader.mjs';
+
+test('發布版本會附加到遊戲資料請求，避免 GitHub Pages 使用舊快取', async () => {
+  assert.equal(versionedAssetUrl('./assets/battle/manifest.json', 'ef88997'), './assets/battle/manifest.json?v=ef88997');
+  const requested = [];
+  await loadBootstrapResources(async url => {
+    requested.push(url);
+    return { ok: true, async json() { return url.includes('catalog') ? { quizzes: [{ id: 'math' }] } : { scenes: [{ id: 'gate' }], characters: [{ id: 'a' }, { id: 'b' }], sfx: {} }; } };
+  }, 'ef88997');
+  assert.deepEqual(requested, ['./data/catalog.json?v=ef88997', './assets/battle/manifest.json?v=ef88997']);
+});
 
 test('fetchJson 在 HTTP 非成功狀態時拒絕資料', async () => {
   let parsed = false;

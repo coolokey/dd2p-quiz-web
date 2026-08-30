@@ -357,7 +357,7 @@ test('開局題庫驗證失敗會保留模式、清空部分初始化狀態並�
 test('初始資料與個別題庫均使用可降級、會檢查 HTTP 的載入器', async () => {
   const source = await readAppSource();
   assert.match(source, /loadBootstrapResources\(fetch\)/);
-  assert.match(source, /load: \(\) => fetchJson\(item\.file, fetch\)/);
+  assert.match(source, /load: \(\) => fetchJson\(versionedAssetUrl\(item\.file\), fetch\)/);
   assert.match(source, /renderQuizLoadFailure\(item, error\)/);
   assert.match(source, /onRetry: bootstrap/);
 });

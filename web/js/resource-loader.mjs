@@ -1,4 +1,10 @@
 const emptyManifest = () => ({ scenes: [], characters: [], sfx: {} });
+const moduleBuildVersion = new URL(import.meta.url).searchParams.get('v') || '';
+
+export function versionedAssetUrl(path, version = moduleBuildVersion) {
+  if (!version) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}v=${encodeURIComponent(version)}`;
+}
 
 export async function fetchJson(url, fetcher = fetch) {
   const response = await fetcher(url);
@@ -45,10 +51,10 @@ export function normalizeBootstrapResults(results) {
   };
 }
 
-export async function loadBootstrapResources(fetcher = fetch) {
+export async function loadBootstrapResources(fetcher = fetch, version = moduleBuildVersion) {
   const results = await Promise.allSettled([
-    fetchJson('./data/catalog.json', fetcher),
-    fetchJson('./assets/battle/manifest.json', fetcher),
+    fetchJson(versionedAssetUrl('./data/catalog.json', version), fetcher),
+    fetchJson(versionedAssetUrl('./assets/battle/manifest.json', version), fetcher),
   ]);
   return normalizeBootstrapResults(results);
 }

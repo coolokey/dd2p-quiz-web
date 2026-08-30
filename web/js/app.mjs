@@ -418,12 +418,12 @@ function characterCards(player) {
   return battleManifest.characters.map(character => {
     const id = String(character.id), selected = characterSelection[player] === id;
     const unavailable = character.playable === false || characterSelection[opponent] === id;
-    return `<button class="character-card ${selected ? 'is-selected' : ''}" data-character="${esc(id)}" data-player="${player}" ${unavailable ? 'disabled' : ''}><img src="${esc(characterImage(character))}" alt=""><b>${esc(character.name || `角色 ${id}`)}</b></button>`;
+    return `<button class="character-card ${selected ? 'is-selected' : ''}" data-character="${esc(id)}" data-player="${player}" ${unavailable ? 'disabled' : ''}><img src="${esc(characterImage(character))}" alt=""><b>${esc(character.label || character.name || `角色 ${id}`)}</b></button>`;
   }).join('');
 }
 function selectedPreview(player) {
   const character = characterById(characterSelection[player]);
-  return character ? `<div class="selected-fighter"><img src="${esc(characterImage(character))}" alt="${esc(character.name || `角色 ${character.id}`)}"></div>` : '<div class="selected-fighter"><b>尚未選擇</b></div>';
+  return character ? `<div class="selected-fighter"><img src="${esc(characterImage(character))}" alt="${esc(character.label || character.name || `角色 ${character.id}`)}"></div>` : '<div class="selected-fighter"><b>尚未選擇</b></div>';
 }
 function renderCharacterSelect(settings) {
   cancelPendingStart();
@@ -602,8 +602,8 @@ function renderGame({
     pauseConfirmAction,
     pausePending: battlePause.isPausePending(),
     players: {
-      left: { name: left.name || `角色 ${left.id}`, health: combatState.health.left, score: combatState.scores.left, image: characterImage(left) },
-      right: { name: right.name || `角色 ${right.id}`, health: combatState.health.right, score: combatState.scores.right, image: characterImage(right) },
+      left: { name: left.label || left.name || `角色 ${left.id}`, health: combatState.health.left, score: combatState.scores.left, image: characterImage(left) },
+      right: { name: right.label || right.name || `角色 ${right.id}`, health: combatState.health.right, score: combatState.scores.right, image: characterImage(right) },
     },
     progress: progressOverride ?? (combatState.phase === 'sudden-death' ? 'SUDDEN' : timeLeft === null ? `${Math.min(quizState.questionIndex + 1, regulationLimit)}／${regulationLimit}` : `${timeLeft}s`),
     prompt: question.prompt, questionImage: question.image, choices: question.choices,

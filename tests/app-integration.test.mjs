@@ -6,6 +6,13 @@ import { createBattleAppHarness, flushMicrotasks } from './helpers/battle-app-ha
 const readAppSource = () => readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
 const readReadme = () => readFile(new URL('../README.md', import.meta.url), 'utf8');
 
+test('選角預覽與戰鬥名稱優先顯示角色中文 label', async () => {
+  const source = await readAppSource();
+  assert.match(source, /character\.label \|\| character\.name \|\| `角色 \$\{id\}`/);
+  assert.match(source, /left\.label \|\| left\.name \|\| `角色 \$\{left\.id\}`/);
+  assert.match(source, /right\.label \|\| right\.name \|\| `角色 \$\{right\.id\}`/);
+});
+
 test('動畫失敗仍將 pending pause 轉為可繼續及安全離場的手動暫停', async t => {
   const diagnostic = t.mock.method(console, 'error', () => {});
   const h = await createBattleAppHarness({ gameMode: 'local' });

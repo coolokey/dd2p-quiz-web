@@ -118,6 +118,13 @@ test('campus roster has twelve original human heroes', () => {
   }
 });
 
+test('campus heroes use the approved Daxi-themed Chinese names', () => {
+  assert.deepEqual(
+    CAMPUS_HEROES.map(({ name }) => name),
+    ['溪羽', '崁迅', '桃樂', '嵙辰', '溪棠', '崁宇', '桃弦', '溪策', '崁星', '大川', '桃語', '嵙森'],
+  );
+});
+
 test('campus roster balances genders and has a distinct art brief per hero', () => {
   assert.deepEqual(
     CAMPUS_HEROES.map(hero => hero.gender).sort(),

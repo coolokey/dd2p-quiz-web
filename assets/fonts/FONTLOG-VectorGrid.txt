@@ -1,0 +1,17 @@
+VectorGrid Font Change Log
+==========================
+
+2026-08-25
+----------
+
+VectorGrid is a local webfont derivative of the variable TTF downloaded from
+https://raw.githubusercontent.com/google/fonts/main/ofl/orbitron/Orbitron%5Bwght%5D.ttf
+and distributed by the Orbitron project under the SIL Open Font License 1.1.
+The source license is kept in OFL-Orbitron.txt.
+
+The source variable TTF was converted to WOFF2 with fontTools subset using the
+complete glyph set and --no-hinting. Because that optimization creates a
+modified font, all user-facing family, full, unique, and PostScript name-table
+entries were renamed to VectorGrid. The application-local CSS family is
+"VectorGrid Local" and the derivative file is VectorGrid-Variable.woff2. All
+named variable-font instances also use VectorGrid-prefixed PostScript names.

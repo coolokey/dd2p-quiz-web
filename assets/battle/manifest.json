@@ -1,0 +1,602 @@
+{
+  "version": 2,
+  "scenes": [
+    {
+      "id": "daxi-gate",
+      "label": "大溪校門對決",
+      "image": "./assets/battle/scenes/daxi-gate.png",
+      "music": "./assets/battle/music/school.mp3",
+      "thumbnail": "./assets/battle/scenes/daxi-gate-thumb.png"
+    },
+    {
+      "id": "track",
+      "label": "紅色跑道衝刺",
+      "image": "./assets/battle/scenes/track.png",
+      "music": "./assets/battle/music/school.mp3",
+      "thumbnail": "./assets/battle/scenes/track-thumb.png"
+    },
+    {
+      "id": "basketball-court",
+      "label": "籃球場決勝",
+      "image": "./assets/battle/scenes/basketball-court.png",
+      "music": "./assets/battle/music/palace.mp3",
+      "thumbnail": "./assets/battle/scenes/basketball-court-thumb.png"
+    },
+    {
+      "id": "classroom",
+      "label": "教室知識擂台",
+      "image": "./assets/battle/scenes/classroom.png",
+      "music": "./assets/battle/music/ship.mp3",
+      "thumbnail": "./assets/battle/scenes/classroom-thumb.png"
+    }
+  ],
+  "characters": [
+    {
+      "id": "basketball-ace",
+      "thumbnail": "./assets/battle/campus-heroes/basketball-ace/thumb.png",
+      "label": "溪羽｜籃球王牌",
+      "name": "溪羽｜籃球王牌",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/basketball-ace/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/basketball-ace/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "灌籃光波",
+          "glyph": "球",
+          "color": "#ff9f1c"
+        },
+        "punch": {
+          "callout": "禁區重拳",
+          "glyph": "拳",
+          "color": "#ff6b35"
+        },
+        "kick": {
+          "callout": "滑步飛踢",
+          "glyph": "踢",
+          "color": "#f7d154"
+        }
+      }
+    },
+    {
+      "id": "track-sprinter",
+      "thumbnail": "./assets/battle/campus-heroes/track-sprinter/thumb.png",
+      "label": "崁迅｜田徑快手",
+      "name": "崁迅｜田徑快手",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/track-sprinter/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/track-sprinter/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "加速氣流",
+          "glyph": "風",
+          "color": "#62e5ff"
+        },
+        "punch": {
+          "callout": "衝刺直拳",
+          "glyph": "拳",
+          "color": "#1596ff"
+        },
+        "kick": {
+          "callout": "跨欄飛踢",
+          "glyph": "踢",
+          "color": "#b6f344"
+        }
+      }
+    },
+    {
+      "id": "street-dancer",
+      "thumbnail": "./assets/battle/campus-heroes/street-dancer/thumb.png",
+      "label": "桃樂｜街舞高手",
+      "name": "桃樂｜街舞高手",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/street-dancer/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/street-dancer/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/street-dancer/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "節拍光彈",
+          "glyph": "♪",
+          "color": "#ff64cb"
+        },
+        "punch": {
+          "callout": "旋轉勾拳",
+          "glyph": "拳",
+          "color": "#ff3d89"
+        },
+        "kick": {
+          "callout": "倒立踢擊",
+          "glyph": "踢",
+          "color": "#9657ff"
+        }
+      }
+    },
+    {
+      "id": "kendo-captain",
+      "thumbnail": "./assets/battle/campus-heroes/kendo-captain/thumb.png",
+      "label": "嵙辰｜劍道社長",
+      "name": "嵙辰｜劍道社長",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/kendo-captain/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/kendo-captain/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "竹劍光波",
+          "glyph": "剣",
+          "color": "#8ab8ff"
+        },
+        "punch": {
+          "callout": "突進拳",
+          "glyph": "拳",
+          "color": "#4b72ef"
+        },
+        "kick": {
+          "callout": "踏步飛踢",
+          "glyph": "踢",
+          "color": "#d5e4ff"
+        }
+      }
+    },
+    {
+      "id": "science-maker",
+      "thumbnail": "./assets/battle/campus-heroes/science-maker/thumb.png",
+      "label": "溪棠｜科學發明家",
+      "name": "溪棠｜科學發明家",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/science-maker/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/science-maker/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/science-maker/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/science-maker/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/science-maker/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/science-maker/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "電路光束",
+          "glyph": "⚡",
+          "color": "#5df2bb"
+        },
+        "punch": {
+          "callout": "磁力拳",
+          "glyph": "拳",
+          "color": "#2dbf91"
+        },
+        "kick": {
+          "callout": "噴射鞋踢",
+          "glyph": "踢",
+          "color": "#d9ff68"
+        }
+      }
+    },
+    {
+      "id": "code-maker",
+      "thumbnail": "./assets/battle/campus-heroes/code-maker/thumb.png",
+      "label": "崁宇｜程式發明家",
+      "name": "崁宇｜程式發明家",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/code-maker/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/code-maker/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/code-maker/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/code-maker/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/code-maker/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/code-maker/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "程式光彈",
+          "glyph": "⌘",
+          "color": "#b38cff"
+        },
+        "punch": {
+          "callout": "除錯重拳",
+          "glyph": "拳",
+          "color": "#8a54dd"
+        },
+        "kick": {
+          "callout": "快捷鍵踢",
+          "glyph": "踢",
+          "color": "#7de5ff"
+        }
+      }
+    },
+    {
+      "id": "math-strategist",
+      "thumbnail": "./assets/battle/campus-heroes/math-strategist/thumb.png",
+      "label": "桃弦｜數學策略家",
+      "name": "桃弦｜數學策略家",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/math-strategist/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/math-strategist/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/math-strategist/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "幾何方陣",
+          "glyph": "△",
+          "color": "#ffe56d"
+        },
+        "punch": {
+          "callout": "座標重拳",
+          "glyph": "拳",
+          "color": "#e7b83e"
+        },
+        "kick": {
+          "callout": "拋物線踢",
+          "glyph": "踢",
+          "color": "#ff8d36"
+        }
+      }
+    },
+    {
+      "id": "chess-tactician",
+      "thumbnail": "./assets/battle/campus-heroes/chess-tactician/thumb.png",
+      "label": "溪策｜棋局軍師",
+      "name": "溪策｜棋局軍師",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/chess-tactician/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/chess-tactician/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "棋盤衝擊",
+          "glyph": "棋",
+          "color": "#dae6f5"
+        },
+        "punch": {
+          "callout": "將軍拳",
+          "glyph": "拳",
+          "color": "#6f87a3"
+        },
+        "kick": {
+          "callout": "跳馬踢",
+          "glyph": "踢",
+          "color": "#b8d8fb"
+        }
+      }
+    },
+    {
+      "id": "astronomy-observer",
+      "thumbnail": "./assets/battle/campus-heroes/astronomy-observer/thumb.png",
+      "label": "崁星｜天文觀測員",
+      "name": "崁星｜天文觀測員",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/astronomy-observer/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/astronomy-observer/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "星圖光彈",
+          "glyph": "★",
+          "color": "#718dff"
+        },
+        "punch": {
+          "callout": "流星拳",
+          "glyph": "拳",
+          "color": "#a9baff"
+        },
+        "kick": {
+          "callout": "行星環踢",
+          "glyph": "踢",
+          "color": "#d775ff"
+        }
+      }
+    },
+    {
+      "id": "puzzle-detective",
+      "thumbnail": "./assets/battle/campus-heroes/puzzle-detective/thumb.png",
+      "label": "大川｜解謎偵探",
+      "name": "大川｜解謎偵探",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/puzzle-detective/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/puzzle-detective/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "線索光彈",
+          "glyph": "？",
+          "color": "#ffc15d"
+        },
+        "punch": {
+          "callout": "推理拳",
+          "glyph": "拳",
+          "color": "#bd6f3c"
+        },
+        "kick": {
+          "callout": "追蹤踢",
+          "glyph": "踢",
+          "color": "#ffdf7e"
+        }
+      }
+    },
+    {
+      "id": "language-magician",
+      "thumbnail": "./assets/battle/campus-heroes/language-magician/thumb.png",
+      "label": "桃語｜語言魔術師",
+      "name": "桃語｜語言魔術師",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/language-magician/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/language-magician/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/language-magician/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/language-magician/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/language-magician/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/language-magician/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "字母光波",
+          "glyph": "字",
+          "color": "#ff8ce3"
+        },
+        "punch": {
+          "callout": "書頁拳",
+          "glyph": "拳",
+          "color": "#df4bc0"
+        },
+        "kick": {
+          "callout": "詞語旋踢",
+          "glyph": "踢",
+          "color": "#ffd1f2"
+        }
+      }
+    },
+    {
+      "id": "nature-researcher",
+      "thumbnail": "./assets/battle/campus-heroes/nature-researcher/thumb.png",
+      "label": "嵙森｜自然研究員",
+      "name": "嵙森｜自然研究員",
+      "playable": true,
+      "missing": [],
+      "states": {
+        "idle": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+        ],
+        "attack": [
+          "./assets/battle/campus-heroes/nature-researcher/attack.png"
+        ],
+        "hurt": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+        ],
+        "miss": [
+          "./assets/battle/campus-heroes/nature-researcher/attack.png"
+        ],
+        "win": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+        ],
+        "lose": [
+          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+        ]
+      },
+      "weapon": null,
+      "attacks": {
+        "energy": {
+          "callout": "葉片光彈",
+          "glyph": "葉",
+          "color": "#8de064"
+        },
+        "punch": {
+          "callout": "藤蔓拳",
+          "glyph": "拳",
+          "color": "#4aa650"
+        },
+        "kick": {
+          "callout": "樹根踢",
+          "glyph": "踢",
+          "color": "#b4d962"
+        }
+      }
+    }
+  ],
+  "sfx": {
+    "menu": "./assets/battle/sfx/menu.wav",
+    "confirm": "./assets/battle/sfx/confirm.wav",
+    "start": "./assets/battle/sfx/start.mp3",
+    "buzz": "./assets/battle/sfx/buzz.mp3",
+    "correct": "./assets/battle/sfx/correct.wav",
+    "wrong": "./assets/battle/sfx/wrong.mp3",
+    "attack": "./assets/battle/sfx/attack.wav",
+    "weapon": "./assets/battle/sfx/weapon.wav",
+    "hit": "./assets/battle/sfx/hit.mp3",
+    "hurt": "./assets/battle/sfx/hurt.mp3",
+    "ko": "./assets/battle/sfx/ko.wav",
+    "win": "./assets/battle/sfx/win.mp3",
+    "lose": "./assets/battle/sfx/lose.wav"
+  }
+}

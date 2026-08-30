@@ -12,16 +12,19 @@ const statesFor = (hero) => {
 const manifest = {
   version: 2,
   scenes: CAMPUS_SCENES,
-  characters: CAMPUS_HEROES.map((hero) => ({
+  characters: CAMPUS_HEROES.map((hero) => {
+    const displayName = `${hero.name}｜${hero.role}`;
+    return {
     id: hero.id,
-    label: hero.name,
-    name: hero.name,
+    label: displayName,
+    name: displayName,
     playable: true,
     missing: [],
     states: statesFor(hero),
     weapon: null,
     attacks: hero.attacks,
-  })),
+    };
+  }),
   sfx: previous.sfx,
 };
 

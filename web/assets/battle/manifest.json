@@ -29,8 +29,8 @@
   "characters": [
     {
       "id": "basketball-ace",
-      "label": "溪羽",
-      "name": "溪羽",
+      "label": "溪羽｜籃球王牌",
+      "name": "溪羽｜籃球王牌",
       "playable": true,
       "missing": [],
       "states": {
@@ -74,8 +74,8 @@
     },
     {
       "id": "track-sprinter",
-      "label": "崁迅",
-      "name": "崁迅",
+      "label": "崁迅｜田徑快手",
+      "name": "崁迅｜田徑快手",
       "playable": true,
       "missing": [],
       "states": {
@@ -119,8 +119,8 @@
     },
     {
       "id": "street-dancer",
-      "label": "桃樂",
-      "name": "桃樂",
+      "label": "桃樂｜街舞高手",
+      "name": "桃樂｜街舞高手",
       "playable": true,
       "missing": [],
       "states": {
@@ -164,8 +164,8 @@
     },
     {
       "id": "kendo-captain",
-      "label": "嵙辰",
-      "name": "嵙辰",
+      "label": "嵙辰｜劍道社長",
+      "name": "嵙辰｜劍道社長",
       "playable": true,
       "missing": [],
       "states": {
@@ -209,8 +209,8 @@
     },
     {
       "id": "science-maker",
-      "label": "溪棠",
-      "name": "溪棠",
+      "label": "溪棠｜科學發明家",
+      "name": "溪棠｜科學發明家",
       "playable": true,
       "missing": [],
       "states": {
@@ -254,8 +254,8 @@
     },
     {
       "id": "code-maker",
-      "label": "崁宇",
-      "name": "崁宇",
+      "label": "崁宇｜程式發明家",
+      "name": "崁宇｜程式發明家",
       "playable": true,
       "missing": [],
       "states": {
@@ -299,8 +299,8 @@
     },
     {
       "id": "math-strategist",
-      "label": "桃弦",
-      "name": "桃弦",
+      "label": "桃弦｜數學策略家",
+      "name": "桃弦｜數學策略家",
       "playable": true,
       "missing": [],
       "states": {
@@ -344,8 +344,8 @@
     },
     {
       "id": "chess-tactician",
-      "label": "溪策",
-      "name": "溪策",
+      "label": "溪策｜棋局軍師",
+      "name": "溪策｜棋局軍師",
       "playable": true,
       "missing": [],
       "states": {
@@ -389,8 +389,8 @@
     },
     {
       "id": "astronomy-observer",
-      "label": "崁星",
-      "name": "崁星",
+      "label": "崁星｜天文觀測員",
+      "name": "崁星｜天文觀測員",
       "playable": true,
       "missing": [],
       "states": {
@@ -434,8 +434,8 @@
     },
     {
       "id": "puzzle-detective",
-      "label": "大川",
-      "name": "大川",
+      "label": "大川｜解謎偵探",
+      "name": "大川｜解謎偵探",
       "playable": true,
       "missing": [],
       "states": {
@@ -479,8 +479,8 @@
     },
     {
       "id": "language-magician",
-      "label": "桃語",
-      "name": "桃語",
+      "label": "桃語｜語言魔術師",
+      "name": "桃語｜語言魔術師",
       "playable": true,
       "missing": [],
       "states": {
@@ -524,8 +524,8 @@
     },
     {
       "id": "nature-researcher",
-      "label": "嵙森",
-      "name": "嵙森",
+      "label": "嵙森｜自然研究員",
+      "name": "嵙森｜自然研究員",
       "playable": true,
       "missing": [],
       "states": {

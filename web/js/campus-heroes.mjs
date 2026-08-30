@@ -1,6 +1,6 @@
 export const HERO_CANVAS = Object.freeze({ width: 1024, height: 1024, baseline: 900 });
 
-const hero = (id, name, color, gender, artBrief, attacks) => Object.freeze({ id, name, kind: 'human', color, gender, artBrief, attacks: Object.freeze(attacks) });
+const hero = (id, name, color, gender, artBrief, attacks) => Object.freeze({ id, name, role: artBrief.split('；')[0], kind: 'human', color, gender, artBrief, attacks: Object.freeze(attacks) });
 const attack = (callout, glyph, color) => Object.freeze({ callout, glyph, color });
 
 export const CAMPUS_HEROES = Object.freeze([

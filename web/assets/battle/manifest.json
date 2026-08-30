@@ -5,30 +5,35 @@
       "id": "daxi-gate",
       "label": "大溪校門對決",
       "image": "./assets/battle/scenes/daxi-gate.png",
-      "music": "./assets/battle/music/school.mp3"
+      "music": "./assets/battle/music/school.mp3",
+      "thumbnail": "./assets/battle/scenes/daxi-gate-thumb.png"
     },
     {
       "id": "track",
       "label": "紅色跑道衝刺",
       "image": "./assets/battle/scenes/track.png",
-      "music": "./assets/battle/music/school.mp3"
+      "music": "./assets/battle/music/school.mp3",
+      "thumbnail": "./assets/battle/scenes/track-thumb.png"
     },
     {
       "id": "basketball-court",
       "label": "籃球場決勝",
       "image": "./assets/battle/scenes/basketball-court.png",
-      "music": "./assets/battle/music/palace.mp3"
+      "music": "./assets/battle/music/palace.mp3",
+      "thumbnail": "./assets/battle/scenes/basketball-court-thumb.png"
     },
     {
       "id": "classroom",
       "label": "教室知識擂台",
       "image": "./assets/battle/scenes/classroom.png",
-      "music": "./assets/battle/music/ship.mp3"
+      "music": "./assets/battle/music/ship.mp3",
+      "thumbnail": "./assets/battle/scenes/classroom-thumb.png"
     }
   ],
   "characters": [
     {
       "id": "basketball-ace",
+      "thumbnail": "./assets/battle/campus-heroes/basketball-ace/thumb.png",
       "label": "溪羽｜籃球王牌",
       "name": "溪羽｜籃球王牌",
       "playable": true,
@@ -74,6 +79,7 @@
     },
     {
       "id": "track-sprinter",
+      "thumbnail": "./assets/battle/campus-heroes/track-sprinter/thumb.png",
       "label": "崁迅｜田徑快手",
       "name": "崁迅｜田徑快手",
       "playable": true,
@@ -119,6 +125,7 @@
     },
     {
       "id": "street-dancer",
+      "thumbnail": "./assets/battle/campus-heroes/street-dancer/thumb.png",
       "label": "桃樂｜街舞高手",
       "name": "桃樂｜街舞高手",
       "playable": true,
@@ -164,6 +171,7 @@
     },
     {
       "id": "kendo-captain",
+      "thumbnail": "./assets/battle/campus-heroes/kendo-captain/thumb.png",
       "label": "嵙辰｜劍道社長",
       "name": "嵙辰｜劍道社長",
       "playable": true,
@@ -209,6 +217,7 @@
     },
     {
       "id": "science-maker",
+      "thumbnail": "./assets/battle/campus-heroes/science-maker/thumb.png",
       "label": "溪棠｜科學發明家",
       "name": "溪棠｜科學發明家",
       "playable": true,
@@ -254,6 +263,7 @@
     },
     {
       "id": "code-maker",
+      "thumbnail": "./assets/battle/campus-heroes/code-maker/thumb.png",
       "label": "崁宇｜程式發明家",
       "name": "崁宇｜程式發明家",
       "playable": true,
@@ -299,6 +309,7 @@
     },
     {
       "id": "math-strategist",
+      "thumbnail": "./assets/battle/campus-heroes/math-strategist/thumb.png",
       "label": "桃弦｜數學策略家",
       "name": "桃弦｜數學策略家",
       "playable": true,
@@ -344,6 +355,7 @@
     },
     {
       "id": "chess-tactician",
+      "thumbnail": "./assets/battle/campus-heroes/chess-tactician/thumb.png",
       "label": "溪策｜棋局軍師",
       "name": "溪策｜棋局軍師",
       "playable": true,
@@ -389,6 +401,7 @@
     },
     {
       "id": "astronomy-observer",
+      "thumbnail": "./assets/battle/campus-heroes/astronomy-observer/thumb.png",
       "label": "崁星｜天文觀測員",
       "name": "崁星｜天文觀測員",
       "playable": true,
@@ -434,6 +447,7 @@
     },
     {
       "id": "puzzle-detective",
+      "thumbnail": "./assets/battle/campus-heroes/puzzle-detective/thumb.png",
       "label": "大川｜解謎偵探",
       "name": "大川｜解謎偵探",
       "playable": true,
@@ -479,6 +493,7 @@
     },
     {
       "id": "language-magician",
+      "thumbnail": "./assets/battle/campus-heroes/language-magician/thumb.png",
       "label": "桃語｜語言魔術師",
       "name": "桃語｜語言魔術師",
       "playable": true,
@@ -524,6 +539,7 @@
     },
     {
       "id": "nature-researcher",
+      "thumbnail": "./assets/battle/campus-heroes/nature-researcher/thumb.png",
       "label": "嵙森｜自然研究員",
       "name": "嵙森｜自然研究員",
       "playable": true,

@@ -13,6 +13,12 @@ test('選角預覽與戰鬥名稱優先顯示角色中文 label', async () => {
   assert.match(source, /right\.label \|\| right\.name \|\| `角色 \$\{right\.id\}`/);
 });
 
+test('選角畫面優先使用角色與戰場縮圖，避免載入戰鬥原圖', async () => {
+  const source = await readAppSource();
+  assert.match(source, /scene\.thumbnail \|\| scene\.image/);
+  assert.match(source, /character\.thumbnail \|\| characterImage\(character\)/);
+});
+
 test('動畫失敗仍將 pending pause 轉為可繼續及安全離場的手動暫停', async t => {
   const diagnostic = t.mock.method(console, 'error', () => {});
   const h = await createBattleAppHarness({ gameMode: 'local' });

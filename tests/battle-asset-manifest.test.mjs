@@ -159,8 +159,9 @@ test('generated manifest publishes twelve unique characters and existing files',
   assert.equal(new Set(manifest.characters.map(({ id }) => id)).size, 12);
 
   const references = [
-    ...manifest.scenes.flatMap(({ image, music }) => [image, music]),
-    ...manifest.characters.flatMap(({ states, weapon }) => [
+    ...manifest.scenes.flatMap(({ image, thumbnail, music }) => [image, thumbnail, music]),
+    ...manifest.characters.flatMap(({ thumbnail, states, weapon }) => [
+      thumbnail,
       ...Object.values(states).flat(),
       ...(weapon ? [weapon] : []),
     ]),
@@ -176,7 +177,10 @@ test('generated campus manifest publishes PNG states and preserves battle contra
     await readFile(path.resolve('web/assets/battle/manifest.json'), 'utf8'),
   );
 
-  assert.deepEqual(manifest.scenes, CAMPUS_SCENES);
+  assert.deepEqual(manifest.scenes, CAMPUS_SCENES.map(scene => ({
+    ...scene,
+    thumbnail: scene.image.replace(/\.png$/, '-thumb.png'),
+  })));
   assert.deepEqual(manifest.sfx, CAMPUS_SFX);
   assert.equal(manifest.characters.length, CAMPUS_HEROES.length);
 
@@ -185,6 +189,7 @@ test('generated campus manifest publishes PNG states and preserves battle contra
     assert.ok(character, `${hero.id} must be published`);
     assert.equal(character.name, `${hero.name}｜${hero.role}`);
     assert.equal(character.label, `${hero.name}｜${hero.role}`);
+    assert.match(character.thumbnail, /\/thumb\.png$/);
     assert.equal(character.playable, true);
     assert.deepEqual(character.missing, []);
     assert.equal(character.weapon, null);

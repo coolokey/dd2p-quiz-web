@@ -11,11 +11,15 @@ const statesFor = (hero) => {
 
 const manifest = {
   version: 2,
-  scenes: CAMPUS_SCENES,
+  scenes: CAMPUS_SCENES.map((scene) => ({
+    ...scene,
+    thumbnail: scene.image.replace(/\.png$/, '-thumb.png'),
+  })),
   characters: CAMPUS_HEROES.map((hero) => {
     const displayName = `${hero.name}｜${hero.role}`;
     return {
     id: hero.id,
+    thumbnail: `./assets/battle/campus-heroes/${hero.id}/thumb.png`,
     label: displayName,
     name: displayName,
     playable: true,

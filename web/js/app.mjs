@@ -401,7 +401,7 @@ function renderRules() {
 
 function renderArenaSelect(settings, selectedId = battleManifest.scenes[0]?.id) {
   cancelPendingStart();
-  const cards = battleManifest.scenes.map(scene => `<button class="arena-card ${scene.id === selectedId ? 'is-selected' : ''}" data-arena-id="${esc(scene.id)}"><img src="${esc(scene.image)}" alt="${esc(scene.label)}"><span>${esc(scene.label)}</span></button>`).join('');
+  const cards = battleManifest.scenes.map(scene => `<button class="arena-card ${scene.id === selectedId ? 'is-selected' : ''}" data-arena-id="${esc(scene.id)}"><img src="${esc(scene.thumbnail || scene.image)}" alt="${esc(scene.label)}" loading="lazy" decoding="async"><span>${esc(scene.label)}</span></button>`).join('');
   app.innerHTML = shell(`<h2 class="selection-title">選擇本局戰場</h2><p class="lead">四個校園場景都能使用，並各自搭配原版背景音樂。</p><div class="arena-grid">${cards}</div><div class="actions"><button class="secondary" id="back">返回規則</button><button class="primary" id="next">選擇角色</button></div>`);
   let arenaId = selectedId;
   app.querySelectorAll('[data-arena-id]').forEach(button => button.onclick = () => {
@@ -418,7 +418,7 @@ function characterCards(player) {
   return battleManifest.characters.map(character => {
     const id = String(character.id), selected = characterSelection[player] === id;
     const unavailable = character.playable === false || characterSelection[opponent] === id;
-    return `<button class="character-card ${selected ? 'is-selected' : ''}" data-character="${esc(id)}" data-player="${player}" ${unavailable ? 'disabled' : ''}><img src="${esc(characterImage(character))}" alt=""><b>${esc(character.label || character.name || `角色 ${id}`)}</b></button>`;
+    return `<button class="character-card ${selected ? 'is-selected' : ''}" data-character="${esc(id)}" data-player="${player}" ${unavailable ? 'disabled' : ''}><img src="${esc(character.thumbnail || characterImage(character))}" alt="" loading="lazy" decoding="async"><b>${esc(character.label || character.name || `角色 ${id}`)}</b></button>`;
   }).join('');
 }
 function selectedPreview(player) {

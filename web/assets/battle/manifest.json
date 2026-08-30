@@ -30,6 +30,7 @@
     {
       "id": "basketball-ace",
       "label": "溪羽",
+      "name": "溪羽",
       "playable": true,
       "missing": [],
       "states": {
@@ -74,6 +75,7 @@
     {
       "id": "track-sprinter",
       "label": "崁迅",
+      "name": "崁迅",
       "playable": true,
       "missing": [],
       "states": {
@@ -118,6 +120,7 @@
     {
       "id": "street-dancer",
       "label": "桃樂",
+      "name": "桃樂",
       "playable": true,
       "missing": [],
       "states": {
@@ -162,6 +165,7 @@
     {
       "id": "kendo-captain",
       "label": "嵙辰",
+      "name": "嵙辰",
       "playable": true,
       "missing": [],
       "states": {
@@ -206,6 +210,7 @@
     {
       "id": "science-maker",
       "label": "溪棠",
+      "name": "溪棠",
       "playable": true,
       "missing": [],
       "states": {
@@ -250,6 +255,7 @@
     {
       "id": "code-maker",
       "label": "崁宇",
+      "name": "崁宇",
       "playable": true,
       "missing": [],
       "states": {
@@ -294,6 +300,7 @@
     {
       "id": "math-strategist",
       "label": "桃弦",
+      "name": "桃弦",
       "playable": true,
       "missing": [],
       "states": {
@@ -338,6 +345,7 @@
     {
       "id": "chess-tactician",
       "label": "溪策",
+      "name": "溪策",
       "playable": true,
       "missing": [],
       "states": {
@@ -382,6 +390,7 @@
     {
       "id": "astronomy-observer",
       "label": "崁星",
+      "name": "崁星",
       "playable": true,
       "missing": [],
       "states": {
@@ -426,6 +435,7 @@
     {
       "id": "puzzle-detective",
       "label": "大川",
+      "name": "大川",
       "playable": true,
       "missing": [],
       "states": {
@@ -470,6 +480,7 @@
     {
       "id": "language-magician",
       "label": "桃語",
+      "name": "桃語",
       "playable": true,
       "missing": [],
       "states": {
@@ -514,6 +525,7 @@
     {
       "id": "nature-researcher",
       "label": "嵙森",
+      "name": "嵙森",
       "playable": true,
       "missing": [],
       "states": {

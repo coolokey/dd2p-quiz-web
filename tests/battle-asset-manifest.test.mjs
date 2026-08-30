@@ -183,6 +183,8 @@ test('generated campus manifest publishes PNG states and preserves battle contra
   for (const hero of CAMPUS_HEROES) {
     const character = manifest.characters.find(({ id }) => id === hero.id);
     assert.ok(character, `${hero.id} must be published`);
+    assert.equal(character.name, hero.name);
+    assert.equal(character.label, hero.name);
     assert.equal(character.playable, true);
     assert.deepEqual(character.missing, []);
     assert.equal(character.weapon, null);

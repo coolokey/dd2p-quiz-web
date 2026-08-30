@@ -15,6 +15,7 @@ const manifest = {
   characters: CAMPUS_HEROES.map((hero) => ({
     id: hero.id,
     label: hero.name,
+    name: hero.name,
     playable: true,
     missing: [],
     states: statesFor(hero),

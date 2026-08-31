@@ -372,11 +372,17 @@ test('觸控橫向版為雙人側鍵與單人底鍵保留核心戰區空間', as
   assert.match(css, /\.touch-capable body:has\(\.mode-solo\) \.battle-shell\s*\{[^}]*padding-bottom:\s*calc\(env\(safe-area-inset-bottom\) \+ 64px\)/);
 });
 
-test('矮橫式觸控版維持雙欄答案並額外壓縮戰區高度', async () => {
+test('觸控橫向版把完整戰鬥畫面等比例縮放，不裁切戰場或人物', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
-  assert.match(css, /@media \(orientation: landscape\) and \(max-height: 500px\)/);
-  assert.match(css, /\.touch-capable \.battle-choices\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0,1fr\)\)/);
-  assert.match(css, /\.touch-capable \.arena\s*\{[^}]*height:\s*clamp\(104px,32vh,180px\)/);
+  const touchLandscape = css.slice(css.indexOf('@media (orientation: landscape) {'));
+
+  assert.match(touchLandscape, /\.touch-capable \.battle-shell\s*\{[^}]*width:\s*1280px/);
+  assert.match(touchLandscape, /\.touch-capable \.battle-shell\s*\{[^}]*height:\s*720px/);
+  assert.match(touchLandscape, /\.touch-capable \.battle-shell\s*\{[^}]*transform:\s*scale\(var\(--battle-scale,1\)\)/);
+  assert.match(touchLandscape, /\.touch-capable \.arena\s*\{[^}]*background-size:\s*contain/);
+  assert.match(touchLandscape, /\.touch-capable \.fighter-sprite\s*\{[^}]*height:\s*88%/);
+  assert.match(touchLandscape, /\.touch-capable \.battle-choices\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0,1fr\)\)/);
+  assert.doesNotMatch(touchLandscape, /\.touch-capable \.arena\s*\{[^}]*height:\s*clamp\(104px,32vh,180px\)/);
   assert.match(css, /\.battle-question-image\s*\{[^}]*max-height:\s*58px/);
   assert.match(css, /\.battle-status\s*\{[^}]*font-size:\s*12px/);
 });
@@ -401,8 +407,8 @@ test('觸控戰鬥遮罩與控制預留在一般和矮橫式都有可計算安�
   assert.match(css, /\.touch-capable body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-left:\s*max\(88px,\s*calc\(env\(safe-area-inset-left\) \+ 88px\)\)/);
   assert.match(css, /\.touch-capable body:has\(\.mode-local\) \.battle-shell\s*\{[^}]*padding-right:\s*max\(88px,\s*calc\(env\(safe-area-inset-right\) \+ 88px\)\)/);
   assert.ok(localGutter >= localPadMaximum + 12);
-  assert.match(css, /@media \(orientation: landscape\) and \(max-height: 800px\)/);
-  assert.match(css, /\.touch-capable \.arena\s*\{[^}]*height:\s*clamp\(180px,36vh,320px\)/);
+  assert.match(css, /\.touch-capable \.battle-shell\s*\{[^}]*width:\s*1280px/);
+  assert.doesNotMatch(css, /\.touch-capable \.arena\s*\{[^}]*height:\s*clamp\(180px,36vh,320px\)/);
   assert.match(css, /\.battle-console\s*\{[^}]*min-height:\s*0/);
 });
 

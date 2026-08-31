@@ -236,19 +236,7 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
   body:has(.orientation-blocker) { overflow:hidden; }
 }
 
-@media (orientation: landscape) and (max-height: 800px) {
-  .touch-capable .battle-shell { min-height:100dvh; }
-  .touch-capable .arena { height:clamp(180px,36vh,320px); }
-  .touch-capable .battle-console { min-height:0; }
-}
-
 @media (orientation: landscape) and (max-height: 500px) {
-  .touch-capable .battle-shell { min-height:100dvh; }
-  .touch-capable .battle-topbar { min-height:32px; padding:3px 8px; }
-  .touch-capable .arena { height:clamp(104px,32vh,180px); }
-  .touch-capable .fighter-hud { margin-top:4px; padding:4px 6px; }
-  .touch-capable .fighter-stage { padding-bottom:0; }
-  .touch-capable .fighter-sprite { height:62%; }
   .touch-capable .battle-console { min-height:0; margin-top:3px; padding:4px 8px; gap:6px; }
   .touch-capable .battle-question-image { max-height:58px; }
   .touch-capable .battle-question-copy h1 { margin-bottom:3px; font-size:clamp(15px,2.4vw,21px); }
@@ -275,4 +263,13 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 @media (orientation: landscape) and (max-height: 500px) {
   .touch-capable .battle-center-controls { gap:4px; }
   .touch-capable .battle-pause-button { padding:4px 6px; font-size:11px; }
+}
+
+/* Touch devices render one complete 16:9 battle canvas, then scale it to fit. */
+@media (orientation: landscape) {
+  .touch-capable #app:has(.battle-shell) { position:fixed; inset:0; display:grid; place-items:center; overflow:hidden; background:#080c14; }
+  .touch-capable .battle-shell { width:1280px; height:720px; min-height:0; margin:0; display:grid; grid-template-rows:auto minmax(0,1fr) minmax(0,.82fr) auto; overflow:hidden; transform:scale(var(--battle-scale,1)); transform-origin:center; }
+  .touch-capable .arena { height:auto; min-height:0; background-size:contain; background-repeat:no-repeat; background-color:#080c14; }
+  .touch-capable .fighter-sprite { max-width:96%; height:88%; }
+  .touch-capable .battle-console { min-height:0; margin-top:0; }
 }

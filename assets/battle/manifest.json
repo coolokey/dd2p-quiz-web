@@ -4,28 +4,28 @@
     {
       "id": "daxi-gate",
       "label": "大溪校門對決",
-      "image": "./assets/battle/scenes/daxi-gate.png",
+      "image": "./assets/battle/scenes/daxi-gate.webp",
       "music": "./assets/battle/music/school.mp3",
       "thumbnail": "./assets/battle/scenes/daxi-gate-thumb.png"
     },
     {
       "id": "track",
       "label": "紅色跑道衝刺",
-      "image": "./assets/battle/scenes/track.png",
+      "image": "./assets/battle/scenes/track.webp",
       "music": "./assets/battle/music/school.mp3",
       "thumbnail": "./assets/battle/scenes/track-thumb.png"
     },
     {
       "id": "basketball-court",
       "label": "籃球場決勝",
-      "image": "./assets/battle/scenes/basketball-court.png",
+      "image": "./assets/battle/scenes/basketball-court.webp",
       "music": "./assets/battle/music/palace.mp3",
       "thumbnail": "./assets/battle/scenes/basketball-court-thumb.png"
     },
     {
       "id": "classroom",
       "label": "教室知識擂台",
-      "image": "./assets/battle/scenes/classroom.png",
+      "image": "./assets/battle/scenes/classroom.webp",
       "music": "./assets/battle/music/ship.mp3",
       "thumbnail": "./assets/battle/scenes/classroom-thumb.png"
     }

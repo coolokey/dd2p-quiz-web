@@ -19,8 +19,8 @@ export const CAMPUS_HEROES = Object.freeze([
 ]);
 
 export const CAMPUS_SCENES = Object.freeze([
-  Object.freeze({ id: 'daxi-gate', label: '大溪校門對決', image: './assets/battle/scenes/daxi-gate.png', music: './assets/battle/music/school.mp3' }),
-  Object.freeze({ id: 'track', label: '紅色跑道衝刺', image: './assets/battle/scenes/track.png', music: './assets/battle/music/school.mp3' }),
-  Object.freeze({ id: 'basketball-court', label: '籃球場決勝', image: './assets/battle/scenes/basketball-court.png', music: './assets/battle/music/palace.mp3' }),
-  Object.freeze({ id: 'classroom', label: '教室知識擂台', image: './assets/battle/scenes/classroom.png', music: './assets/battle/music/ship.mp3' }),
+  Object.freeze({ id: 'daxi-gate', label: '大溪校門對決', image: './assets/battle/scenes/daxi-gate.webp', music: './assets/battle/music/school.mp3' }),
+  Object.freeze({ id: 'track', label: '紅色跑道衝刺', image: './assets/battle/scenes/track.webp', music: './assets/battle/music/school.mp3' }),
+  Object.freeze({ id: 'basketball-court', label: '籃球場決勝', image: './assets/battle/scenes/basketball-court.webp', music: './assets/battle/music/palace.mp3' }),
+  Object.freeze({ id: 'classroom', label: '教室知識擂台', image: './assets/battle/scenes/classroom.webp', music: './assets/battle/music/ship.mp3' }),
 ]);

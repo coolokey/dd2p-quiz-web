@@ -389,6 +389,15 @@ test('觸控能力類別控制混合輸入裝置並避免非觸控電腦套用�
   assert.doesNotMatch(css, /@media \(any-pointer: coarse\)/);
 });
 
+test('寬螢幕桌機戰場使用完整可用寬度而不改變觸控版面', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  const desktopRule = css.match(/@media \(min-width: 1281px\) and \(hover: hover\) and \(pointer: fine\)\s*\{\s*\.battle-shell\s*\{[^}]*\}\s*\}/);
+  assert.ok(desktopRule);
+  assert.match(desktopRule[0], /width:\s*100%;/);
+  assert.match(desktopRule[0], /max-width:\s*none/);
+  assert.doesNotMatch(desktopRule[0], /touch-capable/);
+});
+
 test('觸控戰鬥遮罩與控制預留在一般和矮橫式都有可計算安全空間', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
   const localPadMaximum = 76;

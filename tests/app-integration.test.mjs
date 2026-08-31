@@ -19,6 +19,16 @@ test('選角畫面優先使用角色與戰場縮圖，避免載入戰鬥原圖',
   assert.match(source, /character\.thumbnail \|\| characterImage\(character\)/);
 });
 
+test('選角完成後會非阻塞預載本局戰場與角色攻擊素材', async () => {
+  const source = await readAppSource();
+
+  assert.match(source, /import \{ collectBattleAssetPaths, preloadBattleAssets \} from '\.\/battle-preload\.mjs';/);
+  assert.match(source, /function prewarmBattleAssets\(settings\)/);
+  assert.match(source, /preloadBattleAssets\(collectBattleAssetPaths\(scene, fighters\)\.map\(path => versionedAssetUrl\(path\)\)\)/);
+  assert.match(source, /prewarmBattleAssets\(selected\);[\s\S]*renderKeyTest\(selected\)/);
+  assert.match(source, /prewarmBattleAssets\(selected\);[\s\S]*startGameOnce\(selected\)/);
+});
+
 test('動畫失敗仍將 pending pause 轉為可繼續及安全離場的手動暫停', async t => {
   const diagnostic = t.mock.method(console, 'error', () => {});
   const h = await createBattleAppHarness({ gameMode: 'local' });

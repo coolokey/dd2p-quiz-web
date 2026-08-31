@@ -4,6 +4,7 @@ import { applyCorrectAnswer, applyWrongAnswer, createBattleState, finishRegulati
 import { createCharacterSelection, selectCharacter } from './character-select.mjs';
 import { createAudioManager } from './audio-manager.mjs';
 import { playBattleAnimation, renderBattle } from './battle-renderer.mjs';
+import { collectBattleAssetPaths, preloadBattleAssets } from './battle-preload.mjs';
 import { createAnswerPositionState, prepareQuestionRound } from './question-randomizer.mjs';
 import { attackTiming, createAttackState, drawAttack } from './attack-randomizer.mjs';
 import { attemptBattleSetup, bindCharacterActions, buildCharacterActions, isKeyTestComplete, recordKeyTestKey } from './prebattle-flow.mjs';
@@ -78,6 +79,7 @@ const startSessionGate = createLatestSessionGate();
 const battleInputGate = createBattleInputGate();
 const startGameOnce = settings => {
   requestBattleOrientation();
+  prewarmBattleAssets(settings);
   return startGame(settings);
 };
 const storedVolume = (key, fallback) => {
@@ -97,6 +99,11 @@ function characterImage(character, state = 'idle') {
   return Array.isArray(frames) ? frames[0] : frames;
 }
 function characterById(id) { return battleManifest.characters.find(character => String(character.id) === String(id)); }
+function prewarmBattleAssets(settings) {
+  const scene = battleManifest.scenes.find(item => item.id === settings?.arenaId);
+  const fighters = ['left', 'right'].map(player => characterById(settings?.characters?.[player]));
+  preloadBattleAssets(collectBattleAssetPaths(scene, fighters).map(path => versionedAssetUrl(path)));
+}
 function playUiSound(name = 'menu') { audioManager?.unlock(); audioManager?.playSfx(name); }
 function clearBattleTimer() {
   if (timerId !== null) clearInterval(timerId);
@@ -454,8 +461,8 @@ function renderCharacterSelect(settings) {
   };
   bindCharacterActions(app, {
     onBack: () => renderArenaSelect(settings, settings.arenaId),
-    onTest: () => attemptBattleSetup(selectedSettings, selected => { playUiSound('start'); renderKeyTest(selected); }, showSetupError),
-    onSkip: () => attemptBattleSetup(selectedSettings, selected => startGameOnce(selected), showSetupError),
+    onTest: () => attemptBattleSetup(selectedSettings, selected => { prewarmBattleAssets(selected); playUiSound('start'); renderKeyTest(selected); }, showSetupError),
+    onSkip: () => attemptBattleSetup(selectedSettings, selected => { prewarmBattleAssets(selected); startGameOnce(selected); }, showSetupError),
   });
 }
 

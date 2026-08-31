@@ -179,7 +179,7 @@ test('generated campus manifest publishes PNG states and preserves battle contra
 
   assert.deepEqual(manifest.scenes, CAMPUS_SCENES.map(scene => ({
     ...scene,
-    thumbnail: scene.image.replace(/\.png$/, '-thumb.png'),
+    thumbnail: scene.image.replace(/\.(?:png|webp)$/, '-thumb.png'),
   })));
   assert.deepEqual(manifest.sfx, CAMPUS_SFX);
   assert.equal(manifest.characters.length, CAMPUS_HEROES.length);

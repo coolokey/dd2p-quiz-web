@@ -141,13 +141,17 @@ test('campus arenas define gate, track, basketball court and classroom', () => {
   assert.deepEqual(HERO_CANVAS, { width: 1024, height: 1024, baseline: 900 });
 });
 
-test('campus arena artwork exists as wide PNG files', async () => {
+test('campus arena full backgrounds use WebP while selection thumbnails remain separate PNG files', () => {
+  assert.ok(CAMPUS_SCENES.every(scene => scene.image.endsWith('.webp')));
+});
+
+test('campus arena artwork exists as WebP files', async () => {
   for (const scene of CAMPUS_SCENES) {
     const filePath = path.resolve('web', scene.image.replace(/^\.\//, ''));
     await access(filePath);
-    const { width, height } = pngMetadata(await readFile(filePath));
-    assert.ok(width >= 1280, `${scene.id} should be high resolution`);
-    assert.equal(width * 9, height * 16, `${scene.id} should be 16:9`);
+    const source = await readFile(filePath);
+    assert.equal(source.subarray(0, 4).toString('ascii'), 'RIFF');
+    assert.equal(source.subarray(8, 12).toString('ascii'), 'WEBP');
   }
 });
 

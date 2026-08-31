@@ -14,7 +14,7 @@ import { battleStatus, GAME_MODES, getCharacterSelectionReadiness, playersForKey
 import { createCpuController } from './cpu-player.mjs';
 import { createBattleLifecycle } from './battle-lifecycle.mjs';
 import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs';
-import { fetchJson, loadBootstrapResources, versionedAssetUrl } from './resource-loader.mjs?v=ef88997';
+import { fetchJson, loadBootstrapResources, versionedAssetUrl } from './resource-loader.mjs?v=a552f6d';
 import { createBattleInputGate, createLatestSessionGate, markQuizRequestLoading, runLatestRequest, runStartSession } from './async-navigation.mjs';
 import { createBattleOrientationController, createBattlePauseCoordinator } from './battle-orientation.mjs';
 import { bindMobileAnswerControls, setMobileAnswerControlsLocked, syncTouchCapabilityClass } from './mobile-controls.mjs';

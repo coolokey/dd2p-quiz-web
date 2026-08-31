@@ -398,6 +398,14 @@ test('寬螢幕桌機戰場使用完整可用寬度而不改變觸控版面', as
   assert.doesNotMatch(desktopRule[0], /touch-capable/);
 });
 
+test('固定高度戰場允許角色容器縮入戰場，避免腳部被裁切', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  const fighterRule = css.match(/\.fighter\s*\{[^}]*\}/);
+  assert.ok(fighterRule);
+  assert.match(fighterRule[0], /height:\s*100%;/);
+  assert.match(fighterRule[0], /min-height:\s*0/);
+});
+
 test('觸控戰鬥遮罩與控制預留在一般和矮橫式都有可計算安全空間', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
   const localPadMaximum = 76;

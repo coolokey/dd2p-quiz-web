@@ -82,7 +82,7 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 .arena { position:relative; display:grid; grid-template-columns:1fr 80px 1fr; align-items:end; height:clamp(310px,47vw,570px); overflow:hidden; border:5px solid #07090e; border-top:0; background-image:linear-gradient(rgba(8,12,20,.04),rgba(8,12,20,.08)),var(--scene); background-size:100% 100%; background-position:center; image-rendering:auto; box-shadow:inset 0 0 0 3px #778395,0 8px 25px #000; }
 .arena::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(239,47,49,.18),transparent 36% 64%,rgba(35,145,255,.2)); pointer-events:none; }
 .arena-vignette { position:absolute; inset:0; z-index:8; pointer-events:none; box-shadow:inset 0 0 70px 22px rgba(0,0,0,.58); }
-.fighter { position:relative; z-index:3; height:100%; min-width:0; display:flex; flex-direction:column; justify-content:space-between; }
+.fighter { position:relative; z-index:3; height:100%; min-width:0; min-height:0; display:flex; flex-direction:column; justify-content:space-between; }
 .fighter-hud { position:relative; margin:14px 10px 0; padding:9px 12px 8px; border:3px solid #080b10; background:rgba(8,12,19,.88); box-shadow:inset 0 0 0 2px #69788e,4px 4px 0 rgba(0,0,0,.6); }
 .fighter-right .fighter-hud { text-align:right; }.fighter-meta { display:flex; justify-content:space-between; gap:12px; font-size:15px; }.fighter-meta b { color:#ffd65b; }
 .health-track { height:18px; margin-top:5px; overflow:hidden; border:3px solid #020305; background:#2a1116; transform:skewX(-10deg); }

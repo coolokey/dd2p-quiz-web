@@ -20,21 +20,8 @@ import { createBattleOrientationController, createBattlePauseCoordinator } from 
 import { bindMobileAnswerControls, setMobileAnswerControlsLocked, syncTouchCapabilityClass } from './mobile-controls.mjs';
 import { PAUSE_ACTIONS, trapDialogTab } from './battle-pause-menu.mjs';
 import { createGamepadState, pollGamepadEvents } from './gamepad-input.mjs';
-import { calculateBattleScale } from './battle-viewport.mjs';
 
 const app = document.querySelector('#app');
-function syncBattleViewportScale() {
-  const browserWindow = globalThis.window;
-  const viewport = browserWindow?.visualViewport ?? browserWindow;
-  if (!viewport) return 1;
-  const scale = calculateBattleScale({ width: viewport.width ?? viewport.innerWidth, height: viewport.height ?? viewport.innerHeight });
-  app.style?.setProperty('--battle-scale', String(scale));
-  return scale;
-}
-const browserWindow = globalThis.window;
-browserWindow?.addEventListener?.('resize', syncBattleViewportScale);
-browserWindow?.visualViewport?.addEventListener?.('resize', syncBattleViewportScale);
-syncBattleViewportScale();
 syncTouchCapabilityClass(document.documentElement, navigator);
 const gamepadState = createGamepadState();
 let catalog = [], battleManifest = { scenes: [], characters: [], sfx: {} }, currentQuiz = null;

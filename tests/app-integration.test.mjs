@@ -19,15 +19,6 @@ test('選角畫面優先使用角色與戰場縮圖，避免載入戰鬥原圖',
   assert.match(source, /character\.thumbnail \|\| characterImage\(character\)/);
 });
 
-test('應用程式以 viewport 計算器同步完整行動戰場畫布倍率', async () => {
-  const source = await readAppSource();
-
-  assert.match(source, /import \{ calculateBattleScale \} from '\.\/battle-viewport\.mjs';/);
-  assert.match(source, /function syncBattleViewportScale\(\)/);
-  assert.match(source, /app\.style\?\.setProperty\('--battle-scale', String\(scale\)\)/);
-  assert.match(source, /browserWindow\?\.visualViewport\?\.addEventListener\?\.\('resize', syncBattleViewportScale\)/);
-});
-
 test('選角完成後先載入戰場與待機圖，攻擊圖等開局後再以閒置時段載入', async () => {
   const source = await readAppSource();
 

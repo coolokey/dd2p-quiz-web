@@ -95,7 +95,10 @@ function createDocument() {
   return { document, app };
 }
 
-export async function createBattleAppHarness({ gameMode = 'solo' } = {}) {
+export async function createBattleAppHarness({
+  gameMode = 'solo',
+  navigatorRef = { userAgent: 'Mozilla/5.0 (Linux; Android 14; Mobile)', platform: 'Linux armv8l', maxTouchPoints: 0 },
+} = {}) {
   const source = await readFile(new URL('../../web/js/app.mjs', import.meta.url), 'utf8');
   const imports = {};
   for (const match of source.matchAll(/^import \{ ([^}]+) \} from '(\.\/[^']+)';/gm)) {
@@ -130,11 +133,11 @@ export async function createBattleAppHarness({ gameMode = 'solo' } = {}) {
     afterAnswer: outcome => { settlements.push('after'); return options.afterAnswer(outcome); },
     onSettled: (outcome, settlement) => { settlements.push('settled'); return options.onSettled(outcome, settlement); },
   });
-  imports.createBattleOrientationController = options => realOrientation({ ...options, documentRef: document, windowRef: viewport, screenRef: {} });
+  imports.createBattleOrientationController = options => realOrientation({ ...options, documentRef: document, windowRef: viewport, screenRef: {}, navigatorRef });
   imports.playBattleAnimation = () => new Promise(resolve => animations.push({ resolve }));
   const globals = {
     document,
-    navigator: { maxTouchPoints: 0 },
+    navigator: navigatorRef,
     location: { href: 'http://localhost/' },
     localStorage: { getItem: () => null, setItem() {} },
     setTimeout: clock.setTimeout,

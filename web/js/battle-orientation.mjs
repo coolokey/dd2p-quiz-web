@@ -96,12 +96,21 @@ export function createBattlePauseCoordinator({
   };
 }
 
+export function isMobileBattleDevice(navigatorRef = {}) {
+  const userAgent = String(navigatorRef.userAgent ?? '');
+  const platform = String(navigatorRef.platform ?? '');
+  const maxTouchPoints = Number(navigatorRef.maxTouchPoints ?? 0);
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
+    || (platform === 'MacIntel' && maxTouchPoints > 1);
+}
+
 function browserDefaults() {
   const root = globalThis;
   return {
     windowRef: root.window,
     documentRef: root.document,
     screenRef: root.screen,
+    navigatorRef: root.navigator,
   };
 }
 
@@ -109,6 +118,7 @@ export function createBattleOrientationController({
   windowRef,
   documentRef,
   screenRef,
+  navigatorRef,
   onPortraitChange = () => {},
   onVisibilityChange = () => {},
 } = {}) {
@@ -116,7 +126,9 @@ export function createBattleOrientationController({
   const viewport = windowRef ?? defaults.windowRef;
   const document = documentRef ?? defaults.documentRef;
   const screen = screenRef ?? defaults.screenRef;
+  const navigatorDevice = navigatorRef ?? defaults.navigatorRef;
   const orientation = screen?.orientation;
+  const mobileDevice = isMobileBattleDevice(navigatorDevice);
   let active = false;
   let lastPortrait;
   let lastHidden;
@@ -125,7 +137,7 @@ export function createBattleOrientationController({
 
   function sync({ force = false } = {}) {
     if (!active || !viewport) return;
-    const portrait = isPortraitViewport({ width: viewport.innerWidth, height: viewport.innerHeight });
+    const portrait = mobileDevice && isPortraitViewport({ width: viewport.innerWidth, height: viewport.innerHeight });
     if (!force && portrait === lastPortrait) return;
     lastPortrait = portrait;
     onPortraitChange(portrait);
@@ -166,16 +178,18 @@ export function createBattleOrientationController({
     addListener(document, 'fullscreenchange');
     addListener(document, 'visibilitychange', handleVisibilityChange);
 
-    try {
-      await document?.documentElement?.requestFullscreen?.();
-    } catch {
-      // Fullscreen is an enhancement; viewport fallback remains available.
-    }
-    if (!active || currentSession !== session) return;
-    try {
-      await orientation?.lock?.('landscape');
-    } catch {
-      // Orientation lock is an enhancement; viewport fallback remains available.
+    if (mobileDevice) {
+      try {
+        await document?.documentElement?.requestFullscreen?.();
+      } catch {
+        // Fullscreen is an enhancement; viewport fallback remains available.
+      }
+      if (!active || currentSession !== session) return;
+      try {
+        await orientation?.lock?.('landscape');
+      } catch {
+        // Orientation lock is an enhancement; viewport fallback remains available.
+      }
     }
     if (!active || currentSession !== session) return;
     sync();
@@ -191,11 +205,13 @@ export function createBattleOrientationController({
     }
     lastPortrait = undefined;
     lastHidden = undefined;
-    try {
-      const result = orientation?.unlock?.();
-      result?.catch?.(() => {});
-    } catch {
-      // Unlock is optional and may be unsupported.
+    if (mobileDevice) {
+      try {
+        const result = orientation?.unlock?.();
+        result?.catch?.(() => {});
+      } catch {
+        // Unlock is optional and may be unsupported.
+      }
     }
   }
 

@@ -21,13 +21,20 @@ function eventTarget() {
   };
 }
 
-function fakeBrowser({ width = 390, height = 844, requestFullscreen = async () => {}, lock = async () => {}, unlock = () => {} } = {}) {
+function fakeBrowser({
+  width = 390,
+  height = 844,
+  requestFullscreen = async () => {},
+  lock = async () => {},
+  unlock = () => {},
+  navigatorRef = { userAgent: 'Mozilla/5.0 (Linux; Android 14; Mobile)', platform: 'Linux armv8l', maxTouchPoints: 5 },
+} = {}) {
   const windowRef = Object.assign(eventTarget(), { innerWidth: width, innerHeight: height });
   const orientation = Object.assign(eventTarget(), { lock, unlock });
   const screenRef = { orientation };
   const documentElement = { requestFullscreen };
   const documentRef = Object.assign(eventTarget(), { documentElement, visibilityState: 'visible' });
-  return { windowRef, documentRef, screenRef };
+  return { windowRef, documentRef, screenRef, navigatorRef };
 }
 
 test('判斷數字視窗尺寸中的直向狀態', () => {
@@ -35,6 +42,36 @@ test('判斷數字視窗尺寸中的直向狀態', () => {
   assert.equal(isPortraitViewport({ width: 844, height: 390 }), false);
   assert.equal(isPortraitViewport({ width: 500, height: 500 }), false);
   assert.equal(isPortraitViewport({ width: '390', height: 844 }), false);
+});
+
+test('僅將手機與平板判定為需要橫式全螢幕的行動載具', () => {
+  assert.equal(orientationModule.isMobileBattleDevice({ userAgent: 'Mozilla/5.0 (Linux; Android 14; Mobile)', platform: 'Linux armv8l', maxTouchPoints: 5 }), true);
+  assert.equal(orientationModule.isMobileBattleDevice({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', platform: 'iPhone', maxTouchPoints: 5 }), true);
+  assert.equal(orientationModule.isMobileBattleDevice({ userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)', platform: 'iPad', maxTouchPoints: 5 }), true);
+  assert.equal(orientationModule.isMobileBattleDevice({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)', platform: 'MacIntel', maxTouchPoints: 5 }), true);
+  assert.equal(orientationModule.isMobileBattleDevice({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32', maxTouchPoints: 10 }), false);
+});
+
+test('桌機進入與離開對戰不請求全螢幕或鎖定方向', async () => {
+  let fullscreenCalls = 0;
+  let lockCalls = 0;
+  let unlockCalls = 0;
+  const browser = fakeBrowser({
+    requestFullscreen: async () => { fullscreenCalls += 1; },
+    lock: async () => { lockCalls += 1; },
+    unlock: () => { unlockCalls += 1; },
+    navigatorRef: { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32', maxTouchPoints: 10 },
+  });
+  const states = [];
+  const controller = createBattleOrientationController({ ...browser, onPortraitChange: state => states.push(state) });
+
+  await controller.enterBattle();
+  controller.exitBattle();
+
+  assert.deepEqual(states, [false]);
+  assert.equal(fullscreenCalls, 0);
+  assert.equal(lockCalls, 0);
+  assert.equal(unlockCalls, 0);
 });
 
 test('全螢幕與方向鎖定拒絕時仍完成進入並發布直向狀態', async () => {

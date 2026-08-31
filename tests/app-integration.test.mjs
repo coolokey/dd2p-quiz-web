@@ -19,14 +19,16 @@ test('選角畫面優先使用角色與戰場縮圖，避免載入戰鬥原圖',
   assert.match(source, /character\.thumbnail \|\| characterImage\(character\)/);
 });
 
-test('選角完成後會非阻塞預載本局戰場與角色攻擊素材', async () => {
+test('選角完成後先載入戰場與待機圖，攻擊圖等開局後再以閒置時段載入', async () => {
   const source = await readAppSource();
 
   assert.match(source, /import \{ collectBattleAssetPaths, preloadBattleAssets \} from '\.\/battle-preload\.mjs';/);
-  assert.match(source, /function prewarmBattleAssets\(settings\)/);
-  assert.match(source, /preloadBattleAssets\(collectBattleAssetPaths\(scene, fighters\)\.map\(path => versionedAssetUrl\(path\)\)\)/);
-  assert.match(source, /prewarmBattleAssets\(selected\);[\s\S]*renderKeyTest\(selected\)/);
-  assert.match(source, /prewarmBattleAssets\(selected\);[\s\S]*startGameOnce\(selected\)/);
+  assert.match(source, /function prewarmBattleAssets\(settings, states\)/);
+  assert.match(source, /collectBattleAssetPaths\(scene, fighters, states\)/);
+  assert.match(source, /function scheduleAttackAssetPreload\(settings\)/);
+  assert.match(source, /prewarmBattleAssets\(settings, \['idle'\]\);[\s\S]*scheduleAttackAssetPreload\(settings\)/);
+  assert.match(source, /prewarmBattleAssets\(selected, \['idle'\]\);[\s\S]*renderKeyTest\(selected\)/);
+  assert.match(source, /onSkip:[\s\S]*startGameOnce\(selected\)/);
 });
 
 test('動畫失敗仍將 pending pause 轉為可繼續及安全離場的手動暫停', async t => {
@@ -502,7 +504,7 @@ test('使用者開局入口在任何非同步載入前立即請求對戰方向',
   const startEntry = source.slice(source.indexOf('const startGameOnce'), source.indexOf('const storedVolume'));
   const start = functionSource(source, 'startGame', 'prepareBattleStart');
 
-  assert.match(startEntry, /requestBattleOrientation\(\);[\s\S]*return startGame\(settings\)/);
+  assert.match(startEntry, /requestBattleOrientation\(\);[\s\S]*const start = startGame\(settings\);[\s\S]*return start;/);
   assert.match(source, /function requestBattleOrientation\(\)[\s\S]*orientationController\.enterBattle\(\)\.catch\(/);
   assert.match(start, /prepare: \(\) => \{[\s\S]*prepareBattleStart\(settings\);[\s\S]*orientationController\.refresh\(\);[\s\S]*\}[\s\S]*stages:/);
   assert.doesNotMatch(start, /if \(started\)[\s\S]*orientationController\.enterBattle/);

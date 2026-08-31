@@ -97,16 +97,17 @@ test('模式選單 focus 與 hover 共用節流音效並可觸發重試', () => 
   assert.deepEqual(calls, ['navigate', 'retry']);
 });
 
-test('起始畫面使用本地電競字型且提供響應式與減少動態樣式', () => {
+test('起始畫面保留本地電競標題字型，中文字型改用裝置系統字型', () => {
   const css = readFileSync(new URL('../web/assets/app.css', import.meta.url), 'utf8');
   assert.doesNotMatch(css, /fonts\.googleapis\.com/);
-  assert.match(css, /@font-face[\s\S]*NotoSansTC-Variable\.woff2/);
+  assert.doesNotMatch(css, /NotoSansTC-Variable\.woff2/);
   assert.match(css, /font-family:'VectorGrid Local'[\s\S]*VectorGrid-Variable\.woff2/);
+  assert.match(css, /Microsoft JhengHei/);
   assert.doesNotMatch(css, /Orbitron-Variable\.woff2|font-family:'Orbitron Local'/);
   assert.match(css, /\.start-screen/);
   assert.match(css, /@media\s*\(max-width:900px\)/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:reduce\)/);
-  assert.ok(existsSync(new URL('../web/assets/fonts/NotoSansTC-Variable.woff2', import.meta.url)));
+  assert.ok(existsSync(new URL('../web/assets/fonts/NotoSansTC-Variable.woff2', import.meta.url)), '保留原始字型檔，供日後離線字型方案使用');
   assert.ok(existsSync(new URL('../web/assets/fonts/VectorGrid-Variable.woff2', import.meta.url)));
   assert.equal(existsSync(new URL('../web/assets/fonts/Orbitron-Variable.woff2', import.meta.url)), false);
   assert.ok(existsSync(new URL('../web/assets/fonts/FONTLOG-VectorGrid.txt', import.meta.url)));

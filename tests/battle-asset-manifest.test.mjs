@@ -172,14 +172,14 @@ test('generated manifest publishes twelve unique characters and existing files',
   }
 });
 
-test('generated campus manifest publishes PNG states and preserves battle contract', async () => {
+test('generated campus manifest publishes WebP runtime states and preserves battle contract', async () => {
   const manifest = JSON.parse(
     await readFile(path.resolve('web/assets/battle/manifest.json'), 'utf8'),
   );
 
   assert.deepEqual(manifest.scenes, CAMPUS_SCENES.map(scene => ({
     ...scene,
-    thumbnail: scene.image.replace(/\.(?:png|webp)$/, '-thumb.png'),
+    thumbnail: scene.image.replace(/\.(?:png|webp)$/, '-thumb.webp'),
   })));
   assert.deepEqual(manifest.sfx, CAMPUS_SFX);
   assert.equal(manifest.characters.length, CAMPUS_HEROES.length);
@@ -189,13 +189,13 @@ test('generated campus manifest publishes PNG states and preserves battle contra
     assert.ok(character, `${hero.id} must be published`);
     assert.equal(character.name, `${hero.name}｜${hero.role}`);
     assert.equal(character.label, `${hero.name}｜${hero.role}`);
-    assert.match(character.thumbnail, /\/thumb\.png$/);
+    assert.match(character.thumbnail, /\/thumb\.webp$/);
     assert.equal(character.playable, true);
     assert.deepEqual(character.missing, []);
     assert.equal(character.weapon, null);
     assert.deepEqual(character.attacks, hero.attacks);
-    assert.match(character.states.idle[0], /\/idle\.png$/);
-    assert.match(character.states.attack[0], /\/attack\.png$/);
+    assert.match(character.states.idle[0], /\/idle\.webp$/);
+    assert.match(character.states.attack[0], /\/attack\.webp$/);
     assert.deepEqual(character.states.hurt, character.states.idle);
     assert.deepEqual(character.states.miss, character.states.attack);
     assert.deepEqual(character.states.win, character.states.idle);

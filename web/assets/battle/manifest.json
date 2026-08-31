@@ -6,56 +6,56 @@
       "label": "大溪校門對決",
       "image": "./assets/battle/scenes/daxi-gate.webp",
       "music": "./assets/battle/music/school.mp3",
-      "thumbnail": "./assets/battle/scenes/daxi-gate-thumb.png"
+      "thumbnail": "./assets/battle/scenes/daxi-gate-thumb.webp"
     },
     {
       "id": "track",
       "label": "紅色跑道衝刺",
       "image": "./assets/battle/scenes/track.webp",
       "music": "./assets/battle/music/school.mp3",
-      "thumbnail": "./assets/battle/scenes/track-thumb.png"
+      "thumbnail": "./assets/battle/scenes/track-thumb.webp"
     },
     {
       "id": "basketball-court",
       "label": "籃球場決勝",
       "image": "./assets/battle/scenes/basketball-court.webp",
       "music": "./assets/battle/music/palace.mp3",
-      "thumbnail": "./assets/battle/scenes/basketball-court-thumb.png"
+      "thumbnail": "./assets/battle/scenes/basketball-court-thumb.webp"
     },
     {
       "id": "classroom",
       "label": "教室知識擂台",
       "image": "./assets/battle/scenes/classroom.webp",
       "music": "./assets/battle/music/ship.mp3",
-      "thumbnail": "./assets/battle/scenes/classroom-thumb.png"
+      "thumbnail": "./assets/battle/scenes/classroom-thumb.webp"
     }
   ],
   "characters": [
     {
       "id": "basketball-ace",
-      "thumbnail": "./assets/battle/campus-heroes/basketball-ace/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/basketball-ace/thumb.webp",
       "label": "溪羽｜籃球王牌",
       "name": "溪羽｜籃球王牌",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/basketball-ace/attack.png"
+          "./assets/battle/campus-heroes/basketball-ace/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/basketball-ace/attack.png"
+          "./assets/battle/campus-heroes/basketball-ace/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/basketball-ace/idle.png"
+          "./assets/battle/campus-heroes/basketball-ace/idle.webp"
         ]
       },
       "weapon": null,
@@ -79,29 +79,29 @@
     },
     {
       "id": "track-sprinter",
-      "thumbnail": "./assets/battle/campus-heroes/track-sprinter/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/track-sprinter/thumb.webp",
       "label": "崁迅｜田徑快手",
       "name": "崁迅｜田徑快手",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/track-sprinter/attack.png"
+          "./assets/battle/campus-heroes/track-sprinter/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/track-sprinter/attack.png"
+          "./assets/battle/campus-heroes/track-sprinter/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/track-sprinter/idle.png"
+          "./assets/battle/campus-heroes/track-sprinter/idle.webp"
         ]
       },
       "weapon": null,
@@ -125,29 +125,29 @@
     },
     {
       "id": "street-dancer",
-      "thumbnail": "./assets/battle/campus-heroes/street-dancer/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/street-dancer/thumb.webp",
       "label": "桃樂｜街舞高手",
       "name": "桃樂｜街舞高手",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/street-dancer/idle.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/street-dancer/attack.png"
+          "./assets/battle/campus-heroes/street-dancer/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/street-dancer/idle.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/street-dancer/attack.png"
+          "./assets/battle/campus-heroes/street-dancer/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/street-dancer/idle.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/street-dancer/idle.png"
+          "./assets/battle/campus-heroes/street-dancer/idle.webp"
         ]
       },
       "weapon": null,
@@ -171,29 +171,29 @@
     },
     {
       "id": "kendo-captain",
-      "thumbnail": "./assets/battle/campus-heroes/kendo-captain/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/kendo-captain/thumb.webp",
       "label": "嵙辰｜劍道社長",
       "name": "嵙辰｜劍道社長",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/kendo-captain/attack.png"
+          "./assets/battle/campus-heroes/kendo-captain/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/kendo-captain/attack.png"
+          "./assets/battle/campus-heroes/kendo-captain/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/kendo-captain/idle.png"
+          "./assets/battle/campus-heroes/kendo-captain/idle.webp"
         ]
       },
       "weapon": null,
@@ -217,29 +217,29 @@
     },
     {
       "id": "science-maker",
-      "thumbnail": "./assets/battle/campus-heroes/science-maker/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/science-maker/thumb.webp",
       "label": "溪棠｜科學發明家",
       "name": "溪棠｜科學發明家",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/science-maker/idle.png"
+          "./assets/battle/campus-heroes/science-maker/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/science-maker/attack.png"
+          "./assets/battle/campus-heroes/science-maker/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/science-maker/idle.png"
+          "./assets/battle/campus-heroes/science-maker/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/science-maker/attack.png"
+          "./assets/battle/campus-heroes/science-maker/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/science-maker/idle.png"
+          "./assets/battle/campus-heroes/science-maker/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/science-maker/idle.png"
+          "./assets/battle/campus-heroes/science-maker/idle.webp"
         ]
       },
       "weapon": null,
@@ -263,29 +263,29 @@
     },
     {
       "id": "code-maker",
-      "thumbnail": "./assets/battle/campus-heroes/code-maker/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/code-maker/thumb.webp",
       "label": "崁宇｜程式發明家",
       "name": "崁宇｜程式發明家",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/code-maker/idle.png"
+          "./assets/battle/campus-heroes/code-maker/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/code-maker/attack.png"
+          "./assets/battle/campus-heroes/code-maker/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/code-maker/idle.png"
+          "./assets/battle/campus-heroes/code-maker/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/code-maker/attack.png"
+          "./assets/battle/campus-heroes/code-maker/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/code-maker/idle.png"
+          "./assets/battle/campus-heroes/code-maker/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/code-maker/idle.png"
+          "./assets/battle/campus-heroes/code-maker/idle.webp"
         ]
       },
       "weapon": null,
@@ -309,29 +309,29 @@
     },
     {
       "id": "math-strategist",
-      "thumbnail": "./assets/battle/campus-heroes/math-strategist/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/math-strategist/thumb.webp",
       "label": "桃弦｜數學策略家",
       "name": "桃弦｜數學策略家",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/math-strategist/idle.png"
+          "./assets/battle/campus-heroes/math-strategist/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/math-strategist/attack.png"
+          "./assets/battle/campus-heroes/math-strategist/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/math-strategist/idle.png"
+          "./assets/battle/campus-heroes/math-strategist/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/math-strategist/attack.png"
+          "./assets/battle/campus-heroes/math-strategist/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/math-strategist/idle.png"
+          "./assets/battle/campus-heroes/math-strategist/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/math-strategist/idle.png"
+          "./assets/battle/campus-heroes/math-strategist/idle.webp"
         ]
       },
       "weapon": null,
@@ -355,29 +355,29 @@
     },
     {
       "id": "chess-tactician",
-      "thumbnail": "./assets/battle/campus-heroes/chess-tactician/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/chess-tactician/thumb.webp",
       "label": "溪策｜棋局軍師",
       "name": "溪策｜棋局軍師",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+          "./assets/battle/campus-heroes/chess-tactician/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/chess-tactician/attack.png"
+          "./assets/battle/campus-heroes/chess-tactician/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+          "./assets/battle/campus-heroes/chess-tactician/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/chess-tactician/attack.png"
+          "./assets/battle/campus-heroes/chess-tactician/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+          "./assets/battle/campus-heroes/chess-tactician/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/chess-tactician/idle.png"
+          "./assets/battle/campus-heroes/chess-tactician/idle.webp"
         ]
       },
       "weapon": null,
@@ -401,29 +401,29 @@
     },
     {
       "id": "astronomy-observer",
-      "thumbnail": "./assets/battle/campus-heroes/astronomy-observer/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/astronomy-observer/thumb.webp",
       "label": "崁星｜天文觀測員",
       "name": "崁星｜天文觀測員",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/astronomy-observer/attack.png"
+          "./assets/battle/campus-heroes/astronomy-observer/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/astronomy-observer/attack.png"
+          "./assets/battle/campus-heroes/astronomy-observer/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/astronomy-observer/idle.png"
+          "./assets/battle/campus-heroes/astronomy-observer/idle.webp"
         ]
       },
       "weapon": null,
@@ -447,29 +447,29 @@
     },
     {
       "id": "puzzle-detective",
-      "thumbnail": "./assets/battle/campus-heroes/puzzle-detective/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/puzzle-detective/thumb.webp",
       "label": "大川｜解謎偵探",
       "name": "大川｜解謎偵探",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/puzzle-detective/attack.png"
+          "./assets/battle/campus-heroes/puzzle-detective/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/puzzle-detective/attack.png"
+          "./assets/battle/campus-heroes/puzzle-detective/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/puzzle-detective/idle.png"
+          "./assets/battle/campus-heroes/puzzle-detective/idle.webp"
         ]
       },
       "weapon": null,
@@ -493,29 +493,29 @@
     },
     {
       "id": "language-magician",
-      "thumbnail": "./assets/battle/campus-heroes/language-magician/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/language-magician/thumb.webp",
       "label": "桃語｜語言魔術師",
       "name": "桃語｜語言魔術師",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/language-magician/idle.png"
+          "./assets/battle/campus-heroes/language-magician/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/language-magician/attack.png"
+          "./assets/battle/campus-heroes/language-magician/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/language-magician/idle.png"
+          "./assets/battle/campus-heroes/language-magician/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/language-magician/attack.png"
+          "./assets/battle/campus-heroes/language-magician/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/language-magician/idle.png"
+          "./assets/battle/campus-heroes/language-magician/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/language-magician/idle.png"
+          "./assets/battle/campus-heroes/language-magician/idle.webp"
         ]
       },
       "weapon": null,
@@ -539,29 +539,29 @@
     },
     {
       "id": "nature-researcher",
-      "thumbnail": "./assets/battle/campus-heroes/nature-researcher/thumb.png",
+      "thumbnail": "./assets/battle/campus-heroes/nature-researcher/thumb.webp",
       "label": "嵙森｜自然研究員",
       "name": "嵙森｜自然研究員",
       "playable": true,
       "missing": [],
       "states": {
         "idle": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+          "./assets/battle/campus-heroes/nature-researcher/idle.webp"
         ],
         "attack": [
-          "./assets/battle/campus-heroes/nature-researcher/attack.png"
+          "./assets/battle/campus-heroes/nature-researcher/attack.webp"
         ],
         "hurt": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+          "./assets/battle/campus-heroes/nature-researcher/idle.webp"
         ],
         "miss": [
-          "./assets/battle/campus-heroes/nature-researcher/attack.png"
+          "./assets/battle/campus-heroes/nature-researcher/attack.webp"
         ],
         "win": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+          "./assets/battle/campus-heroes/nature-researcher/idle.webp"
         ],
         "lose": [
-          "./assets/battle/campus-heroes/nature-researcher/idle.png"
+          "./assets/battle/campus-heroes/nature-researcher/idle.webp"
         ]
       },
       "weapon": null,

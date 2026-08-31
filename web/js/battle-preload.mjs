@@ -3,13 +3,10 @@ const firstFrame = (character, state) => {
   return Array.isArray(frames) ? frames[0] : frames;
 };
 
-export function collectBattleAssetPaths(scene, characters = []) {
+export function collectBattleAssetPaths(scene, characters = [], states = ['idle', 'attack']) {
   return [...new Set([
     scene?.image,
-    ...characters.flatMap(character => [
-      firstFrame(character, 'idle'),
-      firstFrame(character, 'attack'),
-    ]),
+    ...characters.flatMap(character => states.map(state => firstFrame(character, state))),
   ].filter(Boolean))];
 }
 

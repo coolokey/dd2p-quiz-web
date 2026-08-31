@@ -15,6 +15,23 @@ test('僅收集本局場景與兩名角色的待機和攻擊素材，且會去�
   ]);
 });
 
+test('可依載入階段只收集待機或攻擊素材', () => {
+  const scene = { image: './assets/battle/scenes/gate.webp' };
+  const left = { states: { idle: ['./assets/battle/heroes/left-idle.webp'], attack: ['./assets/battle/heroes/left-attack.webp'] } };
+  const right = { states: { idle: ['./assets/battle/heroes/right-idle.webp'], attack: ['./assets/battle/heroes/right-attack.webp'] } };
+
+  assert.deepEqual(collectBattleAssetPaths(scene, [left, right], ['idle']), [
+    './assets/battle/scenes/gate.webp',
+    './assets/battle/heroes/left-idle.webp',
+    './assets/battle/heroes/right-idle.webp',
+  ]);
+  assert.deepEqual(collectBattleAssetPaths(scene, [left, right], ['attack']), [
+    './assets/battle/scenes/gate.webp',
+    './assets/battle/heroes/left-attack.webp',
+    './assets/battle/heroes/right-attack.webp',
+  ]);
+});
+
 test('預載不等待下載完成，並以非同步解碼設定每個唯一素材', () => {
   const images = [];
   const created = preloadBattleAssets(['one.webp', 'one.webp', 'two.png', ''], () => {

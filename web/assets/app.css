@@ -1,7 +1,6 @@
-@font-face { font-family:'Noto Sans TC Local'; src:url('./fonts/NotoSansTC-Variable.woff2') format('woff2'); font-style:normal; font-weight:100 900; font-display:swap; }
 @font-face { font-family:'VectorGrid Local'; src:url('./fonts/VectorGrid-Variable.woff2') format('woff2'); font-style:normal; font-weight:400 900; font-display:swap; }
 
-:root { --ink:#101522; --paper:#f5f0df; --yellow:#f7c948; --red:#ec5b53; --blue:#26a6d1; --muted:#71809a; --display:'VectorGrid Local','Noto Sans TC Local',sans-serif; --body:'Noto Sans TC Local',sans-serif; }
+:root { --ink:#101522; --paper:#f5f0df; --yellow:#f7c948; --red:#ec5b53; --blue:#26a6d1; --muted:#71809a; --system-chinese:system-ui,-apple-system,'Segoe UI','Microsoft JhengHei','PingFang TC','Noto Sans TC',sans-serif; --display:'VectorGrid Local',var(--system-chinese); --body:var(--system-chinese); }
 * { box-sizing:border-box; }
 body { margin:0; min-height:100vh; color:var(--ink); font-family:var(--body); background:radial-gradient(circle at 15% 10%,#fbd56a 0 2%,transparent 18%),radial-gradient(circle at 84% 90%,#63c5e5 0 3%,transparent 25%),#e7e2d1; }
 button,input { font:inherit; } button { cursor:pointer; } button:focus-visible,a:focus-visible,input:focus-visible { outline:3px solid #fff36a; outline-offset:4px; } .noise { position:fixed; inset:0; pointer-events:none; opacity:.09; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E"); }

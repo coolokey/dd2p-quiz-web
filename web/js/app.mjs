@@ -243,7 +243,7 @@ function exitBattleOrientation() {
   resetManualPauseState();
   battleStageScale.destroy();
   orientationController.exitBattle();
-  document.documentElement.classList.remove?.('phone-battle-device');
+  document.documentElement.classList.remove('phone-battle-device');
   battlePause.reset();
 }
 

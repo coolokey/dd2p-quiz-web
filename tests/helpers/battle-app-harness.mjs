@@ -39,10 +39,22 @@ function createClock() {
 // and production focus handlers operate on shared element identities.
 function createDocument() {
   const listeners = new Map();
+  const rootClasses = new Set();
+  const classList = {
+    add: (...names) => names.forEach(name => rootClasses.add(name)),
+    contains: name => rootClasses.has(name),
+    remove: (...names) => names.forEach(name => rootClasses.delete(name)),
+    toggle(name, force) {
+      const enabled = force === undefined ? !rootClasses.has(name) : Boolean(force);
+      if (enabled) rootClasses.add(name);
+      else rootClasses.delete(name);
+      return enabled;
+    },
+  };
   const document = {
     activeElement: null,
     visibilityState: 'visible',
-    documentElement: { classList: { toggle() {} } },
+    documentElement: { classList },
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
     dispatch: (name, event) => listeners.get(name)?.(event),

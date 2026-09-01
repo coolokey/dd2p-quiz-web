@@ -105,7 +105,8 @@ export function isMobileBattleDevice(navigatorRef = {}, screenRef = {}) {
   const width = Number(screenRef.width ?? 0);
   const height = Number(screenRef.height ?? 0);
   const shortSide = width > 0 && height > 0 ? Math.min(width, height) : 0;
-  return knownMobile || (maxTouchPoints > 0 && shortSide > 0 && shortSide <= 1024);
+  const windowsPlatform = /^Win/i.test(platform);
+  return knownMobile || (!windowsPlatform && maxTouchPoints > 0 && shortSide > 0 && shortSide <= 1024);
 }
 
 function browserDefaults() {

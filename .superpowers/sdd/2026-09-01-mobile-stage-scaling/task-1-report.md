@@ -26,3 +26,11 @@
 ## Commit
 
 `fix: detect mobile battle browsers with touch fallback`
+
+## Fix round 1
+
+- 原因：螢幕短邊 fallback 未排除 Windows 平台，會將 `1366×768` Windows 觸控筆電誤判為行動載具。
+- RED：新增 `1366×768`、`Win32`、`maxTouchPoints: 10` 回歸測試；執行 `node --test tests/battle-orientation.test.mjs`，`15` 項通過、`1` 項失敗（預期 `false`、實際 `true`）。
+- GREEN：以 `/^Win/i` 排除 fallback；執行 `node --test tests/battle-orientation.test.mjs`，`16/16` 通過。
+- 影響範圍：僅修改 `web/js/battle-orientation.mjs` 的 fallback 條件與 `tests/battle-orientation.test.mjs` 的 Windows 回歸測試；已知 Android／iOS／iPad 與 Linux 未知 UA 窄觸控判定不變。
+- 修正 commit：`fix: detect mobile battle browsers with touch fallback`。

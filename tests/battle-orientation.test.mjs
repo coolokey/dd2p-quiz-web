@@ -59,6 +59,11 @@ test('未知識別字串的窄觸控螢幕仍判定為行動載具，Windows 觸
   assert.equal(orientationModule.isMobileBattleDevice(laptop, { width: 1920, height: 1080 }), false);
 });
 
+test('1366×768 的 Windows 觸控筆電維持桌機判定', () => {
+  const laptop = { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32', maxTouchPoints: 10 };
+  assert.equal(orientationModule.isMobileBattleDevice(laptop, { width: 1366, height: 768 }), false);
+});
+
 test('未知識別字串的窄觸控螢幕進入對戰會全螢幕並鎖定橫向，離場時解除鎖定', async () => {
   let fullscreenCalls = 0;
   let lockCalls = 0;

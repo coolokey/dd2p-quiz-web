@@ -31,7 +31,7 @@ function fakeBrowser({
 } = {}) {
   const windowRef = Object.assign(eventTarget(), { innerWidth: width, innerHeight: height });
   const orientation = Object.assign(eventTarget(), { lock, unlock });
-  const screenRef = { orientation };
+  const screenRef = { orientation, width, height };
   const documentElement = { requestFullscreen };
   const documentRef = Object.assign(eventTarget(), { documentElement, visibilityState: 'visible' });
   return { windowRef, documentRef, screenRef, navigatorRef };
@@ -52,11 +52,42 @@ test('僅將手機與平板判定為需要橫式全螢幕的行動載具', () =>
   assert.equal(orientationModule.isMobileBattleDevice({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32', maxTouchPoints: 10 }), false);
 });
 
+test('未知識別字串的窄觸控螢幕仍判定為行動載具，Windows 觸控筆電維持桌機', () => {
+  const phone = { userAgent: 'Mozilla/5.0 CustomWebView', platform: 'Linux', maxTouchPoints: 5 };
+  const laptop = { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32', maxTouchPoints: 10 };
+  assert.equal(orientationModule.isMobileBattleDevice(phone, { width: 412, height: 915 }), true);
+  assert.equal(orientationModule.isMobileBattleDevice(laptop, { width: 1920, height: 1080 }), false);
+});
+
+test('未知識別字串的窄觸控螢幕進入對戰會全螢幕並鎖定橫向，離場時解除鎖定', async () => {
+  let fullscreenCalls = 0;
+  let lockCalls = 0;
+  let unlockCalls = 0;
+  const browser = fakeBrowser({
+    width: 412,
+    height: 915,
+    requestFullscreen: async () => { fullscreenCalls += 1; },
+    lock: async () => { lockCalls += 1; },
+    unlock: () => { unlockCalls += 1; },
+    navigatorRef: { userAgent: 'Mozilla/5.0 CustomWebView', platform: 'Linux', maxTouchPoints: 5 },
+  });
+  const controller = createBattleOrientationController({ ...browser, onPortraitChange: () => {} });
+
+  await controller.enterBattle();
+  controller.exitBattle();
+
+  assert.equal(fullscreenCalls, 1);
+  assert.equal(lockCalls, 1);
+  assert.equal(unlockCalls, 1);
+});
+
 test('桌機進入與離開對戰不請求全螢幕或鎖定方向', async () => {
   let fullscreenCalls = 0;
   let lockCalls = 0;
   let unlockCalls = 0;
   const browser = fakeBrowser({
+    width: 1920,
+    height: 1080,
     requestFullscreen: async () => { fullscreenCalls += 1; },
     lock: async () => { lockCalls += 1; },
     unlock: () => { unlockCalls += 1; },

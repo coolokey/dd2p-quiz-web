@@ -96,12 +96,16 @@ export function createBattlePauseCoordinator({
   };
 }
 
-export function isMobileBattleDevice(navigatorRef = {}) {
+export function isMobileBattleDevice(navigatorRef = {}, screenRef = {}) {
   const userAgent = String(navigatorRef.userAgent ?? '');
   const platform = String(navigatorRef.platform ?? '');
   const maxTouchPoints = Number(navigatorRef.maxTouchPoints ?? 0);
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
+  const knownMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent)
     || (platform === 'MacIntel' && maxTouchPoints > 1);
+  const width = Number(screenRef.width ?? 0);
+  const height = Number(screenRef.height ?? 0);
+  const shortSide = width > 0 && height > 0 ? Math.min(width, height) : 0;
+  return knownMobile || (maxTouchPoints > 0 && shortSide > 0 && shortSide <= 1024);
 }
 
 function browserDefaults() {
@@ -128,7 +132,7 @@ export function createBattleOrientationController({
   const screen = screenRef ?? defaults.screenRef;
   const navigatorDevice = navigatorRef ?? defaults.navigatorRef;
   const orientation = screen?.orientation;
-  const mobileDevice = isMobileBattleDevice(navigatorDevice);
+  const mobileDevice = isMobileBattleDevice(navigatorDevice, screen);
   let active = false;
   let lastPortrait;
   let lastHidden;

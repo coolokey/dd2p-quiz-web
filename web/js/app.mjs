@@ -524,7 +524,7 @@ function prepareBattleStart(settings) {
   battleSession.reset();
   battleSettings = settings;
   answerPositionState = createAnswerPositionState();
-  currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState) };
+  currentQuiz = { ...currentQuiz, activeQuestions: prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState, currentQuiz.questionOrder) };
   quizState = createGameState({ mode: 'time', limit: Number.MAX_SAFE_INTEGER });
   combatState = createBattleState();
   regulationLimit = settings.mode === 'questions' ? Math.min(settings.limit, currentQuiz.questions.length) : Infinity;
@@ -549,7 +549,7 @@ function handleTimer() {
 }
 function ensureQuestion() {
   if (quizState.questionIndex >= currentQuiz.activeQuestions.length) {
-    currentQuiz.activeQuestions.push(...prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState));
+    currentQuiz.activeQuestions.push(...prepareQuestionRound(currentQuiz.questions, Math.random, answerPositionState, currentQuiz.questionOrder));
   }
 }
 function closeRegulationState({ advanceQuestion = false } = {}) {

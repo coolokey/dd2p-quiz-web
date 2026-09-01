@@ -45,6 +45,19 @@ test('每一輪同時隨機排列題目順序與各題選項', () => {
   assert.notStrictEqual(round[0], questions[1]);
 });
 
+test('固定題序保留題目 ID 順序，但仍重新配置選項位置', () => {
+  const questions = [
+    { id: '001', prompt: 'Q1', choices: ['正確', '乙', '丙', '丁'], answerIndex: 0 },
+    { id: '002', prompt: 'Q2', choices: ['甲', '正確', '丙', '丁'], answerIndex: 1 },
+    { id: '003', prompt: 'Q3', choices: ['甲', '乙', '正確', '丁'], answerIndex: 2 },
+  ];
+
+  const result = prepareQuestionRound(questions, () => 0, createAnswerPositionState(), 'fixed');
+
+  assert.deepEqual(result.map(question => question.id), ['001', '002', '003']);
+  assert.deepEqual(result.map(question => question.choices[question.answerIndex]), ['正確', '正確', '正確']);
+});
+
 test('四選一每四題正確答案位置一至四各一次', () => {
   const questions = Array.from({ length: 8 }, (_, index) => ({
     id: `q${index}`,

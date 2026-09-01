@@ -64,6 +64,19 @@ test('1366×768 的 Windows 觸控筆電維持桌機判定', () => {
   assert.equal(orientationModule.isMobileBattleDevice(laptop, { width: 1366, height: 768 }), false);
 });
 
+test('只有短邊不超過 600 的行動載具會套用手機戰場高度', () => {
+  const androidPhone = { userAgent: 'Mozilla/5.0 (Linux; Android 14; Mobile)', platform: 'Linux armv8l', maxTouchPoints: 5 };
+  const androidTablet = { userAgent: 'Mozilla/5.0 (Linux; Android 14; Tablet)', platform: 'Linux armv8l', maxTouchPoints: 5 };
+
+  assert.equal(orientationModule.isPhoneBattleDevice(androidPhone, { width: 844, height: 390 }), true);
+  assert.equal(orientationModule.isPhoneBattleDevice(androidTablet, { width: 1180, height: 820 }), false);
+
+  const phoneController = createBattleOrientationController({ ...fakeBrowser({ width: 844, height: 390, navigatorRef: androidPhone }) });
+  const tabletController = createBattleOrientationController({ ...fakeBrowser({ width: 1180, height: 820, navigatorRef: androidTablet }) });
+  assert.equal(phoneController.isPhoneDevice(), true);
+  assert.equal(tabletController.isPhoneDevice(), false);
+});
+
 test('未知識別字串的窄觸控螢幕進入對戰會全螢幕並鎖定橫向，離場時解除鎖定', async () => {
   let fullscreenCalls = 0;
   let lockCalls = 0;

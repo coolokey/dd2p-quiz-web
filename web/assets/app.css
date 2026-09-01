@@ -279,6 +279,9 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
   .touch-capable .mode-solo { padding-top:0; }
 }
 
+.phone-battle-device.touch-capable .arena { height:clamp(220px,52vh,420px); }
+.phone-battle-device.touch-capable .fighter-sprite { height:82%; }
+
 @media (max-width:760px) {
   .battle-topbar { grid-template-columns:minmax(0,1fr) auto; gap:6px; }
   .battle-center-controls { justify-content:flex-start; gap:5px; }

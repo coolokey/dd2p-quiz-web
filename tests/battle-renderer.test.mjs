@@ -394,6 +394,18 @@ test('矮橫式觸控版維持雙欄答案並額外壓縮戰區高度', async ()
   assert.match(css, /\.battle-status\s*\{[^}]*font-size:\s*12px/);
 });
 
+test('手機限定規則在矮橫式規則後恢復戰場與角色高度', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  const shortLandscape = css.indexOf('@media (orientation: landscape) and (max-height: 500px)');
+  const phoneArena = css.indexOf('.phone-battle-device.touch-capable .arena');
+  const phoneSprite = css.indexOf('.phone-battle-device.touch-capable .fighter-sprite');
+
+  assert.ok(phoneArena > shortLandscape);
+  assert.ok(phoneSprite > phoneArena);
+  assert.match(css, /\.phone-battle-device\.touch-capable \.arena\s*\{[^}]*height:\s*clamp\(220px,52vh,420px\)/);
+  assert.match(css, /\.phone-battle-device\.touch-capable \.fighter-sprite\s*\{[^}]*height:\s*82%/);
+});
+
 test('觸控能力類別控制混合輸入裝置並避免非觸控電腦套用控制版面', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
   assert.match(css, /@media \(orientation: landscape\)\s*\{[\s\S]*?\.touch-capable \.mobile-answer-controls/);

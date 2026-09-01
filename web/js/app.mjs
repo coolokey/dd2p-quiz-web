@@ -243,6 +243,7 @@ function exitBattleOrientation() {
   resetManualPauseState();
   battleStageScale.destroy();
   orientationController.exitBattle();
+  document.documentElement.classList.remove?.('phone-battle-device');
   battlePause.reset();
 }
 
@@ -632,6 +633,7 @@ function renderGame({
     prompt: question.prompt, questionImage: question.image, choices: question.choices,
     status: statusOverride ?? currentStatus(), phase: combatState.phase, revealAnswerIndex,
   });
+  document.documentElement.classList.toggle('phone-battle-device', orientationController.isPhoneDevice());
   battleStageScale.bind(app);
   bindAudioToggle();
   bindMobileAnswerControls(app, { onAnswer: input => void processAnswer(input) });

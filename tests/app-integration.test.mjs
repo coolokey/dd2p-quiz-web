@@ -476,6 +476,15 @@ test('對戰結果、題庫、主選單、開局失敗與停止活動都會清�
   assert.match(source, /onCancel: stopBattleActivity/);
 });
 
+test('對戰渲染同步手機戰場類別，離場時移除', async () => {
+  const source = await readAppSource();
+  const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');
+  const cleanup = functionSource(source, 'exitBattleOrientation', 'stopBattleActivity');
+
+  assert.match(render, /document\.documentElement\.classList\.toggle\('phone-battle-device', orientationController\.isPhoneDevice\(\)\)/);
+  assert.match(cleanup, /document\.documentElement\.classList\.remove\?\.\('phone-battle-device'\)/);
+});
+
 test('每次對戰渲染都傳入行動狀態、綁定觸控並共用 processAnswer', async () => {
   const source = await readAppSource();
   const render = functionSource(source, 'renderGame', 'scheduleCpuForCurrentQuestion');

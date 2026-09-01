@@ -109,6 +109,13 @@ export function isMobileBattleDevice(navigatorRef = {}, screenRef = {}) {
   return knownMobile || (!windowsPlatform && maxTouchPoints > 0 && shortSide > 0 && shortSide <= 1024);
 }
 
+export function isPhoneBattleDevice(navigatorRef = {}, screenRef = {}) {
+  if (!isMobileBattleDevice(navigatorRef, screenRef)) return false;
+  const width = Number(screenRef.width ?? 0);
+  const height = Number(screenRef.height ?? 0);
+  return width > 0 && height > 0 && Math.min(width, height) <= 600;
+}
+
 function browserDefaults() {
   const root = globalThis;
   return {
@@ -134,6 +141,7 @@ export function createBattleOrientationController({
   const navigatorDevice = navigatorRef ?? defaults.navigatorRef;
   const orientation = screen?.orientation;
   const mobileDevice = isMobileBattleDevice(navigatorDevice, screen);
+  const phoneDevice = isPhoneBattleDevice(navigatorDevice, screen);
   let active = false;
   let lastPortrait;
   let lastHidden;
@@ -225,6 +233,7 @@ export function createBattleOrientationController({
     exitBattle,
     isActive: () => active,
     isMobileDevice: () => mobileDevice,
+    isPhoneDevice: () => phoneDevice,
     isPortrait: () => mobileDevice && isPortraitViewport({ width: viewport?.innerWidth, height: viewport?.innerHeight }),
     refresh,
     sync,

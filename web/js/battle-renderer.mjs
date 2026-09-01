@@ -54,7 +54,9 @@ export function buildBattleMarkup(viewModel) {
     ? '<button type="button" class="battle-pause-button" data-pause-battle aria-label="暫停對戰" disabled>等待本次攻擊結束……</button>'
     : '<button type="button" class="battle-pause-button" data-pause-battle aria-label="暫停對戰">Ⅱ 暫停</button>';
 
-  return `<div class="battle-shell" style="--scene:url('${escapeHtml(sceneImage)}')">
+  return `<div class="battle-viewport">
+  <div class="battle-stage">
+  <div class="battle-shell" style="--scene:url('${escapeHtml(sceneImage)}')">
     <header class="battle-topbar">
       <span class="arena-name">${escapeHtml(viewModel.scene.label)}</span>
       <div class="battle-center-controls">
@@ -87,9 +89,11 @@ export function buildBattleMarkup(viewModel) {
         }).join('')}</div>
       </div>
     </article>
-    ${mobileControls}
-    ${orientationBlocker}
     <p class="battle-status" aria-live="polite">${escapeHtml(viewModel.status)}</p>
+  </div>
+    ${mobileControls}
+  </div>
+    ${orientationBlocker}
     ${pauseMenu}
   </div>`;
 }

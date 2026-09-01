@@ -37,6 +37,19 @@ test('戰鬥畫面包含場景、雙方角色、血條、題目與音量控制',
   assert.match(html, /data-effects-volume/);
 });
 
+test('完整戰鬥舞台包含 viewport 與 stage 包裝且維持遮罩順序', () => {
+  const html = buildBattleMarkup({
+    ...viewModel,
+    gameMode: 'local',
+    eligiblePlayers: ['left', 'right'],
+    orientationPaused: true,
+  });
+  assert.match(html, /class="battle-viewport"/);
+  assert.match(html, /class="battle-stage"/);
+  assert.ok(html.indexOf('class="battle-stage"') < html.indexOf('class="mobile-answer-controls'));
+  assert.ok(html.indexOf('class="mobile-answer-controls') < html.indexOf('class="orientation-blocker"'));
+});
+
 test('本機四選題建立兩側觸控答題板與八個按鈕', () => {
   const html = buildBattleMarkup({
     ...viewModel,
@@ -49,7 +62,7 @@ test('本機四選題建立兩側觸控答題板與八個按鈕', () => {
   assert.match(html, /mobile-answer-pad-right/);
   assert.equal((html.match(/data-touch-answer=/g) ?? []).length, 8);
   assert.ok(html.indexOf('battle-console') < html.indexOf('mobile-answer-controls'));
-  assert.ok(html.indexOf('mobile-answer-controls') < html.indexOf('battle-status'));
+  assert.ok(html.indexOf('battle-status') < html.indexOf('mobile-answer-controls'));
 });
 
 test('只有右方可作答時，左方觸控按鈕停用而右方保持可用', () => {

@@ -1,6 +1,13 @@
 {
   "quizzes": [
     {
+      "id": "cap-115-math-01-10",
+      "name": "115 年國中教育會考數學第 1～10 題",
+      "subject": "國中教育會考",
+      "questions": 10,
+      "file": "./data/quizzes/cap-115-math-01-10.json"
+    },
+    {
       "id": "1061204",
       "name": "(國中)數學 三角形的重心(公開課)",
       "subject": "數學",

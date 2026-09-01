@@ -57,11 +57,24 @@ test('首頁接入科目篩選模組與響應式樣式', async () => {
 test('目前題庫資料維持確認過的各科數量', async () => {
   const data = JSON.parse(await readFile(new URL('../web/data/catalog.json', import.meta.url), 'utf8'));
   assert.deepEqual(buildSubjectFilters(data.quizzes), [
-    { subject: '全部', count: 31 },
+    { subject: '全部', count: 32 },
+    { subject: '國中教育會考', count: 1 },
     { subject: '數學', count: 23 },
     { subject: '國文', count: 4 },
     { subject: '英文', count: 2 },
     { subject: '公民', count: 1 },
     { subject: '歷史', count: 1 },
   ]);
+});
+
+test('115 年會考數學題庫保存官方前十題與固定題序', async () => {
+  const catalog = JSON.parse(await readFile(new URL('../web/data/catalog.json', import.meta.url), 'utf8'));
+  const quiz = catalog.quizzes.find(item => item.id === 'cap-115-math-01-10');
+  assert.equal(quiz.subject, '國中教育會考');
+  assert.equal(quiz.questions, 10);
+  const data = JSON.parse(await readFile(new URL('../web/data/quizzes/cap-115-math-01-10.json', import.meta.url), 'utf8'));
+  assert.equal(data.questionOrder, 'fixed');
+  assert.deepEqual(data.questions.map(question => question.id), ['001', '002', '003', '004', '005', '006', '007', '008', '009', '010']);
+  assert.deepEqual(data.questions.map(question => question.answerIndex), [2, 2, 2, 1, 1, 2, 0, 0, 0, 1]);
+  assert.ok(data.questions.every(question => question.choices.length === 4));
 });

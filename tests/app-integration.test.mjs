@@ -337,7 +337,7 @@ test('應用程式依模式決定選角、按鍵測試與 CPU 角色', async () 
   assert.match(source, /selectCpuCharacter\(/);
   assert.match(source, /cpuDifficulty/);
   assert.match(source, /createAnswerPositionState\(\)/);
-  assert.match(source, /prepareQuestionRound\(currentQuiz\.questions, Math\.random, answerPositionState\)/);
+  assert.match(source, /prepareQuestionRound\(currentQuiz\.questions, Math\.random, answerPositionState, currentQuiz\.questionOrder\)/);
 });
 
 test('戰場選擇文案正確說明四個校園場景', async () => {
@@ -694,7 +694,7 @@ test('確認重新開始保留原題庫與完整設定，並透過既有 prepara
   assert.doesNotMatch(restart, /clearBattleState|currentQuiz = null|characterSelection = createCharacterSelection/);
   assert.match(prepare, /battleSettings = settings/);
   assert.match(prepare, /answerPositionState = createAnswerPositionState\(\)/);
-  assert.match(prepare, /currentQuiz = \{ \.\.\.currentQuiz, activeQuestions: prepareQuestionRound\(currentQuiz\.questions, Math\.random, answerPositionState\) \}/);
+  assert.match(prepare, /currentQuiz = \{ \.\.\.currentQuiz, activeQuestions: prepareQuestionRound\(currentQuiz\.questions, Math\.random, answerPositionState, currentQuiz\.questionOrder\) \}/);
   assert.match(prepare, /quizState = createGameState/);
   assert.match(prepare, /combatState = createBattleState\(\)/);
   assert.match(prepare, /activeQuestionIndex = null/);

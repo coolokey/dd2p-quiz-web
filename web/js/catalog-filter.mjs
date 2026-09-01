@@ -1,4 +1,4 @@
-export const SUBJECT_ORDER = ['數學', '國文', '英文', '公民', '歷史', '其他'];
+export const SUBJECT_ORDER = ['國中教育會考', '數學', '國文', '英文', '公民', '歷史', '其他'];
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',

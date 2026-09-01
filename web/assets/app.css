@@ -168,6 +168,17 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 .orientation-blocker button { min-width:160px; min-height:48px; border:3px solid #fff; border-radius:10px; background:#ffd64f; color:#101522; font:900 18px var(--body); }
 
 @media (orientation: landscape) {
+  .touch-capable .battle-viewport {
+    position:relative;
+    height:var(--battle-stage-height, auto);
+    overflow:hidden;
+  }
+  .touch-capable .battle-stage {
+    width:100%;
+    margin:0 auto;
+    transform:scale(var(--battle-stage-scale,1));
+    transform-origin:top center;
+  }
   .touch-capable .mobile-answer-controls {
     display:flex;
     position:fixed;

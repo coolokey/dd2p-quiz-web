@@ -17,6 +17,7 @@ import { createBattleSessionCoordinator } from './battle-session-coordinator.mjs
 import { fetchJson, loadBootstrapResources, versionedAssetUrl } from './resource-loader.mjs?v=a552f6d';
 import { createBattleInputGate, createLatestSessionGate, markQuizRequestLoading, runLatestRequest, runStartSession } from './async-navigation.mjs';
 import { createBattleOrientationController, createBattlePauseCoordinator } from './battle-orientation.mjs';
+import { createBattleStageScaleController } from './battle-stage-scale.mjs';
 import { bindMobileAnswerControls, setMobileAnswerControlsLocked, syncTouchCapabilityClass } from './mobile-controls.mjs';
 import { PAUSE_ACTIONS, trapDialogTab } from './battle-pause-menu.mjs';
 import { createGamepadState, pollGamepadEvents } from './gamepad-input.mjs';
@@ -54,6 +55,10 @@ const battlePause = createBattlePauseCoordinator({
 const orientationController = createBattleOrientationController({
   onPortraitChange: handleBattleOrientationChange,
   onVisibilityChange: battlePause.setBackgroundPaused,
+});
+const battleStageScale = createBattleStageScaleController({
+  isMobileDevice: () => orientationController.isMobileDevice(),
+  isPortrait: () => orientationController.isPortrait(),
 });
 const battleLifecycle = createBattleLifecycle({
   cpuController,
@@ -236,6 +241,7 @@ function startBattleTimer() {
 
 function exitBattleOrientation() {
   resetManualPauseState();
+  battleStageScale.destroy();
   orientationController.exitBattle();
   battlePause.reset();
 }
@@ -496,6 +502,7 @@ async function startGame(settings) {
     prepare: () => {
       prepareBattleStart(settings);
       orientationController.refresh();
+      battleStageScale.sync();
     },
     stages: [
       () => audioManager?.setScene(settings.arenaId),
@@ -625,6 +632,7 @@ function renderGame({
     prompt: question.prompt, questionImage: question.image, choices: question.choices,
     status: statusOverride ?? currentStatus(), phase: combatState.phase, revealAnswerIndex,
   });
+  battleStageScale.bind(app);
   bindAudioToggle();
   bindMobileAnswerControls(app, { onAnswer: input => void processAnswer(input) });
   const returnButton = app.querySelector('[data-return-main-menu]');

@@ -6,6 +6,19 @@ import { createBattleAppHarness, flushMicrotasks } from './helpers/battle-app-ha
 const readAppSource = () => readFile(new URL('../web/js/app.mjs', import.meta.url), 'utf8');
 const readReadme = () => readFile(new URL('../README.md', import.meta.url), 'utf8');
 
+test('對戰舞台縮放控制器在渲染、方向同步與離場生命週期中掛接', async () => {
+  const source = await readAppSource();
+
+  assert.match(source, /import \{ createBattleStageScaleController \} from '\.\/battle-stage-scale\.mjs';/);
+  assert.match(source, /const battleStageScale = createBattleStageScaleController\(\{[\s\S]*isMobileDevice:\s*\(\) => orientationController\.isMobileDevice\(\),[\s\S]*isPortrait:\s*\(\) => orientationController\.isPortrait\(\),[\s\S]*\}\);/);
+  const orientationSource = await readFile(new URL('../web/js/battle-orientation.mjs', import.meta.url), 'utf8');
+  assert.match(orientationSource, /isMobileDevice:\s*\(\) => mobileDevice/);
+  assert.match(orientationSource, /isPortrait:\s*\(\) => mobileDevice && isPortraitViewport\(\{ width: viewport\?\.innerWidth, height: viewport\?\.innerHeight \}\)/);
+  assert.match(source, /orientationController\.refresh\(\);\s*battleStageScale\.sync\(\);/);
+  assert.match(source, /function exitBattleOrientation\(\) \{[\s\S]*battleStageScale\.destroy\(\);/);
+  assert.match(source, /renderBattle\(app,[\s\S]*\);\s*battleStageScale\.bind\(app\);/);
+});
+
 test('選角預覽與戰鬥名稱優先顯示角色中文 label', async () => {
   const source = await readAppSource();
   assert.match(source, /character\.label \|\| character\.name \|\| `角色 \$\{id\}`/);

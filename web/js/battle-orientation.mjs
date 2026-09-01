@@ -224,6 +224,8 @@ export function createBattleOrientationController({
     enterBattle,
     exitBattle,
     isActive: () => active,
+    isMobileDevice: () => mobileDevice,
+    isPortrait: () => mobileDevice && isPortraitViewport({ width: viewport?.innerWidth, height: viewport?.innerHeight }),
     refresh,
     sync,
   };

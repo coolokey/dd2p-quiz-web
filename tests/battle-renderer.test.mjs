@@ -402,6 +402,16 @@ test('觸控能力類別控制混合輸入裝置並避免非觸控電腦套用�
   assert.doesNotMatch(css, /@media \(any-pointer: coarse\)/);
 });
 
+test('行動橫向完整舞台使用縮放變數，桌機不套用舞台縮放', async () => {
+  const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
+  const landscapeRule = css.match(/@media\s*\(orientation:\s*landscape\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+
+  assert.match(landscapeRule, /\.touch-capable \.battle-viewport\s*\{[^}]*position:\s*relative[^}]*height:\s*var\(--battle-stage-height[^}]*\}/);
+  assert.match(landscapeRule, /\.touch-capable \.battle-stage\s*\{[^}]*margin:\s*0 auto[^}]*transform:\s*scale\(var\(--battle-stage-scale,\s*1\)\)[^}]*transform-origin:\s*top center[^}]*\}/);
+  const desktopRule = css.match(/@media\s*\(min-width:\s*761px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+  assert.doesNotMatch(desktopRule, /--battle-stage-(?:scale|height)|transform:\s*scale\(/);
+});
+
 test('寬螢幕桌機戰場使用完整可用寬度而不改變觸控版面', async () => {
   const css = await readFile(new URL('../web/assets/app.css', import.meta.url), 'utf8');
   const desktopRule = css.match(/@media \(min-width: 1281px\) and \(hover: hover\) and \(pointer: fine\)\s*\{\s*\.battle-shell\s*\{[^}]*\}\s*\}/);

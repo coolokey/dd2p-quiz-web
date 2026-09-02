@@ -1,6 +1,34 @@
 {
   "quizzes": [
     {
+      "id": "cap-111-math-01-10",
+      "name": "111 年國中教育會考數學第 1～10 題",
+      "subject": "國中教育會考",
+      "questions": 10,
+      "file": "./data/quizzes/cap-111-math-01-10.json"
+    },
+    {
+      "id": "cap-112-math-01-10",
+      "name": "112 年國中教育會考數學第 1～10 題",
+      "subject": "國中教育會考",
+      "questions": 10,
+      "file": "./data/quizzes/cap-112-math-01-10.json"
+    },
+    {
+      "id": "cap-113-math-01-10",
+      "name": "113 年國中教育會考數學第 1～10 題",
+      "subject": "國中教育會考",
+      "questions": 10,
+      "file": "./data/quizzes/cap-113-math-01-10.json"
+    },
+    {
+      "id": "cap-114-math-01-10",
+      "name": "114 年國中教育會考數學第 1～10 題",
+      "subject": "國中教育會考",
+      "questions": 10,
+      "file": "./data/quizzes/cap-114-math-01-10.json"
+    },
+    {
       "id": "cap-115-math-01-10",
       "name": "115 年國中教育會考數學第 1～10 題",
       "subject": "國中教育會考",

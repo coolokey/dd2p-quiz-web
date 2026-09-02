@@ -1,0 +1,138 @@
+{
+  "id": "cap-113-math-01-10",
+  "name": "113 年國中教育會考數學第 1～10 題",
+  "declaredTotal": 10,
+  "questionOrder": "fixed",
+  "questions": [
+    {
+      "id": "001",
+      "type": 0,
+      "prompt": "第 1 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 0,
+      "image": "./assets/questions/cap-113-math-01-10/q001.png"
+    },
+    {
+      "id": "002",
+      "type": 0,
+      "prompt": "第 2 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 0,
+      "image": "./assets/questions/cap-113-math-01-10/q002.png"
+    },
+    {
+      "id": "003",
+      "type": 0,
+      "prompt": "第 3 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 2,
+      "image": "./assets/questions/cap-113-math-01-10/q003.png"
+    },
+    {
+      "id": "004",
+      "type": 0,
+      "prompt": "第 4 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 3,
+      "image": "./assets/questions/cap-113-math-01-10/q004.png"
+    },
+    {
+      "id": "005",
+      "type": 0,
+      "prompt": "第 5 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 1,
+      "image": "./assets/questions/cap-113-math-01-10/q005.png"
+    },
+    {
+      "id": "006",
+      "type": 0,
+      "prompt": "第 6 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 3,
+      "image": "./assets/questions/cap-113-math-01-10/q006.png"
+    },
+    {
+      "id": "007",
+      "type": 0,
+      "prompt": "第 7 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 3,
+      "image": "./assets/questions/cap-113-math-01-10/q007.png"
+    },
+    {
+      "id": "008",
+      "type": 0,
+      "prompt": "第 8 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 2,
+      "image": "./assets/questions/cap-113-math-01-10/q008.png"
+    },
+    {
+      "id": "009",
+      "type": 0,
+      "prompt": "第 9 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 2,
+      "image": "./assets/questions/cap-113-math-01-10/q009.png"
+    },
+    {
+      "id": "010",
+      "type": 0,
+      "prompt": "第 10 題：請依題圖選答。",
+      "choices": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "answerIndex": 2,
+      "image": "./assets/questions/cap-113-math-01-10/q010.png"
+    }
+  ]
+}

@@ -57,8 +57,8 @@ test('首頁接入科目篩選模組與響應式樣式', async () => {
 test('目前題庫資料維持確認過的各科數量', async () => {
   const data = JSON.parse(await readFile(new URL('../web/data/catalog.json', import.meta.url), 'utf8'));
   assert.deepEqual(buildSubjectFilters(data.quizzes), [
-    { subject: '全部', count: 32 },
-    { subject: '國中教育會考', count: 1 },
+    { subject: '全部', count: 36 },
+    { subject: '國中教育會考', count: 5 },
     { subject: '數學', count: 23 },
     { subject: '國文', count: 4 },
     { subject: '英文', count: 2 },

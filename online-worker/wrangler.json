@@ -1,0 +1,12 @@
+{
+  "name": "ddp-online-battle-worker",
+  "main": "src/worker.mjs",
+  "account_id": "d8729bbdee246e52996040402c83fe76",
+  "compatibility_date": "2026-10-31",
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "SUPABASE_URL": "https://adnuyyhfxnzwfqmhizcr.supabase.co",
+    "ALLOWED_ORIGINS": "*"
+  }
+}

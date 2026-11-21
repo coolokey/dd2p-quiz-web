@@ -21,6 +21,11 @@ import { createBattleStageScaleController } from './battle-stage-scale.mjs';
 import { bindMobileAnswerControls, setMobileAnswerControlsLocked, syncTouchCapabilityClass } from './mobile-controls.mjs';
 import { PAUSE_ACTIONS, trapDialogTab } from './battle-pause-menu.mjs';
 import { createGamepadState, pollGamepadEvents } from './gamepad-input.mjs';
+import { createSeededQuestionDeck, isValidRoomCode, normalizeRoomCode } from './online/room-code.mjs';
+import { buildInviteUrl, ONLINE_NAME_STORAGE_KEY, readInviteParams, resolveOnlineApiUrl, saveOnlineApiUrl } from './online/online-config.mjs';
+import { clearOnlineSession, createOnlineTransport, loadOnlineSession, saveOnlineSession } from './online/online-transport.mjs';
+import { createOnlineController } from './online/online-controller.mjs';
+import { buildOnlineHubView, buildOnlineResultView, buildOnlineWaitingRoomView } from './online/online-views.mjs';
 
 const app = document.querySelector('#app');
 syncTouchCapabilityClass(document.documentElement, navigator);
@@ -38,6 +43,24 @@ let keyTestPlayers = [];
 let muted = localStorage.getItem('dd2p-muted') === 'true';
 let pauseConfirmAction = null;
 let pauseReturnFocus = null;
+let onlineApiUrl = resolveOnlineApiUrl({ search: location?.search ?? '', storage: localStorage });
+let onlinePlayerName = localStorage.getItem(ONLINE_NAME_STORAGE_KEY) || '';
+let onlineHealth = { state: 'idle', message: '' };
+let onlineController = null;
+let onlineView = null;
+let onlineQuiz = null;
+let onlineQuizId = null;
+let onlineDeck = null;
+let onlineQuestionSeed = null;
+let onlineAnimating = false;
+let onlineSubmitting = false;
+let onlineLeaveConfirm = false;
+let onlineTimeTimer = null;
+let onlineRevealTimer = null;
+let onlineHubFeedback = { status: '', error: '', busy: false };
+let onlineWaitingFeedback = { copy: '', error: '', busy: false };
+let onlineInviteRoomCode = '';
+let onlineInviteConsumed = false;
 const battleSoundTimers = new Set();
 const cpuController = createCpuController();
 const battlePause = createBattlePauseCoordinator({
@@ -256,6 +279,7 @@ function stopBattleActivity() {
 }
 
 function clearBattleState({ keepGameMode = false } = {}) {
+  cleanupOnlineSession();
   stopBattleActivity();
   currentQuiz = null;
   quizState = null;
@@ -315,7 +339,9 @@ function renderStartScreen() {
   bindStartScreen(app, {
     onMode: mode => {
       if (!startAvailability.ready || !Object.values(GAME_MODES).includes(mode)) return;
-      gameMode = mode; playUiSound('confirm'); renderCatalog();
+      gameMode = mode; playUiSound('confirm');
+      if (mode === GAME_MODES.online) { openOnlineHub(); return; }
+      renderCatalog();
     },
     onHelp: renderStartHelp,
     onAudio: renderStartAudioSettings,
@@ -331,6 +357,7 @@ function renderStartHelp() {
       <section><h3>左方玩家　紅隊</h3><p>移動與選擇：W、X、A、D；作答：1、2、3、4。</p></section>
       <section><h3>右方玩家　藍隊</h3><p>移動與選擇：↑、↓、←、→；作答：0、−、＝、反斜線（\\）。</p></section>
       <section><h3>單人／雙人模式</h3><p>單人模式由玩家對戰電腦；本機雙人對戰由兩位玩家使用同一台鍵盤同場搶答。</p></section>
+      <section><h3>網路雙人對戰</h3><p>由 Cloudflare × Supabase 即時同步房間。建立房間取得 6 碼房號或邀請連結，兩位玩家在各自裝置用 1～4 鍵、觸控按鈕或手把同場搶答。</p></section>
     </div>
     <div class="actions"><button class="primary" id="back-start">返回主選單</button></div>`);
   app.querySelector('#back-start').onclick = renderStartScreen;
@@ -425,7 +452,8 @@ function renderRules() {
 function renderArenaSelect(settings, selectedId = battleManifest.scenes[0]?.id) {
   cancelPendingStart();
   const cards = battleManifest.scenes.map(scene => `<button class="arena-card ${scene.id === selectedId ? 'is-selected' : ''}" data-arena-id="${esc(scene.id)}"><img src="${esc(scene.thumbnail || scene.image)}" alt="${esc(scene.label)}" loading="lazy" decoding="async"><span>${esc(scene.label)}</span></button>`).join('');
-  app.innerHTML = shell(`<h2 class="selection-title">選擇本局戰場</h2><p class="lead">四個校園場景都能使用，並各自搭配原版背景音樂。</p><div class="arena-grid">${cards}</div><div class="actions"><button class="secondary" id="back">返回規則</button><button class="primary" id="next">選擇角色</button></div>`);
+  const nextLabel = gameMode === GAME_MODES.online ? '建立網路房間' : '選擇角色';
+  app.innerHTML = shell(`<h2 class="selection-title">選擇本局戰場</h2><p class="lead">四個校園場景都能使用，並各自搭配原版背景音樂。</p><div class="arena-grid">${cards}</div><div class="actions"><button class="secondary" id="back">返回規則</button><button class="primary" id="next">${nextLabel}</button></div>`);
   let arenaId = selectedId;
   app.querySelectorAll('[data-arena-id]').forEach(button => button.onclick = () => {
     arenaId = button.dataset.arenaId;
@@ -433,7 +461,14 @@ function renderArenaSelect(settings, selectedId = battleManifest.scenes[0]?.id) 
     playUiSound();
   });
   app.querySelector('#back').onclick = renderRules;
-  app.querySelector('#next').onclick = () => { playUiSound('confirm'); renderCharacterSelect({ ...settings, arenaId }); };
+  app.querySelector('#next').onclick = () => {
+    playUiSound('confirm');
+    if (gameMode === GAME_MODES.online) {
+      void createOnlineRoomFromSetup({ ...settings, arenaId });
+      return;
+    }
+    renderCharacterSelect({ ...settings, arenaId });
+  };
 }
 
 function characterCards(player) {
@@ -810,6 +845,634 @@ function renderResult() {
   app.querySelector('#again').onclick = () => { audioManager?.stop(); characterSelection = createCharacterSelection(); renderRules(); };
 }
 
+function clearOnlineTimers() {
+  if (onlineTimeTimer !== null) {
+    clearInterval(onlineTimeTimer);
+    onlineTimeTimer = null;
+  }
+  if (onlineRevealTimer !== null) {
+    clearTimeout(onlineRevealTimer);
+    onlineRevealTimer = null;
+  }
+}
+
+function cleanupOnlineSession({ clearStorage = false } = {}) {
+  clearOnlineTimers();
+  onlineController?.reset?.();
+  onlineController = null;
+  onlineView = null;
+  onlineAnimating = false;
+  onlineSubmitting = false;
+  onlineLeaveConfirm = false;
+  onlineDeck = null;
+  onlineQuestionSeed = null;
+  onlineQuiz = null;
+  onlineQuizId = null;
+  if (clearStorage) clearOnlineSession();
+}
+
+function getOnlineTransport() {
+  return createOnlineTransport({ apiUrl: onlineApiUrl, fetchImpl: fetch });
+}
+
+async function checkOnlineHealth() {
+  if (!onlineApiUrl) {
+    onlineHealth = { state: 'idle', message: '' };
+    if (onlineView === 'hub') renderOnlineHub();
+    return false;
+  }
+  onlineHealth = { state: 'checking', message: '正在連線至 Cloudflare × Supabase……' };
+  if (onlineView === 'hub') renderOnlineHub();
+  const result = await getOnlineTransport().checkHealth();
+  if (result.ok) {
+    onlineHealth = {
+      state: 'connected',
+      message: `資料庫連線正常（回應 ${result.elapsed_ms ?? 0} ms，目前活躍房間 ${result.active_rooms ?? 0}）。`,
+    };
+  } else {
+    onlineHealth = {
+      state: 'error',
+      message: result.message || '無法連線至網路對戰伺服器。',
+    };
+  }
+  if (onlineView === 'hub') renderOnlineHub();
+  return result.ok;
+}
+
+function openOnlineHub({ status = '', error = '' } = {}) {
+  cancelPendingStart();
+  quizRequestGate.invalidate();
+  stopBattleActivity();
+  cleanupOnlineSession();
+  gameMode = GAME_MODES.online;
+  onlineView = 'hub';
+  onlineHubFeedback = { status, error, busy: false };
+  renderOnlineHub();
+  if (onlineApiUrl && onlineHealth.state === 'idle') {
+    void checkOnlineHealth();
+  }
+}
+
+function renderOnlineHub() {
+  if (onlineView !== 'hub') return;
+  const savedSession = loadOnlineSession();
+  app.innerHTML = shell(buildOnlineHubView({
+    apiUrl: onlineApiUrl,
+    healthState: onlineHealth.state,
+    healthMessage: onlineHealth.message,
+    playerName: onlinePlayerName,
+    inviteRoomCode: onlineInviteRoomCode,
+    savedSession,
+    statusMessage: onlineHubFeedback.status,
+    errorMessage: onlineHubFeedback.error,
+    busy: onlineHubFeedback.busy,
+    escape: esc,
+  }));
+
+  const nameInput = app.querySelector('#online-player-name');
+  if (nameInput) {
+    nameInput.oninput = () => {
+      onlinePlayerName = nameInput.value.trim().slice(0, 20);
+      localStorage.setItem(ONLINE_NAME_STORAGE_KEY, onlinePlayerName);
+    };
+  }
+
+  const createBtn = app.querySelector('#online-create-flow');
+  if (createBtn) {
+    createBtn.onclick = () => {
+      if (!onlineApiUrl) return;
+      playUiSound('confirm');
+      onlineView = null;
+      gameMode = GAME_MODES.online;
+      renderCatalog();
+    };
+  }
+
+  const roomInput = app.querySelector('#online-room-code');
+  const joinBtn = app.querySelector('#online-join-btn');
+  if (joinBtn && roomInput) {
+    const submitJoin = () => {
+      const code = normalizeRoomCode(roomInput.value);
+      onlineInviteRoomCode = code;
+      if (!isValidRoomCode(code)) {
+        onlineHubFeedback = { status: '', error: '請輸入正確的 6 位英數房間碼。', busy: false };
+        renderOnlineHub();
+        return;
+      }
+      playUiSound('confirm');
+      void joinOnlineRoom(code);
+    };
+    joinBtn.onclick = submitJoin;
+    roomInput.onkeydown = event => { if (event.key === 'Enter') submitJoin(); };
+  }
+
+  const resumeBtn = app.querySelector('#online-resume-btn');
+  if (resumeBtn && savedSession) {
+    resumeBtn.onclick = () => {
+      playUiSound('confirm');
+      void joinOnlineRoom(savedSession.roomCode, { resume: savedSession });
+    };
+  }
+
+  const saveApiBtn = app.querySelector('#online-save-api');
+  const apiInput = app.querySelector('#online-api-url');
+  if (saveApiBtn && apiInput) {
+    saveApiBtn.onclick = () => {
+      const saved = saveOnlineApiUrl(apiInput.value, localStorage);
+      if (apiInput.value.trim() && !saved) {
+        onlineHubFeedback = { status: '', error: '伺服器網址格式無效，請使用 https://（或本機 http://localhost）。', busy: false };
+        renderOnlineHub();
+        return;
+      }
+      onlineApiUrl = saved;
+      onlineHealth = { state: 'idle', message: '' };
+      onlineHubFeedback = { status: saved ? '已儲存伺服器網址，正在測試連線……' : '已清除伺服器網址。', error: '', busy: false };
+      renderOnlineHub();
+      if (saved) void checkOnlineHealth();
+    };
+  }
+
+  const backBtn = app.querySelector('#online-back-home');
+  if (backBtn) backBtn.onclick = returnToMainMenu;
+}
+
+async function createOnlineRoomFromSetup(settings) {
+  if (!onlineApiUrl) {
+    openOnlineHub({ error: '請先設定 Cloudflare Worker 伺服器網址再建立房間。' });
+    return;
+  }
+  const nextBtn = app.querySelector('#next');
+  if (nextBtn) {
+    nextBtn.disabled = true;
+    nextBtn.textContent = '正在建立房間……';
+  }
+  const result = await getOnlineTransport().createRoom({
+    quizId: currentQuiz.id,
+    quizName: currentQuiz.name,
+    arenaId: settings.arenaId,
+    ruleMode: settings.mode,
+    ruleLimit: settings.limit,
+    questionCount: currentQuiz.questions.length,
+    playerName: onlinePlayerName || '紅隊玩家',
+  });
+  if (!result.ok) {
+    openOnlineHub({ error: result.message || '建立房間失敗，請稍後再試。' });
+    return;
+  }
+  onlineQuiz = currentQuiz;
+  onlineQuizId = currentQuiz.id;
+  enterOnlineRoom(result.session, result.room);
+}
+
+async function joinOnlineRoom(code, { resume = null } = {}) {
+  onlineHubFeedback = { status: '正在連線加入房間……', error: '', busy: true };
+  renderOnlineHub();
+  const payload = resume
+    ? { playerId: resume.playerId, resumeToken: resume.resumeToken, playerName: onlinePlayerName || '藍隊玩家' }
+    : { playerName: onlinePlayerName || '藍隊玩家' };
+  const result = await getOnlineTransport().joinRoom(code, payload);
+  if (!result.ok) {
+    if (resume && (result.code === 'ROOM_NOT_FOUND' || result.code === 'UNAUTHORIZED')) {
+      clearOnlineSession();
+    }
+    onlineHubFeedback = { status: '', error: result.message || '加入房間失敗。', busy: false };
+    renderOnlineHub();
+    return;
+  }
+  enterOnlineRoom(result.session, result.room);
+}
+
+async function ensureOnlineQuizLoaded(room) {
+  if (onlineQuiz && onlineQuizId === room.quizId) return onlineQuiz;
+  const item = catalog.find(quiz => quiz.id === room.quizId);
+  if (!item) throw new Error(`找不到題庫 ${room.quizId}`);
+  const quiz = await fetchJson(versionedAssetUrl(item.file), fetch);
+  onlineQuiz = quiz;
+  onlineQuizId = room.quizId;
+  return quiz;
+}
+
+async function ensureOnlineDeck(room) {
+  const quiz = await ensureOnlineQuizLoaded(room);
+  if (!onlineDeck || onlineQuestionSeed !== room.questionSeed || onlineQuizId !== room.quizId) {
+    onlineDeck = createSeededQuestionDeck(quiz.questions, room.questionSeed || 1, quiz.questionOrder);
+    onlineQuestionSeed = room.questionSeed;
+  }
+  return onlineDeck;
+}
+
+function enterOnlineRoom(session, initialRoom) {
+  cleanupOnlineSession();
+  gameMode = GAME_MODES.online;
+  saveOnlineSession({ ...session, apiUrl: onlineApiUrl });
+  onlineWaitingFeedback = { copy: '', error: '', busy: false };
+  const transport = getOnlineTransport();
+  onlineController = createOnlineController({
+    transport,
+    onRoomUpdate: (room, meta) => { void handleOnlineRoomUpdate(room, meta); },
+    onBattleEvent: (event, room) => { void handleOnlineBattleEvent(event, room); },
+    onConnectionChange: () => {
+      const currentRoom = onlineController?.getRoom();
+      if (!currentRoom) return;
+      if (onlineView === 'waiting') renderOnlineWaitingRoom(currentRoom);
+      else if (onlineView === 'battle' && !onlineAnimating) void renderOnlineBattle(currentRoom);
+    },
+    onRoomLost: error => {
+      cleanupOnlineSession({ clearStorage: true });
+      openOnlineHub({ error: error?.message || '房間已結束或連線已失效。' });
+    },
+  });
+  onlineController.start(session, initialRoom, { emitInitialEvent: false });
+}
+
+async function handleOnlineRoomUpdate(room, { previousRoom } = {}) {
+  if (!onlineController) return;
+  if (room.status === 'waiting') {
+    clearOnlineTimers();
+    exitBattleOrientation();
+    onlineView = 'waiting';
+    renderOnlineWaitingRoom(room);
+    return;
+  }
+  if (room.status === 'playing') {
+    const enteringBattle = onlineView !== 'battle' || previousRoom?.status !== 'playing' || onlineQuestionSeed !== room.questionSeed;
+    try {
+      await ensureOnlineDeck(room);
+    } catch (error) {
+      cleanupOnlineSession({ clearStorage: true });
+      openOnlineHub({ error: `無法載入本房間題庫：${error.message}` });
+      return;
+    }
+    if (!onlineController) return;
+    if (enteringBattle) {
+      onlineLeaveConfirm = false;
+      onlineAnimating = false;
+      onlineSubmitting = false;
+      attackState = createAttackState();
+      const battleConf = {
+        arenaId: room.arenaId,
+        characters: {
+          left: room.players?.left?.characterId,
+          right: room.players?.right?.characterId,
+        },
+      };
+      prewarmBattleAssets(battleConf, ['idle']);
+      scheduleAttackAssetPreload(battleConf);
+      requestBattleOrientation();
+      orientationController.refresh();
+      battleStageScale.sync();
+      void audioManager?.setScene(room.arenaId);
+      audioManager?.unlock();
+      audioManager?.playSfx('start');
+      startOnlineClockTicker();
+    }
+    onlineView = 'battle';
+    if (!onlineAnimating) renderOnlineBattle(room);
+    return;
+  }
+  if (room.status === 'ended') {
+    clearOnlineTimers();
+    if (!onlineAnimating) renderOnlineResult(room);
+  }
+}
+
+function renderOnlineWaitingRoom(room) {
+  const session = onlineController?.getSession();
+  if (!session) return;
+  const scene = battleManifest.scenes.find(item => item.id === room.arenaId);
+  const inviteUrl = buildInviteUrl({ roomCode: room.roomCode, pageUrl: location.href, apiUrl: onlineApiUrl });
+  app.innerHTML = shell(buildOnlineWaitingRoomView({
+    room,
+    seat: session.seat,
+    characters: battleManifest.characters,
+    arenaLabel: scene?.label ?? room.arenaId,
+    inviteUrl,
+    connectionStatus: onlineController.getConnectionStatus(),
+    copyFeedback: onlineWaitingFeedback.copy,
+    errorMessage: onlineWaitingFeedback.error,
+    busy: onlineWaitingFeedback.busy,
+    characterImage,
+    escape: esc,
+  }));
+
+  const copyCodeBtn = app.querySelector('#online-copy-code');
+  if (copyCodeBtn) {
+    copyCodeBtn.onclick = async () => {
+      try {
+        await navigator?.clipboard?.writeText(room.roomCode);
+        onlineWaitingFeedback = { ...onlineWaitingFeedback, copy: `已複製房間碼：${room.roomCode}`, error: '' };
+      } catch {
+        onlineWaitingFeedback = { ...onlineWaitingFeedback, copy: `房間碼為：${room.roomCode}（請手動複製）`, error: '' };
+      }
+      renderOnlineWaitingRoom(room);
+    };
+  }
+
+  const copyLinkBtn = app.querySelector('#online-copy-link');
+  if (copyLinkBtn) {
+    copyLinkBtn.onclick = async () => {
+      try {
+        await navigator?.clipboard?.writeText(inviteUrl);
+        onlineWaitingFeedback = { ...onlineWaitingFeedback, copy: '已複製邀請連結！直接傳給對手即可加入。', error: '' };
+      } catch {
+        onlineWaitingFeedback = { ...onlineWaitingFeedback, copy: `邀請連結：${inviteUrl}`, error: '' };
+      }
+      renderOnlineWaitingRoom(room);
+    };
+  }
+
+  app.querySelectorAll('[data-online-character]').forEach(button => {
+    button.onclick = async () => {
+      playUiSound();
+      onlineWaitingFeedback = { ...onlineWaitingFeedback, error: '', busy: true };
+      renderOnlineWaitingRoom(room);
+      const res = await onlineController?.selectCharacter(button.dataset.onlineCharacter);
+      onlineWaitingFeedback = { ...onlineWaitingFeedback, error: res?.ok ? '' : (res?.message || '選角失敗'), busy: false };
+      if (onlineView === 'waiting' && onlineController?.getRoom()) renderOnlineWaitingRoom(onlineController.getRoom());
+    };
+  });
+
+  const readyBtn = app.querySelector('#online-toggle-ready');
+  if (readyBtn) {
+    readyBtn.onclick = async () => {
+      const me = room.players?.[session.seat];
+      playUiSound('confirm');
+      onlineWaitingFeedback = { ...onlineWaitingFeedback, error: '', busy: true };
+      renderOnlineWaitingRoom(room);
+      const res = await onlineController?.setReady(!me?.ready);
+      onlineWaitingFeedback = { ...onlineWaitingFeedback, error: res?.ok ? '' : (res?.message || '更新準備狀態失敗'), busy: false };
+      if (onlineView === 'waiting' && onlineController?.getRoom()) renderOnlineWaitingRoom(onlineController.getRoom());
+    };
+  }
+
+  const leaveBtn = app.querySelector('#online-leave-room');
+  if (leaveBtn) {
+    leaveBtn.onclick = async () => {
+      playUiSound();
+      await onlineController?.leaveRoom();
+      clearOnlineSession();
+      openOnlineHub({ status: '已離開房間。' });
+    };
+  }
+}
+
+function startOnlineClockTicker() {
+  clearOnlineTimers();
+  onlineTimeTimer = setInterval(() => {
+    const room = onlineController?.getRoom();
+    if (!room || room.status !== 'playing' || room.ruleMode !== 'time' || room.phase !== 'regulation') return;
+    const remaining = onlineController.getRemainingSeconds();
+    if (remaining === 0) {
+      void onlineController.finishTime();
+    }
+    if (onlineView === 'battle' && !onlineAnimating) renderOnlineBattle(room);
+  }, 1000);
+}
+
+function formatOnlineProgress(room, questionIndexOverride = null) {
+  if (room.phase === 'sudden-death') return 'SUDDEN';
+  if (room.ruleMode === 'time') {
+    const remaining = onlineController?.getRemainingSeconds() ?? room.ruleLimit;
+    return `${remaining}s`;
+  }
+  const index = questionIndexOverride ?? room.questionIndex;
+  const limit = Math.min(room.ruleLimit, room.questionCount);
+  return `${Math.min(index + 1, limit)}／${limit}`;
+}
+
+function renderOnlineBattle(room, {
+  questionOverride = null,
+  progressOverride = null,
+  statusOverride = null,
+  revealAnswerIndex = null,
+  healthOverride = null,
+  scoresOverride = null,
+} = {}) {
+  const session = onlineController?.getSession();
+  if (!session || !onlineDeck) return;
+  const seat = session.seat;
+  const scene = battleManifest.scenes.find(item => item.id === room.arenaId) ?? battleManifest.scenes[0];
+  const leftChar = characterById(room.players?.left?.characterId) ?? battleManifest.characters[0];
+  const rightChar = characterById(room.players?.right?.characterId) ?? battleManifest.characters[1] ?? leftChar;
+  const question = questionOverride ?? onlineDeck.getQuestion(room.questionIndex);
+  const health = healthOverride ?? room.health ?? { left: 100, right: 100 };
+  const scores = scoresOverride ?? room.scores ?? { left: 0, right: 0 };
+  const leftName = room.players?.left?.name ? `${room.players.left.name}｜${leftChar.label || leftChar.name}` : (leftChar.label || leftChar.name);
+  const rightName = room.players?.right?.name ? `${room.players.right.name}｜${rightChar.label || rightChar.name}` : (rightChar.label || rightChar.name);
+  const connStatus = onlineController.getConnectionStatus();
+  const badgePrefix = connStatus === 'reconnecting' ? '重連中' : connStatus === 'disconnected' ? '已斷線' : '線上';
+  const onlineBadge = `${badgePrefix}｜${room.roomCode}`;
+
+  renderBattle(app, {
+    scene,
+    baseUrl: location.href,
+    audio: audioVolumes,
+    gameMode: GAME_MODES.online,
+    localPlayer: seat,
+    onlineBadge,
+    onlineLeaveConfirm,
+    eligiblePlayers: room.eligiblePlayers ?? ['left', 'right'],
+    mobileInputLocked: onlineAnimating || onlineSubmitting || onlineLeaveConfirm || room.status !== 'playing',
+    orientationPaused: orientationController.isPortrait() && !onlineLeaveConfirm,
+    manualPaused: false,
+    pauseConfirmAction: null,
+    pausePending: false,
+    players: {
+      left: { name: leftName, health: health.left, score: scores.left, image: characterImage(leftChar) },
+      right: { name: rightName, health: health.right, score: scores.right, image: characterImage(rightChar) },
+    },
+    progress: progressOverride ?? formatOnlineProgress(room),
+    prompt: question.prompt,
+    questionImage: question.image,
+    choices: question.choices,
+    status: statusOverride ?? battleStatus(GAME_MODES.online, room.eligiblePlayers ?? ['left', 'right'], room.phase, {
+      localSeat: seat,
+      playerNames: { left: room.players?.left?.name, right: room.players?.right?.name },
+    }),
+    phase: room.phase,
+    revealAnswerIndex,
+  });
+  document.documentElement.classList.toggle('phone-battle-device', orientationController.isPhoneDevice());
+  battleStageScale.bind(app);
+  bindAudioToggle();
+  bindMobileAnswerControls(app, { onAnswer: input => void submitOnlineAnswer(input.answerIndex) });
+
+  const leaveBtn = app.querySelector('[data-online-leave-battle]');
+  if (leaveBtn) leaveBtn.onclick = () => { onlineLeaveConfirm = true; renderOnlineBattle(onlineController?.getRoom() ?? room); };
+  const cancelLeave = app.querySelector('[data-online-leave-cancel]');
+  if (cancelLeave) cancelLeave.onclick = () => { onlineLeaveConfirm = false; renderOnlineBattle(onlineController?.getRoom() ?? room); };
+  const confirmLeave = app.querySelector('[data-online-leave-confirm]');
+  if (confirmLeave) {
+    confirmLeave.onclick = async () => {
+      onlineLeaveConfirm = false;
+      await onlineController?.leaveRoom();
+      clearOnlineSession();
+      openOnlineHub({ status: '已離開網路對戰。' });
+    };
+  }
+  const returnHome = app.querySelector('[data-return-main-menu]');
+  if (returnHome) {
+    returnHome.onclick = () => { onlineLeaveConfirm = true; renderOnlineBattle(onlineController?.getRoom() ?? room); };
+  }
+}
+
+async function submitOnlineAnswer(answerIndex) {
+  const controller = onlineController;
+  const session = controller?.getSession();
+  const room = controller?.getRoom();
+  if (!controller || !session || !room || onlineView !== 'battle') return false;
+  if (onlineAnimating || onlineSubmitting || onlineLeaveConfirm || room.status !== 'playing') return false;
+  if (!room.eligiblePlayers?.includes(session.seat)) return false;
+
+  const question = onlineDeck?.getQuestion(room.questionIndex);
+  if (!question || answerIndex < 0 || answerIndex >= question.choices.length) return false;
+
+  onlineSubmitting = true;
+  setMobileAnswerControlsLocked(app, true);
+  try {
+    const attack = drawAttack(attackState, session.seat);
+    attackState = attack.state;
+    await controller.submitAnswer({
+      questionIndex: room.questionIndex,
+      answerIndex,
+      correctAnswerIndex: question.answerIndex,
+      attackType: attack.attackType,
+    });
+    return true;
+  } finally {
+    onlineSubmitting = false;
+  }
+}
+
+async function handleOnlineBattleEvent(event, room) {
+  if (!onlineController || !onlineDeck) return;
+  if (event.type === 'rematch') {
+    await ensureOnlineDeck(room);
+    onlineView = 'battle';
+    onlineAnimating = false;
+    onlineLeaveConfirm = false;
+    requestBattleOrientation();
+    startOnlineClockTicker();
+    audioManager?.playSfx('start');
+    renderOnlineBattle(room);
+    return;
+  }
+  if (event.type === 'timeout') {
+    if (event.ended || room.status === 'ended') renderOnlineResult(room);
+    else {
+      audioManager?.playSfx('start');
+      renderOnlineBattle(room);
+    }
+    return;
+  }
+  if (event.type === 'forfeit') {
+    renderOnlineResult(room);
+    return;
+  }
+  if (event.type !== 'answer') return;
+
+  onlineAnimating = true;
+  try {
+    const question = onlineDeck.getQuestion(event.questionIndex);
+    const progress = formatOnlineProgress(room, event.questionIndex);
+    const actorChar = characterById(room.players?.[event.player]?.characterId);
+    renderOnlineBattle(room, { questionOverride: question, progressOverride: progress });
+
+    audioManager?.playSfx('buzz');
+    if (event.correct) {
+      audioManager?.playSfx('correct');
+      audioManager?.playSfx('attack');
+      const timing = attackTiming(event.attackType || 'energy');
+      const anim = playBattleAnimation(app, {
+        type: 'attack',
+        player: event.player,
+        opponent: event.opponent,
+        damage: event.damage ?? 10,
+      }, {
+        attackType: event.attackType || 'energy',
+        weapon: actorChar?.weapon,
+        profile: actorChar?.attacks?.[event.attackType || 'energy'],
+        attackFrames: actorChar?.states?.attack,
+        duration: 650,
+        impactDelay: timing.impactDelay,
+      });
+      if (timing.swingDelay === 0) audioManager?.playSfx('weapon');
+      else setTimeout(() => { if (onlineView === 'battle') audioManager?.playSfx('weapon'); }, timing.swingDelay);
+      await new Promise(resolve => setTimeout(resolve, timing.impactDelay));
+      if (onlineView === 'battle') {
+        audioManager?.playSfx('hit');
+        audioManager?.playSfx('hurt');
+      }
+      await anim;
+    } else {
+      audioManager?.playSfx('wrong');
+      await playBattleAnimation(app, {
+        type: 'miss',
+        player: event.player,
+        opponent: event.opponent,
+      }, {
+        attackFrames: actorChar?.states?.miss,
+        duration: 500,
+      });
+      if (event.questionAdvanced && onlineController) {
+        renderOnlineBattle(room, {
+          questionOverride: question,
+          progressOverride: progress,
+          statusOverride: `正確答案：${question.choices[event.correctAnswerIndex]}`,
+          revealAnswerIndex: event.correctAnswerIndex,
+        });
+        await new Promise(resolve => { onlineRevealTimer = setTimeout(resolve, 900); });
+        onlineRevealTimer = null;
+      }
+    }
+  } finally {
+    onlineAnimating = false;
+  }
+
+  const latest = onlineController?.getRoom();
+  if (!latest) return;
+  if (latest.status === 'ended') renderOnlineResult(latest);
+  else if (onlineView === 'battle') renderOnlineBattle(latest);
+}
+
+function renderOnlineResult(room) {
+  const session = onlineController?.getSession();
+  if (!session) return;
+  const firstEntry = onlineView !== 'result';
+  onlineView = 'result';
+  clearOnlineTimers();
+  exitBattleOrientation();
+  if (firstEntry) {
+    if (room.endReason === 'ko') audioManager?.playSfx('ko');
+    audioManager?.playSfx(room.winner === session.seat ? 'win' : 'lose');
+  }
+  app.innerHTML = shell(buildOnlineResultView({ room, seat: session.seat, escape: esc }));
+  const hubBtn = app.querySelector('#online-result-hub');
+  if (hubBtn) {
+    hubBtn.onclick = async () => {
+      await onlineController?.leaveRoom();
+      clearOnlineSession();
+      openOnlineHub();
+    };
+  }
+  const homeBtn = app.querySelector('#online-result-home');
+  if (homeBtn) {
+    homeBtn.onclick = async () => {
+      await onlineController?.leaveRoom();
+      clearOnlineSession();
+      returnToMainMenu();
+    };
+  }
+  const rematchBtn = app.querySelector('#online-rematch-btn');
+  if (rematchBtn) {
+    rematchBtn.onclick = async () => {
+      playUiSound('confirm');
+      rematchBtn.disabled = true;
+      await onlineController?.requestRematch();
+    };
+  }
+}
+
 function handleGameCodeInput(code) {
   if (app.querySelector('#key-hint')) {
     const needed = keyTestPlayers.flatMap(keysFor);
@@ -820,6 +1483,7 @@ function handleGameCodeInput(code) {
     return;
   }
   const input = getAnswerInput(code);
+  if (input && onlineView === 'battle') { void submitOnlineAnswer(input.answerIndex); return; }
   if (input && battleInputGate.isEnabled() && (battleSettings?.gameMode !== GAME_MODES.solo || input.player !== 'right')) void processAnswer(input);
 }
 
@@ -847,7 +1511,16 @@ function startGamepadLoop() {
 document.addEventListener('pointerdown', () => audioManager?.unlock(), { once: true });
 document.addEventListener('keydown', event => {
   audioManager?.unlock();
+  const targetTag = event.target?.tagName;
+  if (targetTag === 'INPUT' || targetTag === 'TEXTAREA' || targetTag === 'SELECT') return;
   if (event.code === 'Escape') {
+    if (onlineView === 'battle') {
+      event.preventDefault();
+      if (event.repeat) return;
+      onlineLeaveConfirm = !onlineLeaveConfirm;
+      if (onlineController?.getRoom()) renderOnlineBattle(onlineController.getRoom());
+      return;
+    }
     if (!hasLiveBattle()) return;
     event.preventDefault();
     if (event.repeat) return;
@@ -883,6 +1556,18 @@ async function bootstrap() {
       battleManifest = resources.manifest;
       startAvailability = { ready: resources.ready, message: resources.message };
       audioManager = createAudioManager({ manifest: battleManifest, muted, volume: audioVolumes.master, musicVolume: audioVolumes.music, effectsVolume: audioVolumes.effects });
+      if (!onlineInviteConsumed) {
+        onlineInviteConsumed = true;
+        const invite = readInviteParams(location?.search ?? '');
+        if (invite.apiUrl) {
+          onlineApiUrl = saveOnlineApiUrl(invite.apiUrl, localStorage) || invite.apiUrl;
+        }
+        if (invite.roomCode && resources.ready) {
+          onlineInviteRoomCode = invite.roomCode;
+          openOnlineHub({ status: `已自動帶入邀請房間碼：${invite.roomCode}` });
+          return;
+        }
+      }
       renderStartScreen();
     },
     onError: error => {

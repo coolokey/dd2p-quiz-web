@@ -44,6 +44,7 @@ export function buildStartScreen({
         <p>SELECT GAME MODE</p>
         <button class="start-mode start-mode-solo" data-game-mode="solo"${disabled}>玩家 VS 電腦<span>01</span><b>›</b></button>
         <button class="start-mode start-mode-local" data-game-mode="local"${disabled}>本機雙人對戰<span>02</span><b>›</b></button>
+        <button class="start-mode start-mode-online" data-game-mode="online"${disabled}>網路雙人對戰<span>03</span><b>›</b></button>
         ${loadNotice}
         <div class="start-minor-actions">
           <button id="start-help">操作說明</button><button id="start-audio">音效設定</button>
@@ -69,8 +70,10 @@ export function bindStartScreen(root, {
 }) {
   const solo = root.querySelector('[data-game-mode="solo"]');
   const local = root.querySelector('[data-game-mode="local"]');
+  const online = root.querySelector('[data-game-mode="online"]');
   solo.onclick = () => onMode('solo');
   local.onclick = () => onMode('local');
+  if (online) online.onclick = () => onMode('online');
   root.querySelector('#start-help').onclick = onHelp;
   root.querySelector('#start-audio').onclick = onAudio;
   const retry = root.querySelector('#retry-start-load');

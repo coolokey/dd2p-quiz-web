@@ -33,6 +33,7 @@ body:has(.start-screen) .noise { opacity:.06; mix-blend-mode:screen; }
 .start-mode:hover { transform:translateX(8px); filter:brightness(1.11) saturate(1.13); }.start-mode:focus-visible { outline-color:#fff; }
 .start-mode-solo { background:linear-gradient(100deg,#41e5ff,#53adf6 73%,#74a3ff); color:#061a29; box-shadow:0 9px 28px rgba(53,204,255,.25); }
 .start-mode-local { background:linear-gradient(100deg,#ff4aad,#ed2d7d 68%,#ba2181); color:#290817; box-shadow:0 9px 28px rgba(255,49,164,.21); }
+.start-mode-online { background:linear-gradient(100deg,#ffd84d,#ff9e2c 68%,#f56a1e); color:#291404; box-shadow:0 9px 28px rgba(255,176,46,.24); }
 .start-mode:disabled { cursor:not-allowed; filter:grayscale(.72) brightness(.58); transform:none; box-shadow:none; }
 .start-load-error { position:relative; z-index:2; margin:3px 0 10px; padding:12px; border:1px solid #ff88ca; background:rgba(116,10,60,.56); color:#ffe1f2; font-size:14px; line-height:1.45; }.start-load-error button { display:block; width:100%; margin-top:10px; padding:9px; border:1px solid #ffb6df; background:#3e0c29; color:#fff; font-weight:900; }
 .start-minor-actions { position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px; }
@@ -292,4 +293,49 @@ body:has(.battle-shell) .noise { opacity:.13; mix-blend-mode:screen; }
 @media (orientation: landscape) and (max-height: 500px) {
   .touch-capable .battle-center-controls { gap:4px; }
   .touch-capable .battle-pause-button { padding:4px 6px; font-size:11px; }
+}
+
+
+/* Online multiplayer hub, waiting room, and battle badge */
+.online-header-row { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px; }
+.online-health-pill { display:inline-flex; align-items:center; padding:8px 14px; border:3px solid var(--ink); font-weight:900; font-size:14px; background:#e9edf5; box-shadow:3px 3px 0 var(--ink); }
+.online-health-pill.is-ok { background:#c9f5d5; color:#0b4d23; }
+.online-health-pill.is-error { background:#ffd7d4; color:#8f1812; }
+.online-health-pill.is-pending { background:#fff2bd; color:#5a4100; }
+.online-notice { padding:10px 14px; border:3px solid var(--ink); background:#d9f1f9; font-weight:700; margin:0 0 16px; }
+.online-resume-banner { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; margin-bottom:16px; border:3px solid var(--ink); background:#fff4c2; box-shadow:4px 4px 0 var(--ink); }
+.online-resume-banner strong { display:block; font-size:18px; }
+.online-resume-banner span { color:#536176; font-size:14px; }
+.online-hub-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+.online-card { border:3px solid var(--ink); background:#fffdf6; padding:18px; box-shadow:4px 4px 0 var(--ink); }
+.online-card h3 { margin:0 0 8px; font-size:21px; }
+.online-profile-card { margin-bottom:16px; }
+.online-field { display:flex; flex-direction:column; gap:8px; font-weight:800; }
+.online-field input, .online-join-row input, .online-server-row input { width:100%; padding:11px 13px; border:3px solid var(--ink); background:#fff; font-weight:700; }
+.online-join-row, .online-server-row { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:stretch; }
+.online-join-row input { text-transform:uppercase; letter-spacing:.18em; font:900 20px/1 var(--display); }
+.online-server-config { margin-top:16px; border:3px solid var(--ink); background:#f1ecdc; padding:14px 16px; }
+.online-server-config summary { font-weight:900; cursor:pointer; }
+.online-room-banner { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; padding:16px 18px; margin-bottom:18px; border:3px solid var(--ink); background:#fffdf6; box-shadow:5px 5px 0 var(--ink); }
+.online-room-banner small { display:block; color:#a63e3e; font:700 11px/1 var(--display); letter-spacing:.12em; margin-bottom:4px; }
+.online-room-code { font:900 clamp(26px,4vw,40px)/1 var(--display); letter-spacing:.16em; color:var(--ink); }
+.online-room-meta { display:flex; flex-wrap:wrap; gap:10px 16px; font-size:15px; color:#3d4c63; }
+.online-conn-tag { padding:2px 9px; border:2px solid var(--ink); background:#c9f5d5; color:#0b4d23; font-weight:900; font-size:13px; }
+.online-copy-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.online-seat-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.online-seat-head h3 { margin:0; }
+.online-ready-tag { padding:4px 10px; border:2px solid var(--ink); background:#ece8db; font-size:12px; font-weight:900; }
+.online-ready-tag.is-ready { background:#c9f5d5; color:#0b4d23; }
+.select-side.is-local-seat { outline:4px solid var(--yellow); }
+.online-char-picker { margin-top:18px; }
+.online-char-picker h3 { margin:0 0 12px; font-size:19px; }
+.online-char-picker .character-grid { grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); }
+.character-card.is-opponent-picked { opacity:.42; border-style:dashed; }
+.online-battle-badge { padding:4px 9px; border:2px solid #74e7ff; border-radius:6px; background:rgba(12,48,74,.9); color:#9ef0ff; font:800 12px/1 var(--body); white-space:nowrap; }
+@media (orientation: landscape) {
+  .touch-capable .mode-online .mobile-answer-pad-right { width:100%; grid-auto-flow:column; grid-auto-columns:minmax(48px,1fr); }
+}
+@media (max-width:760px) {
+  .online-hub-grid { grid-template-columns:1fr; }
+  .online-join-row, .online-server-row { grid-template-columns:1fr; }
 }

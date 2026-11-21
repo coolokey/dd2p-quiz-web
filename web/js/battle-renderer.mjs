@@ -38,6 +38,7 @@ export function buildBattleMarkup(viewModel) {
     choiceCount: viewModel.choices.length,
     eligiblePlayers: viewModel.eligiblePlayers,
     locked: viewModel.mobileInputLocked || viewModel.orientationPaused || viewModel.manualPaused || viewModel.pausePending,
+    localPlayer: viewModel.localPlayer ?? null,
   });
   const orientationBlocker = viewModel.orientationPaused
     ? `<aside class="orientation-blocker" role="dialog" aria-modal="true">
@@ -47,10 +48,26 @@ export function buildBattleMarkup(viewModel) {
       <button type="button" data-return-main-menu>返回首頁</button>
     </aside>`
     : '';
-  const pauseMenu = viewModel.manualPaused
+  const pauseMenu = viewModel.onlineLeaveConfirm
+    ? `<div class="battle-pause-overlay" role="dialog" aria-modal="true" aria-labelledby="battle-pause-title">
+      <div class="battle-pause-dialog">
+        <h2 id="battle-pause-title">離開網路對戰？</h2>
+        <p>離開後本局將直接判負並通知對手。</p>
+        <div class="battle-pause-actions">
+          <button type="button" data-online-leave-cancel>繼續對戰</button>
+          <button type="button" class="primary pause-danger" data-online-leave-confirm>確認離開房間</button>
+        </div>
+      </div>
+    </div>`
+    : viewModel.manualPaused
     ? buildBattlePauseMenu({ confirmAction: viewModel.pauseConfirmAction ?? null })
     : '';
-  const pauseButton = viewModel.pausePending
+  const onlineBadge = viewModel.onlineBadge
+    ? `<span class="online-battle-badge" role="status">${escapeHtml(viewModel.onlineBadge)}</span>`
+    : '';
+  const pauseButton = viewModel.gameMode === 'online'
+    ? '<button type="button" class="battle-pause-button" data-online-leave-battle aria-label="離開網路對戰">離開</button>'
+    : viewModel.pausePending
     ? '<button type="button" class="battle-pause-button" data-pause-battle aria-label="暫停對戰" disabled>等待本次攻擊結束……</button>'
     : '<button type="button" class="battle-pause-button" data-pause-battle aria-label="暫停對戰">Ⅱ 暫停</button>';
 
@@ -60,6 +77,7 @@ export function buildBattleMarkup(viewModel) {
     <header class="battle-topbar">
       <span class="arena-name">${escapeHtml(viewModel.scene.label)}</span>
       <div class="battle-center-controls">
+        ${onlineBadge}
         <strong class="battle-progress">${escapeHtml(viewModel.progress)}</strong>
         ${pauseButton}
       </div>

@@ -1,7 +1,7 @@
-export const GAME_MODES = Object.freeze({ solo: 'solo', local: 'local' });
+export const GAME_MODES = Object.freeze({ solo: 'solo', local: 'local', online: 'online' });
 
 export function requiredCharacterPlayers(mode) {
-  return mode === GAME_MODES.solo ? ['left'] : ['left', 'right'];
+  return mode === GAME_MODES.solo || mode === GAME_MODES.online ? ['left'] : ['left', 'right'];
 }
 
 export function playersForKeyTest(mode) {
@@ -28,14 +28,21 @@ export function selectCpuCharacter(characters, playerCharacterId, random = Math.
   return available[Math.floor(random() * available.length)];
 }
 
-export function battleStatus(mode, eligiblePlayers, phase) {
+export function battleStatus(mode, eligiblePlayers, phase, { localSeat = null, playerNames = null } = {}) {
   if (phase === 'sudden-death') return '驟死決勝：第一位答對者立即獲勝！';
   if (eligiblePlayers.length === 1) {
     const player = eligiblePlayers[0];
+    if (mode === GAME_MODES.online) {
+      const label = playerNames?.[player] || (player === 'left' ? '紅隊' : '藍隊');
+      return player === localSeat ? `輪到你（${label}）作答！` : `等待對手（${label}）作答……`;
+    }
     const name = mode === GAME_MODES.solo
       ? (player === 'left' ? '玩家紅隊' : 'CPU 藍隊')
       : (player === 'left' ? '左方紅隊' : '右方藍隊');
     return `${name}可作答`;
+  }
+  if (mode === GAME_MODES.online) {
+    return '網路同步搶答中　｜　答對攻擊 −10 HP，答錯交給對手';
   }
   const prompt = mode === GAME_MODES.solo ? '玩家與 CPU 請搶答' : '兩位玩家請搶答';
   return `${prompt}　｜　答對攻擊 −10 HP，答錯交給對手`;

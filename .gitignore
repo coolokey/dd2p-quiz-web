@@ -17,3 +17,13 @@
 !web/**
 !posters/
 !posters/**
+!online-worker/
+!online-worker/**
+!docs/online-battle-cloudflare-supabase.md
+online-worker/.dev.vars
+online-worker/secrets.local.json
+online-worker/.wrangler/
+online-worker/dist/
+online-worker/node_modules/
+**/__pycache__/
+**/*.pyc

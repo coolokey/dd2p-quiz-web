@@ -27,10 +27,15 @@ function playerMarkup(player, choiceCount, eligiblePlayers, locked) {
   return `<div class="mobile-answer-pad mobile-answer-pad-${esc(player)}" data-mobile-player="${esc(player)}">${buttons}</div>`;
 }
 
-export function buildMobileAnswerControls({ gameMode, choiceCount, eligiblePlayers = [], locked = false }) {
+export function buildMobileAnswerControls({ gameMode, choiceCount, eligiblePlayers = [], locked = false, localPlayer = null }) {
   const count = Math.max(0, Math.min(4, Number(choiceCount) || 0));
-  const players = gameMode === 'solo' ? ['left'] : ['left', 'right'];
-  return `<div class="mobile-answer-controls mode-${esc(gameMode)}" aria-label="觸控作答">${players.map(player => playerMarkup(player, count, eligiblePlayers, locked)).join('')}</div>`;
+  const players = gameMode === 'solo'
+    ? ['left']
+    : gameMode === 'online'
+      ? [localPlayer === 'right' ? 'right' : 'left']
+      : ['left', 'right'];
+  const modeClass = gameMode === 'online' ? 'mode-solo mode-online' : `mode-${esc(gameMode)}`;
+  return `<div class="mobile-answer-controls ${modeClass}" aria-label="觸控作答">${players.map(player => playerMarkup(player, count, eligiblePlayers, locked)).join('')}</div>`;
 }
 
 export function answerInputFromTouchTarget(target) {

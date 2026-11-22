@@ -4,7 +4,7 @@
 
 ## 架構說明
 
-- **Cloudflare Worker（`src/worker.mjs`）**：驗證所有請求參數與玩家 Token（SHA-256 雜湊），轉發至 Supabase Data API RPC；瀏覽器不需持有任何 Supabase 金鑰。
+- **Cloudflare Worker（`src/worker.mjs` + `assets: ../web`）**：同時透過 Cloudflare Workers Static Assets 發布 `web/` 靜態網頁與 API 路由（共享同一組 `workers.dev` 網址）；Worker 驗證所有請求參數與玩家 Token（SHA-256 雜湊），轉發至 Supabase Data API RPC；瀏覽器不需持有任何 Supabase 金鑰。
 - **Supabase PostgreSQL（`supabase/schema.sql`）**：
   - 資料表 `public.ddp_online_rooms` 啟用 RLS 且**不開放任何直接資料表存取**。
   - 所有操作透過 `SECURITY DEFINER` RPC（`set search_path = ''`）執行，並以 `SELECT ... FOR UPDATE` 確保兩人同時搶答時只會有一位玩家取得該題作答權。

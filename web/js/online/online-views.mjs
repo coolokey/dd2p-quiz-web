@@ -61,7 +61,7 @@ export function buildOnlineHubView({
       <section class="online-card">
         <h3>建立對戰房間</h3>
         <p class="hint">由你選擇題庫、固定題數／限時規則與校園戰場，取得 6 碼房號與邀請連結。</p>
-        <button type="button" class="primary" id="online-create-flow"${disabledAttr}>選擇題庫並開房</button>
+        <button type="button" class="primary" id="online-create-flow"${disabledAttr}>選擇題庫建立擂台</button>
       </section>
 
       <section class="online-card">

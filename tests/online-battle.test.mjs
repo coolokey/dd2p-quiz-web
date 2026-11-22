@@ -258,6 +258,8 @@ test('網路大廳、備戰室與結算畫面正確呈現房間碼、對手鎖�
     savedSession: { roomCode: 'K7M9P2' },
   });
   assert.match(hubHtml, /伺服器連線正常/);
+  assert.match(hubHtml, /id="online-create-flow"[^>]*>選擇題庫建立擂台/);
+  assert.doesNotMatch(hubHtml, /開房/);
   assert.match(hubHtml, /id="online-resume-btn"/);
 
   const waitingHtml = buildOnlineWaitingRoomView({

@@ -4,7 +4,7 @@ export const ONLINE_API_STORAGE_KEY = 'dd2p-online-api-url';
 export const ONLINE_NAME_STORAGE_KEY = 'dd2p-online-player-name';
 
 // 部署 online-worker 後可將正式 Cloudflare Worker 網址填入此處（不含結尾斜線）
-export const DEFAULT_ONLINE_API_URL = '';
+export const DEFAULT_ONLINE_API_URL = 'https://ddp-online-battle-worker.cloudflare-supabase-connection-test.workers.dev';
 
 export function normalizeApiUrl(value) {
   const raw = String(value ?? '').trim();

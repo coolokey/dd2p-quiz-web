@@ -148,9 +148,11 @@ test('online-controller 對相同 event.seq 只觸發一次動畫事件，並追
   };
 
   const events = [];
+  const updateMetas = [];
   const statuses = [];
   const controller = createOnlineController({
     transport,
+    onRoomUpdate: (_room, meta) => updateMetas.push({ hasNewEvent: meta.hasNewEvent, seq: meta.newEvent?.seq ?? null }),
     onBattleEvent: evt => events.push(evt.seq),
     onConnectionChange: status => statuses.push(status),
     setTimeoutFn: fn => { timers.push(fn); return timers.length; },
@@ -176,6 +178,11 @@ test('online-controller 對相同 event.seq 只觸發一次動畫事件，並追
   await controller.pollOnce();
   await controller.pollOnce();
   assert.deepEqual(events, [1], '相同 seq 的戰鬥事件不可重複觸發');
+  assert.deepEqual(updateMetas, [
+    { hasNewEvent: false, seq: null },
+    { hasNewEvent: true, seq: 1 },
+    { hasNewEvent: false, seq: null },
+  ]);
   assert.equal(controller.getRemainingSeconds(), 48, '依據伺服器時間差計算剩餘秒數');
 
   pollMode = 'error';

@@ -69,9 +69,15 @@ export function createOnlineController({
       lastProcessedEventSeq = nextRoom.eventSeq;
     }
 
-    onRoomUpdate(room, { previousRoom, seat: session?.seat ?? null });
+    const meta = {
+      previousRoom,
+      seat: session?.seat ?? null,
+      hasNewEvent: isNewEvent,
+      newEvent: isNewEvent ? incomingEvent : null,
+    };
+    onRoomUpdate(room, meta);
     if (isNewEvent) {
-      onBattleEvent(incomingEvent, room, { previousRoom, seat: session?.seat ?? null });
+      onBattleEvent(incomingEvent, room, meta);
     }
   }
 

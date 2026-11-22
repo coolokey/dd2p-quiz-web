@@ -249,6 +249,9 @@ function requestBattleHomeExit() {
 }
 
 function handleBattleOrientationChange(portrait) {
+  if (onlineView === 'battle' && !onlineAnimating && onlineController?.getRoom()) {
+    renderOnlineBattle(onlineController.getRoom());
+  }
   return battlePause.setOrientationPaused(portrait);
 }
 
@@ -1002,6 +1005,8 @@ async function createOnlineRoomFromSetup(settings) {
     return;
   }
   const nextBtn = app.querySelector('#next');
+  const backBtn = app.querySelector('#back');
+  if (backBtn) backBtn.disabled = true;
   if (nextBtn) {
     nextBtn.disabled = true;
     nextBtn.textContent = '正在建立房間……';
@@ -1085,8 +1090,9 @@ function enterOnlineRoom(session, initialRoom) {
   onlineController.start(session, initialRoom, { emitInitialEvent: false });
 }
 
-async function handleOnlineRoomUpdate(room, { previousRoom } = {}) {
+async function handleOnlineRoomUpdate(room, { previousRoom, hasNewEvent = false, newEvent = null } = {}) {
   if (!onlineController) return;
+  const deferToAnswerAnimation = Boolean(hasNewEvent && newEvent?.type === 'answer' && onlineView === 'battle');
   if (room.status === 'waiting') {
     clearOnlineTimers();
     exitBattleOrientation();
@@ -1127,12 +1133,12 @@ async function handleOnlineRoomUpdate(room, { previousRoom } = {}) {
       startOnlineClockTicker();
     }
     onlineView = 'battle';
-    if (!onlineAnimating) renderOnlineBattle(room);
+    if (!onlineAnimating && !deferToAnswerAnimation) renderOnlineBattle(room);
     return;
   }
   if (room.status === 'ended') {
     clearOnlineTimers();
-    if (!onlineAnimating) renderOnlineResult(room);
+    if (!onlineAnimating && !deferToAnswerAnimation) renderOnlineResult(room);
   }
 }
 
@@ -1314,6 +1320,11 @@ function renderOnlineBattle(room, {
   if (returnHome) {
     returnHome.onclick = () => { onlineLeaveConfirm = true; renderOnlineBattle(onlineController?.getRoom() ?? room); };
   }
+  const activeDialog = app.querySelector('.orientation-blocker') ?? app.querySelector('.battle-pause-overlay');
+  if (activeDialog) {
+    activeDialog.onkeydown = event => trapDialogTab(activeDialog, event);
+    (activeDialog.querySelector('[data-return-main-menu]') ?? activeDialog.querySelector('[data-online-leave-cancel]'))?.focus();
+  }
 }
 
 async function submitOnlineAnswer(answerIndex) {
@@ -1494,6 +1505,11 @@ function startGamepadLoop() {
     for (const evt of events) {
       audioManager?.unlock();
       if (evt.type === 'start') {
+        if (onlineView === 'battle') {
+          onlineLeaveConfirm = !onlineLeaveConfirm;
+          if (onlineController?.getRoom()) renderOnlineBattle(onlineController.getRoom());
+          continue;
+        }
         if (hasLiveBattle()) {
           if (pauseConfirmAction) cancelPauseConfirmation();
           else if (battlePause.isManualPaused()) continueBattle();

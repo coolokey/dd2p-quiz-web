@@ -917,17 +917,17 @@ begin
 end;
 $$;
 
--- 權限收斂：移除 public 執行權，僅授予 anon 執行公開 RPC
-revoke all on function public.ddp_online_health() from public;
-revoke all on function public.ddp_online_create_room(text, text, text, text, text, text, text, text, integer, integer) from public;
-revoke all on function public.ddp_online_join_room(text, text, text, text) from public;
-revoke all on function public.ddp_online_get_state(text, text, text, integer) from public;
-revoke all on function public.ddp_online_select_character(text, text, text, text) from public;
-revoke all on function public.ddp_online_set_ready(text, text, text, boolean, integer) from public;
-revoke all on function public.ddp_online_submit_answer(text, text, text, integer, integer, integer, text) from public;
-revoke all on function public.ddp_online_finish_time(text, text, text) from public;
-revoke all on function public.ddp_online_request_rematch(text, text, text, integer) from public;
-revoke all on function public.ddp_online_leave_room(text, text, text) from public;
+-- 權限收斂：移除 public 與 authenticated 執行權，僅授予 anon 執行公開 RPC
+revoke all on function public.ddp_online_health() from public, authenticated;
+revoke all on function public.ddp_online_create_room(text, text, text, text, text, text, text, text, integer, integer) from public, authenticated;
+revoke all on function public.ddp_online_join_room(text, text, text, text) from public, authenticated;
+revoke all on function public.ddp_online_get_state(text, text, text, integer) from public, authenticated;
+revoke all on function public.ddp_online_select_character(text, text, text, text) from public, authenticated;
+revoke all on function public.ddp_online_set_ready(text, text, text, boolean, integer) from public, authenticated;
+revoke all on function public.ddp_online_submit_answer(text, text, text, integer, integer, integer, text) from public, authenticated;
+revoke all on function public.ddp_online_finish_time(text, text, text) from public, authenticated;
+revoke all on function public.ddp_online_request_rematch(text, text, text, integer) from public, authenticated;
+revoke all on function public.ddp_online_leave_room(text, text, text) from public, authenticated;
 
 grant execute on function public.ddp_online_health() to anon;
 grant execute on function public.ddp_online_create_room(text, text, text, text, text, text, text, text, integer, integer) to anon;

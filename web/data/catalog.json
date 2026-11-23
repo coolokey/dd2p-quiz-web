@@ -36,6 +36,41 @@
       "file": "./data/quizzes/cap-115-math-01-10.json"
     },
     {
+      "id": "math-8a-2-2-t1-representation",
+      "name": "(國中)數學 2-2 主題1 根式的表示",
+      "subject": "數學",
+      "questions": 12,
+      "file": "./data/quizzes/math-8a-2-2-t1-representation.json"
+    },
+    {
+      "id": "math-8a-2-2-t2-multiply-compare",
+      "name": "(國中)數學 2-2 主題2 根式的乘法與比大小",
+      "subject": "數學",
+      "questions": 30,
+      "file": "./data/quizzes/math-8a-2-2-t2-multiply-compare.json"
+    },
+    {
+      "id": "math-8a-2-2-t3-division-rationalize",
+      "name": "(國中)數學 2-2 主題3 根式的除法與有理化",
+      "subject": "數學",
+      "questions": 53,
+      "file": "./data/quizzes/math-8a-2-2-t3-division-rationalize.json"
+    },
+    {
+      "id": "math-8a-2-2-t4-add-sub",
+      "name": "(國中)數學 2-2 主題4 根式的加減",
+      "subject": "數學",
+      "questions": 24,
+      "file": "./data/quizzes/math-8a-2-2-t4-add-sub.json"
+    },
+    {
+      "id": "math-8a-2-2-t5-four-ops-formula",
+      "name": "(國中)數學 2-2 主題5 根式的四則運算與乘法公式",
+      "subject": "數學",
+      "questions": 22,
+      "file": "./data/quizzes/math-8a-2-2-t5-four-ops-formula.json"
+    },
+    {
       "id": "1061204",
       "name": "(國中)數學 三角形的重心(公開課)",
       "subject": "數學",
